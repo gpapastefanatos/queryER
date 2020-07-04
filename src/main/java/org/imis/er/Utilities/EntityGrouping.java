@@ -1,0 +1,95 @@
+package org.imis.er.Utilities;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import gnu.trove.map.hash.TIntObjectHashMap;
+
+/**
+ * 
+ * @author bstam
+ * Utility functions to merge an enumerable and a reverse UnionFind into merged entities.
+ */
+public class EntityGrouping {
+	
+	public static List<Object[]> groupSimilar(UnionFind uFind, HashMap<Integer, Object[]> newData, 
+			Set<Integer> qIds, Integer keyIndex, Integer noOfFields) {
+		// TODO Auto-generated method stub
+		HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
+		List<Object[]> finalData = new ArrayList<>();
+		for (int child : uFind.getParent().keySet()) {
+			//System.out.println(uFind.getParent().get(child));
+			revUF.computeIfAbsent(uFind.getParent().get(child), x -> new HashSet<>()).add(child);
+		}
+		for (int id : revUF.keySet()) {
+			Object[] groupedObj = new Object[noOfFields]; //length
+			for (int idInner : revUF.get(id)) {
+				Object[] datum = newData.get(idInner);
+				int i = 0;
+				if(datum != null) {
+					while(i < noOfFields) {
+						if(groupedObj[i] == null && !(datum[i].equals("") || datum[i].equals("[\\W_]"))) {
+							if(i == keyIndex) { 
+								if(qIds.contains(Integer.parseInt(datum[i].toString())))
+									groupedObj[i] = datum[i];
+							}
+							else {
+								groupedObj[i] = datum[i];
+							}
+						}
+						else if (groupedObj[i] != null && !(datum[i].equals("") || datum[i].equals("[\\W_]"))) {
+							if(!groupedObj[i].equals(datum[i]) && i != keyIndex)
+								groupedObj[i] = groupedObj[i].toString() + " | "+ datum[i].toString();
+						}
+						else {
+							groupedObj[i] = null;
+						}
+						i++;
+					}
+				}
+			}
+			finalData.add(groupedObj);
+		}
+		return finalData;
+	}
+
+
+	public static List<Object[]> sortSimilar(UnionFind uFind, HashMap<Integer, Object[]> newData) {
+		// TODO Auto-generated method stub
+		HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
+		List<Object[]> finalData = new ArrayList<>();
+		for (int child : uFind.getParent().keySet()) {
+			//System.out.println(uFind.getParent().get(child));
+			revUF.computeIfAbsent(uFind.getParent().get(child), x -> new HashSet<>()).add(child);
+		}
+
+		for (int id : revUF.keySet()) {
+			for (int idInner : revUF.get(id)) {
+				finalData.add(newData.get(idInner));
+			}
+		}
+		return finalData;
+	}
+	
+	public static List<Object[]> sortSimilar2(UnionFind uFind, TIntObjectHashMap<Object[]> newData) {
+		// TODO Auto-generated method stub
+		HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
+		List<Object[]> finalData = new ArrayList<>();
+		for (int child : uFind.getParent().keySet()) {
+			//System.out.println(uFind.getParent().get(child));
+			revUF.computeIfAbsent(uFind.getParent().get(child), x -> new HashSet<>()).add(child);
+		}
+
+		for (int id : revUF.keySet()) {
+			for (int idInner : revUF.get(id)) {
+				finalData.add(newData.get(idInner));
+			}
+		}
+		return finalData;
+	}
+	
+	
+}
