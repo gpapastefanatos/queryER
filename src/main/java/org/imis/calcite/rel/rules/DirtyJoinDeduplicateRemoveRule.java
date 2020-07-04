@@ -39,7 +39,8 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 			RelBuilderFactory relBuilderFactory) {
 		super(
 				operandJ(joinClass, null,
-						join -> join.getJoinType() == JoinRelType.CLEAN,
+						join -> join.getJoinType() == JoinRelType.DIRTY
+							 || join.getJoinType() == JoinRelType.CLEAN,
 					operand(deduplicateClass, any()),
 					operand(deduplicateClass, any())),
 				relBuilderFactory, null);
@@ -70,7 +71,6 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 		final Join join = call.rel(0);
 		final Deduplicate deduplicateLeft = call.rel(1);
 		final Deduplicate deduplicateRight = call.rel(2);
-		
 		RelNode newJoin = null;
 		List<String> tableLeft = deduplicateLeft.getRelTable().getQualifiedName();
 		String leftTableName = "";
@@ -83,15 +83,27 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 		if(tableRight.size() > 0) {
 			rightTableName = tableRight.get(1);
 		}
-		newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(), deduplicateRight.getInput(), join.getCondition(),
-				join.getVariablesSet(), JoinRelType.DIRTY, deduplicateLeft.getKey(), deduplicateRight.getKey(),
-				leftTableName, rightTableName, 
-				deduplicateLeft.getFieldTypes().size(), deduplicateRight.getFieldTypes().size());
+		
+		//TODO: WRITE COMMENT FOR THIS
+		if(!join.isDirtyJoin()) {
+		
+			newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(), deduplicateRight.getInput(), join.getCondition(),
+					join.getVariablesSet(), JoinRelType.DIRTY, deduplicateLeft.getKey(), deduplicateRight.getKey(),
+					leftTableName, rightTableName, 
+					deduplicateLeft.getFieldTypes().size(), deduplicateRight.getFieldTypes().size(), false);
+			
+		}
+		else {
+			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), join.getRight(), join.getCondition(),
+					join.getVariablesSet(), JoinRelType.CLEAN, join.getKeyLeft(), join.getKeyRight(),
+					join.getTableNameLeft(), join.getTableNameRight(), 
+					join.getKeyLeft(), join.getKeyRight(), true);
+			
+		}
 		if(newJoin != null) {
 			call.transformTo(newJoin);
 		
 		}
-		
 	}
 
 }

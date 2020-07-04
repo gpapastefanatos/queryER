@@ -439,7 +439,8 @@ public class JdbcRules {
 																																String tableNameLeft,
 																																String tableNameRight,
 																																Integer fieldLeft,
-																																Integer fieldRight) {
+																																Integer fieldRight,
+																																Boolean isD) {
 																															// TODO Auto-generated method stub
 																															return null;
 																														}

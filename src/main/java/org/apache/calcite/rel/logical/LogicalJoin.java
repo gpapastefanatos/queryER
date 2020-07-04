@@ -241,7 +241,8 @@ public final class LogicalJoin extends Join {
 			boolean semiJoinDone, Integer keyLeft, Integer keyRight, String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight) {
+			Integer fieldRight,
+			Boolean isD) {
 		// TODO Auto-generated method stub
 		return null;
 	}

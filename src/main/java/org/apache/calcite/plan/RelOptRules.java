@@ -71,13 +71,12 @@ import org.apache.calcite.rel.rules.UnionMergeRule;
 import org.apache.calcite.rel.rules.UnionPullUpConstantsRule;
 import org.apache.calcite.rel.rules.UnionToDistinctRule;
 import org.apache.calcite.rel.rules.ValuesReduceRule;
-import org.imis.calcite.rel.rules.DeduplicateScanRemoveRule;
 import org.imis.calcite.rel.rules.FilterDeduplicateTransposeRule;
 import org.imis.calcite.rel.rules.FilterMergeTransposeRule;
 import org.imis.calcite.rel.rules.DirtyJoinDeduplicateRemoveRule;
-import org.imis.calcite.rel.rules.MultiJoinDirtyRightDeduplicateRemoveRule;
-import org.imis.calcite.rel.rules.DirtyJoinLeftDeduplicateRemoveRule;
-import org.imis.calcite.rel.rules.DirtyJoinRightDeduplicateRemoveRule;
+import org.imis.calcite.rel.rules.MultiDirtyRightJoinDeduplicateRemoveRule;
+import org.imis.calcite.rel.rules.DirtyLeftJoinDeduplicateRemoveRule;
+import org.imis.calcite.rel.rules.DirtyRightJoinDeduplicateRemoveRule;
 import org.imis.calcite.rel.rules.JoinConvertToDuplicateRule;
 
 import com.google.common.collect.ImmutableList;
@@ -127,10 +126,10 @@ public class RelOptRules {
 					FilterDeduplicateTransposeRule.INSTANCE,
 					FilterMergeTransposeRule.INSTANCE,
 					DirtyJoinDeduplicateRemoveRule.INSTANCE,
-					DirtyJoinRightDeduplicateRemoveRule.INSTANCE,
-					DirtyJoinLeftDeduplicateRemoveRule.INSTANCE,
+					DirtyRightJoinDeduplicateRemoveRule.INSTANCE,
+					DirtyLeftJoinDeduplicateRemoveRule.INSTANCE,
 					//DeduplicateScanRemoveRule.INSTANCE,
-					MultiJoinDirtyRightDeduplicateRemoveRule.INSTANCE,
+					MultiDirtyRightJoinDeduplicateRemoveRule.INSTANCE,
 					//JoinConvertToDuplicateRule.INSTANCE,
 					ProjectFilterTransposeRule.INSTANCE,
 					FilterProjectTransposeRule.INSTANCE,

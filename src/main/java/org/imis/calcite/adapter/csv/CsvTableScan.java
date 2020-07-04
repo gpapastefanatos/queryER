@@ -103,6 +103,7 @@ public class CsvTableScan extends TableScan implements EnumerableRel {
 		RelOptCost cost =  super.computeSelfCost(planner, mq)
 				.multiplyBy((fields.length + 2D)
 						/ (table.getRowType().getFieldCount() + 2D));
+		//System.out.println(cost);
 		return cost;
 	}
 

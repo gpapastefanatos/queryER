@@ -150,7 +150,7 @@ public class EnumerableNestedLoopJoin extends Join implements EnumerableRel {
 	@Override
 	public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, JoinRelType joinType,
 			boolean semiJoinDone, Integer keyLeft, Integer keyRight, String tableNameLeft, String tableNameRight,
-			Integer fieldLeft, Integer fieldRight) {
+			Integer fieldLeft, Integer fieldRight, Boolean isD) {
 		// TODO Auto-generated method stub
 		return null;
 	}

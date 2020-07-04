@@ -30,7 +30,7 @@ import com.google.common.collect.ImmutableList;
 public class LogicalDeduplicateJoin extends Join {
 
 
-	
+
 	protected LogicalDeduplicateJoin(RelOptCluster cluster,
 			RelTraitSet traits,
 			RelNode left,
@@ -43,7 +43,8 @@ public class LogicalDeduplicateJoin extends Join {
 			String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight) {
+			Integer fieldRight,
+			Boolean isDirtyJoin) {
 		super(
 				cluster,
 				traits,
@@ -52,16 +53,22 @@ public class LogicalDeduplicateJoin extends Join {
 				right,
 				condition,
 				variablesSet,
-				joinType);
+				joinType
+				);
 		this.setKeyLeft(keyLeft);
 		this.setKeyRight(keyRight);
 		this.setTableNameLeft(tableNameLeft);
 		this.setTableNameRight(tableNameRight);
 		this.setFieldLeft(fieldLeft);
 		this.setFieldRight(fieldRight);
+		this.setDirtyJoin(isDirtyJoin);
+
 	}
 
 	
+
+
+
 	public static LogicalDeduplicateJoin create(
 			RelNode left,
 			RelNode right,
@@ -73,7 +80,8 @@ public class LogicalDeduplicateJoin extends Join {
 			String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight) {
+			Integer fieldRight,
+			Boolean isDirtyJoin) {
 		final RelOptCluster cluster = left.getCluster();
 		final RelMetadataQuery mq = cluster.getMetadataQuery();
 		final RelTraitSet traitSet =
@@ -82,7 +90,7 @@ public class LogicalDeduplicateJoin extends Join {
 						() -> RelMdCollation.enumerableHashJoin(mq, left, right, joinType));
 		return new LogicalDeduplicateJoin(cluster, traitSet, left, right, condition,
 				variablesSet, joinType, keyLeft, keyRight,  tableNameLeft, tableNameRight,
-				fieldLeft, fieldRight);
+				fieldLeft, fieldRight, isDirtyJoin);
 	}
 
 
@@ -92,7 +100,7 @@ public class LogicalDeduplicateJoin extends Join {
 		// TODO Auto-generated method stub
 		return new LogicalDeduplicateJoin(getCluster(), traitSet, left, right,
 				condition, variablesSet, joinType, getKeyLeft(), getKeyRight(), getTableNameLeft(), getTableNameRight(),
-				getFieldLeft(), getFieldRight());
+				getFieldLeft(), getFieldRight(), isDirtyJoin());
 	}
 	
 	@Override public RelOptCost computeSelfCost(RelOptPlanner planner,
@@ -145,11 +153,12 @@ public class LogicalDeduplicateJoin extends Join {
 	@Override
 	public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, JoinRelType joinType,
 			boolean semiJoinDone, Integer keyLeft, Integer keyRight, String tableNameLeft, String tableNameRight,
-			Integer fieldLeft, Integer fieldRight) {
+			Integer fieldLeft, Integer fieldRight, Boolean isDirtyJoin) {
 		// TODO Auto-generated method stub
 		return new LogicalDeduplicateJoin(getCluster(), traitSet, left, right,
 				condition, variablesSet, joinType, keyLeft, keyRight, tableNameLeft, tableNameRight,
-				fieldLeft, fieldRight);
+				fieldLeft, fieldRight, isDirtyJoin);
 	}
 
+	
 }

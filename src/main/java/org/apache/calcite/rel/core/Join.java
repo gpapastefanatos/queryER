@@ -104,7 +104,8 @@ public abstract class Join extends BiRel implements Hintable {
 	private String tableNameRight;
 	private Integer fieldLeft;
 	private Integer fieldRight;
-	
+	private boolean isDirtyJoin; // set to true if it is checked
+
 
 	protected Join(
 			RelOptCluster cluster,
@@ -334,7 +335,8 @@ public abstract class Join extends BiRel implements Hintable {
 			Integer keyLeft, Integer keyRight, String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight);
+			Integer fieldRight,
+			Boolean isDirtyJoin);
 	
 	/**
 	 * Analyzes the join condition.
@@ -400,6 +402,14 @@ public abstract class Join extends BiRel implements Hintable {
 
 	public JoinInfo getJoinInfo() {
 		return joinInfo;
+	}
+
+	public boolean isDirtyJoin() {
+		return isDirtyJoin;
+	}
+
+	public void setDirtyJoin(boolean isDirtyJoin) {
+		this.isDirtyJoin = isDirtyJoin;
 	}
 	
 }

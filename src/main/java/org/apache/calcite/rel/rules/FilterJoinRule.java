@@ -139,6 +139,8 @@ public abstract class FilterJoinRule extends RelOptRule {
 		if (filter == null && joinFilters.isEmpty()) {
 			return;
 		}
+		
+			
 		final List<RexNode> aboveFilters =
 				filter != null
 				? getConjunctions(filter)
@@ -193,16 +195,24 @@ public abstract class FilterJoinRule extends RelOptRule {
 						filterPushed = false;
 					}
 				}
-
 				if(leftFilters.isEmpty() && !rightFilters.isEmpty()) {
 					joinType = JoinRelType.DIRTY_LEFT;
+					join.setDirtyJoin(true);
+					//System.out.println("GOT 1");
 				}
 				else if(rightFilters.isEmpty() && !leftFilters.isEmpty()) {
 					joinType = JoinRelType.DIRTY_RIGHT;
+					join.setDirtyJoin(true);
+					//System.out.println("GOT 2");
 				}
 				else if(!rightFilters.isEmpty() && !leftFilters.isEmpty()) {
-					System.out.println(join.getJoinType());
 					joinType = JoinRelType.CLEAN;
+					join.setDirtyJoin(true);
+					//System.out.println("GOT 3");
+				}
+				else if(rightFilters.isEmpty() && leftFilters.isEmpty() && join.isDirtyJoin() == false) {
+					joinType = JoinRelType.DIRTY;
+					//System.out.println("GOT 4");
 				}
 				// Try to push down filters in ON clause. A ON clause filter can only be
 				// pushed down if it does not affect the non-matching set, i.e. it is

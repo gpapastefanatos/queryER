@@ -76,7 +76,8 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight
+			Integer fieldRight,
+			Boolean isDirtyJoin
 			){
 		super(
 				cluster,
@@ -95,6 +96,7 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 		this.setTableNameRight(tableNameRight);
 		this.setFieldLeft(fieldLeft);
 		this.setFieldRight(fieldLeft);
+		this.setDirtyJoin(isDirtyJoin);
 
 	}
 
@@ -110,7 +112,8 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight) {
+			Integer fieldRight,
+			Boolean isDirtyJoin) {
 		final RelOptCluster cluster = left.getCluster();
 		final RelMetadataQuery mq = cluster.getMetadataQuery();
 		final RelTraitSet traitSet =
@@ -119,7 +122,7 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 						() -> RelMdCollation.enumerableHashJoin(mq, left, right, joinType));
 		return new EnumerableDeduplicateJoin(cluster, traitSet, left, right, condition,
 				variablesSet, joinType, keyLeft, keyRight, tableNameLeft,
-				 tableNameRight, fieldLeft, fieldRight);
+				 tableNameRight, fieldLeft, fieldRight, isDirtyJoin);
 	}
 	
 
@@ -130,10 +133,11 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
-			Integer fieldRight) {
+			Integer fieldRight,
+			Boolean isDirtyJoin) {
 		return new EnumerableDeduplicateJoin(getCluster(), traitSet, left, right,
 				condition, variablesSet, joinType, keyRight, keyLeft, tableNameLeft,
-				 tableNameRight, fieldLeft, fieldRight);
+				 tableNameRight, fieldLeft, fieldRight, isDirtyJoin);
 	
 	}
 
@@ -161,7 +165,7 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 		// TODO Auto-generated method stub
 		return new EnumerableDeduplicateJoin(getCluster(), traitSet, left, right,
 				condition, variablesSet, joinType, this.getKeyLeft(), this.getKeyRight(), this.getTableNameLeft(), this.getTableNameRight(),
-				this.getFieldLeft(), this.getFieldRight());
+				this.getFieldLeft(), this.getFieldRight(), this.isDirtyJoin());
 	}
 
 	/**

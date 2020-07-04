@@ -91,7 +91,6 @@ implements QueryableTable, TranslatableTable {
 	}
 
 	@Override
-	@SuppressWarnings("deprecation")
 	public RelNode toRel(
 			RelOptTable.ToRelContext context,
 			RelOptTable relOptTable) {

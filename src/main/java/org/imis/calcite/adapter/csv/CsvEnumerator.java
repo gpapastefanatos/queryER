@@ -95,7 +95,7 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	}
 
 
-
+	
 	public static Double estimateRowCount(Source source,  List<CsvFieldType> fieldTypes) {
 		try{
 			Long sizeBytes = new File(source.toString()).length();

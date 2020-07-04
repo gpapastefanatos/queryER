@@ -31,6 +31,7 @@ public class EnumerableDeduplicateJoinRule extends ConverterRule {
 				deduplicateJoin.getCondition(), deduplicateJoin.getVariablesSet(),
 				deduplicateJoin.getJoinType(), deduplicateJoin.getKeyLeft(), deduplicateJoin.getKeyRight(),
 				deduplicateJoin.getTableNameLeft(), deduplicateJoin.getTableNameRight(), deduplicateJoin.getFieldLeft(),
-				deduplicateJoin.getFieldRight());
+				deduplicateJoin.getFieldRight(),
+				deduplicateJoin.isDirtyJoin());
 	}
 }

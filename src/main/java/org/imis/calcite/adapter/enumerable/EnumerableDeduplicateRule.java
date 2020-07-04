@@ -30,7 +30,7 @@ public class EnumerableDeduplicateRule extends ConverterRule {
 		return EnumerableDeduplicate.create(
 				convert(deduplicate.getInput(),
 						deduplicate.getInput().getTraitSet()
-						.replace(EnumerableConvention.INSTANCE)), deduplicate.getRelTable(),
-				deduplicate.getKey(), deduplicate.getSource(), deduplicate.getFieldTypes());
+						.replace(EnumerableConvention.INSTANCE)), deduplicate.getBlockIndex(), 
+				deduplicate.getRelTable(),	deduplicate.getKey(), deduplicate.getSource(), deduplicate.getFieldTypes());
 	}
 }

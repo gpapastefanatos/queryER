@@ -10,6 +10,7 @@ import org.apache.calcite.rel.RelWriter;
 import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.util.Source;
 import org.imis.calcite.adapter.csv.CsvFieldType;
+import org.imis.calcite.rel.planner.RelBlockIndex;
 
 /**
  * 
@@ -25,12 +26,14 @@ public abstract class Deduplicate extends SingleRel {
 	protected final Integer key;
 	protected final Source source;
 	protected final List<CsvFieldType> fieldTypes;
+	protected final RelBlockIndex blockIndex;
 
 
 	protected Deduplicate(
 			RelOptCluster cluster,
 			RelTraitSet traitSet,
 			RelNode input,
+			RelBlockIndex blockIndex,
 			RelOptTable table,
 			Integer key,
 			Source source,
@@ -39,6 +42,7 @@ public abstract class Deduplicate extends SingleRel {
 		this.table = table;
 		this.key = key;
 		this.source = source;
+		this.blockIndex = blockIndex;
 		this.fieldTypes = fieldTypes;
 		if (table.getRelOptSchema() != null) {
 			cluster.getPlanner().registerSchema(table.getRelOptSchema());
@@ -74,6 +78,10 @@ public abstract class Deduplicate extends SingleRel {
 
 	public List<CsvFieldType> getFieldTypes() {
 		return fieldTypes;
+	}
+	
+	public RelBlockIndex getBlockIndex() {
+		return blockIndex;
 	}
 
 	public abstract Deduplicate copy(RelTraitSet traitSet,  RelNode input);

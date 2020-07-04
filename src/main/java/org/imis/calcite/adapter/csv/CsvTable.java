@@ -17,14 +17,24 @@
 package org.imis.calcite.adapter.csv;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.calcite.adapter.java.JavaTypeFactory;
+import org.apache.calcite.rel.RelCollation;
+import org.apache.calcite.rel.RelDistribution;
+import org.apache.calcite.rel.RelDistributionTraitDef;
+import org.apache.calcite.rel.RelReferentialConstraint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelProtoDataType;
+import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.impl.AbstractTable;
+import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Source;
+import org.imis.er.KDebug;
+
+import com.google.common.collect.ImmutableList;
 
 /**
  * Base class for table that reads CSV files.
@@ -73,44 +83,61 @@ public abstract class CsvTable extends AbstractTable {
 		return this.tableKey;
 	}
 
-//
-//	@Override  public Statistic getStatistic() {
-//		return new Statistic() {
-//
-//			@Override
-//			public Double getRowCount() {
-//				if(rows == null)
-//					rows = CsvEnumerator.estimateRowCount(source, fieldTypes);
-//				return rows;
-//			}
-//
-//			@Override
-//			public boolean isKey(ImmutableBitSet columns) {
-//				return false;
-//			}
-//
-//			@Override
-//			public List<ImmutableBitSet> getKeys() {
-//				return ImmutableList.of();
-//			}
-//
-//			@Override
-//			public List<RelReferentialConstraint> getReferentialConstraints() {
-//				return ImmutableList.of();
-//			}
-//
-//			@Override
-//			public List<RelCollation> getCollations() {
-//				return ImmutableList.of();
-//			}
-//
-//			@Override
-//			public RelDistribution getDistribution() {
-//				return RelDistributionTraitDef.INSTANCE.getDefault();
-//			}
-//		};
-//	}
 
+	@Override  public Statistic getStatistic() {
+		//System.out.println(getCallerClassName());
+		return new Statistic() {
+
+			@Override
+			public Double getRowCount() {
+				if(rows == null)
+					rows = CsvEnumerator.estimateRowCount(source, fieldTypes);
+				//System.out.println("Stats" + " " +rows);
+				return rows;
+			}
+
+			@Override
+			public boolean isKey(ImmutableBitSet columns) {
+				return false;
+			}
+
+			@Override
+			public List<ImmutableBitSet> getKeys() {
+				return ImmutableList.of();
+			}
+
+			@Override
+			public List<RelReferentialConstraint> getReferentialConstraints() {
+				return ImmutableList.of();
+			}
+
+			@Override
+			public List<RelCollation> getCollations() {
+				return ImmutableList.of();
+			}
+
+			@Override
+			public RelDistribution getDistribution() {
+				return RelDistributionTraitDef.INSTANCE.getDefault();
+			}
+		};
+	}
+	// For debugging
+		public static String getCallerClassName() {
+			StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+			String callerClassName = null;
+			for (int i=1; i<stElements.length; i++) {
+				StackTraceElement ste = stElements[i];
+				if (!ste.getClassName().equals(KDebug.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
+					if (callerClassName==null) {
+						callerClassName = ste.getClassName();
+					} else if (!callerClassName.equals(ste.getClassName())) {
+						return ste.getClassName();
+					}
+				}
+			}
+			return null;
+		}
 
 	public Source getSource() {
 		return source;

@@ -17,6 +17,8 @@
 package org.imis.calcite.adapter.enumerable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
@@ -36,7 +38,10 @@ import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.util.Source;
 import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.calcite.rel.core.Deduplicate;
+import org.imis.calcite.rel.planner.RelBlockIndex;
 import org.imis.calcite.util.NewBuiltInMethod;
+import org.imis.er.BlockIndex.BlockIndex;
+import org.imis.er.Utilities.SerializationUtilities;
 
 
 /**
@@ -56,40 +61,52 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 	 * @param input    Input relational expression
 	 * @param rowType  Output row type
 	 */
-
+	@SuppressWarnings("unchecked")
 	protected EnumerableDeduplicate(
 			RelOptCluster cluster,
 			RelTraitSet traitSet,
 			RelNode input,
+			RelBlockIndex blockIndex,
 			RelOptTable table,
 			Integer key,
 			Source source,
 			List<CsvFieldType> fieldTypes){
-		super(cluster, traitSet,  input, table, key, source, fieldTypes);
+		super(cluster, traitSet,  input, blockIndex, table, key, source, fieldTypes);
 		this.traitSet =
 				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
+		
 	}
 
 
-	public static RelNode create( RelNode input, RelOptTable table, Integer key,
+	public static RelNode create( RelNode input, RelBlockIndex blockIndex, RelOptTable table, Integer key,
 			Source source, List<CsvFieldType> fieldTypes) {
 		// TODO Auto-generated method stub
 		final RelOptCluster cluster = input.getCluster();
 		final RelMetadataQuery mq = cluster.getMetadataQuery();
 		final RelTraitSet traitSet =
 				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
-		return new EnumerableDeduplicate(cluster, traitSet, input, table, key, source, fieldTypes);
+		return new EnumerableDeduplicate(cluster, traitSet, input, blockIndex, table, key, source, fieldTypes);
 	}
 
 
 	@Override public  EnumerableDeduplicate copy(RelTraitSet traitSet,  RelNode input){
-		return new EnumerableDeduplicate(getCluster(), traitSet, input, this.table, this.key, this.source, this.fieldTypes);
+		return new EnumerableDeduplicate(getCluster(), traitSet, input, this.blockIndex, this.table, this.key, this.source, this.fieldTypes);
 	}
 
 	@Override public RelOptCost computeSelfCost(RelOptPlanner planner,
 			RelMetadataQuery mq) {
-		double rowCount = mq.getRowCount(this);
-		return planner.getCostFactory().makeCost(rowCount, 0, 0);
+		// Multiply the cost by a factor that makes a scan more attractive if it
+		// has significantly fewer fields than the original scan.
+		//
+		// The "+ 2D" on top and bottom keeps the function fairly smooth.
+		//
+		// For example, if table has 3 fields, project has 1 field,
+		// then factor = (1 + 2) / (3 + 2) = 0.6
+		//System.out.println("Computing cost");
+		RelOptCost cost =  super.computeSelfCost(planner, mq)
+				.multiplyBy((fieldTypes.size() + 2D)
+						/ (table.getRowType().getFieldCount() + 2D));
+		return cost;
 	}
 	/**
 	 * Calls the java function that implements the deduplication

@@ -205,6 +205,7 @@ import org.imis.calcite.adapter.csv.CsvTableScan;
 import org.imis.calcite.rel.logical.LogicalDeduplicate;
 import org.imis.calcite.rel.logical.LogicalDeduplicateJoin;
 import org.imis.calcite.rel.logical.LogicalMergeEntities;
+import org.imis.calcite.rel.planner.RelBlockIndex;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
@@ -2478,8 +2479,10 @@ public class SqlToRelConverter {
 		bb.setRoot(tableRel, true);
 
 		if(deduplicate) {
+			RelBlockIndex blockIndex = new RelBlockIndex(table.getQualifiedName().get(1), key, fieldTypes);
 			RelNode newRoot = LogicalDeduplicate.create(tableRel.getCluster(),
-					tableRel.getTraitSet().replace(Convention.NONE), tableRel, table, key, source, fieldTypes);
+					tableRel.getTraitSet().replace(Convention.NONE), tableRel, blockIndex, 
+						table, key, source, fieldTypes);
 			bb.setRoot(newRoot, false);	
 		}
 		if (usedDataset[0]) {
@@ -2700,7 +2703,7 @@ public class SqlToRelConverter {
 		final LogicalDeduplicateJoin deduplicateJoin = LogicalDeduplicateJoin.create(
 				originalJoin.getLeft(), originalJoin.getRight(), originalJoin.getCondition(),
 				originalJoin.getVariablesSet(), originalJoin.getJoinType(), null,
-				null, null, null, null, null);
+				null, null, null, null, null, false);
 		RelNode node = RelOptUtil.pushDownJoinConditions(deduplicateJoin, relBuilder);
 		// If join conditions are pushed down, update the leaves.
 		if (node instanceof Project) {
