@@ -1,0 +1,4 @@
+query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ
+"SELECT DEDUP * FROM synth.people_full100k INNER JOIN synth.orgs_with_dups ON name = organisation WHERE MOD(people_full100k.rec_id, 20) < 1",1,21.595,
+"SELECT DEDUP * FROM synth.people_full100k INNER JOIN synth.orgs_with_dups ON name = organisation WHERE MOD(orgs_with_dups.rec_id, 20) < 1",1,63.091,
+"SELECT DEDUP * FROM synth.people_full100k INNER JOIN synth.orgs_with_dups ON name = organisation WHERE MOD(orgs_with_dups.rec_id, 20) < 1 AND MOD(people_full100k.rec_id, 20) < 1 ",1,22.459,

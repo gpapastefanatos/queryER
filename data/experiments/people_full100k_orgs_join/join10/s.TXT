@@ -1,0 +1,30 @@
+Blocking time: 2.339
+Meta Blocking time: 0.206
+Comparison execution time: 14.313
+Total Deduplication time: 18.726
+Blocking time: 1.078
+Meta Blocking time: 0.027
+Comparison execution time: 1.928
+Total Deduplication time: 3.229
+Deduplicate join time: 8.186
+Finished query: 1 runs: 1 time: 35.921
+Blocking time: 6.206
+Meta Blocking time: 0.024
+Comparison execution time: 1.81
+Total Deduplication time: 8.478
+Blocking time: 4.003
+Meta Blocking time: 0.125
+Comparison execution time: 33.153
+Total Deduplication time: 37.833
+Deduplicate join time: 60.422
+Finished query: 2 runs: 1 time: 108.874
+Blocking time: 1.235
+Meta Blocking time: 0.117
+Comparison execution time: 9.927
+Total Deduplication time: 29.661
+Blocking time: 0.418
+Meta Blocking time: 0.01
+Comparison execution time: 1.429
+Total Deduplication time: 2.123
+Deduplicate join time: 2.16
+Finished query: 3 runs: 1 time: 34.09

@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "defaultSchema": "DIRTY",
+  "schemas": [
+    {
+      "name": "DIRTY",
+      "type": "custom",
+      "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
+      "operand": {
+        "directory": "dirty",
+        "flavor": "translatable"
+      }
+    }
+  ]
+}

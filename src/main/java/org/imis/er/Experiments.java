@@ -223,7 +223,7 @@ public class Experiments {
 			System.out.println("Finished query: " + index + " runs: " + totalRuns + " time: " + totalRunTime/totalRuns);
 
 			// Get the ground truth for this query
-			calculateGroundTruth(calciteConnection, query, schemaName, csvWriter);
+			//calculateGroundTruth(calciteConnection, query, schemaName, csvWriter);
 			csvWriter.append("\n");
 			csvWriter.flush();
 			index ++;

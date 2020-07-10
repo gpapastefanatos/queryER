@@ -53,24 +53,31 @@ public class DeduplicationExecution<T> {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
 		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab){
-
+		double deduplicateStartTime = System.currentTimeMillis();
+		
 		Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
 		CsvEnumerator<T> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
 		
 		List<T> queryData = enumerable.toList();
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("Query Entity Profiles\t:\t" + queryData.size());
+		
+		double blockingStartTime = System.currentTimeMillis();
 		QueryBlockIndex queryBlockIndex = new QueryBlockIndex();
 		queryBlockIndex.createBlockIndex(queryData, key);
 		queryBlockIndex.buildQueryBlocks();
-		Set<Integer> qIds = queryBlockIndex.getIds();
 		queryData.clear(); // no more need for query data
 		
 		List<AbstractBlock> blocks = queryBlockIndex
 				.joinBlockIndices(tableName);
+		double blockingEndTime = System.currentTimeMillis();
+		System.out.println("Blocking time: " + (blockingEndTime - blockingStartTime)/1000);
+		Set<Integer> qIds = queryBlockIndex.getIds();
+
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("QueryBLocking - Blocks Ready\t:\t" + blocks.size());
-		//Get ids of final entities
+		
+		double metaBlockingStartTime = System.currentTimeMillis();
 		AbstractEfficiencyMethod blockPurging = new ComparisonsBasedBlockPurging();
 		blockPurging.applyProcessing(blocks);
 		//purge based on number of comparisons, the max_number is calculated dynamically
@@ -82,7 +89,10 @@ public class DeduplicationExecution<T> {
 			if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 				DEDUPLICATION_EXEC_LOGGER.debug("B Filtering - Blocks Ready\t:\t" + blocks.size());
 		}
+		double metaBlockingEndTime = System.currentTimeMillis();
+		System.out.println("Meta Blocking time: " + (metaBlockingEndTime - metaBlockingStartTime)/1000);
 
+		//Get ids of final entities
 		List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
 		Set<Integer> totalIds = queryBlockIndex.blocksToEntities(uBlocks);	
 		AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((CsvEnumerator<Object[]>) originalEnumerator, totalIds, key);
@@ -91,12 +101,19 @@ public class DeduplicationExecution<T> {
 		HashMap<Integer, Object[]>  entityMap = createMap(comparisonEnumerable, key);
 		
 		// To find ground truth statistics
-		storeBlocks(uBlocks, tableName);
+		//storeBlocks(uBlocks, tableName);
 		
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("Joined Entity Profiles\t:\t" + entityMap.size());
+		double comparisonStartTime = System.currentTimeMillis();
 		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
 		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(uBlocks, qIds, key, fieldTypes.size(), hashType);
+		double comparisonEndTime = System.currentTimeMillis();
+		System.out.println("Comparison execution time: " + (comparisonEndTime - comparisonStartTime)/1000);
+
+		double deduplicateEndTime = System.currentTimeMillis();
+		System.out.println("Total Deduplication time: " + (deduplicateEndTime - deduplicateStartTime)/1000);
+
 		return entityResolvedTuple;
 	}
 	

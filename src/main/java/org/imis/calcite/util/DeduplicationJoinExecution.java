@@ -461,8 +461,10 @@ public class DeduplicationJoinExecution {
 		      boolean generateNullsOnLeft, boolean generateNullsOnRight,
 		      Predicate2<Object[], Object[]> predicate) {
 		
+		double deduplicateJoinStartTime = System.currentTimeMillis();
 		final Enumerable<Object[]> innerToLookUp = Linq4j.asEnumerable(inner.finalData);
-		
+		System.out.println(outer.finalData.size());
+		System.out.println(inner.finalData.size());
 	    final Lookup<TKey, Object[]> innerLookup =
 	         comparer == null
 	         	? innerToLookUp.toLookup(innerKeySelector)
@@ -597,6 +599,9 @@ public class DeduplicationJoinExecution {
 
             }
         }
+	    double deduplicateJoinEndTime = System.currentTimeMillis();
+		System.out.println("Deduplicate join time: " + (deduplicateJoinEndTime - deduplicateJoinStartTime)/1000);
+
 	    // Test that its all working good by commenting in the following
 //	    HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
 //		for (int child : joinedUFind.getParent().keySet()) {
@@ -636,18 +641,26 @@ public class DeduplicationJoinExecution {
 	
 	private static EntityResolvedTuple deduplicate(List<Object[]> data, Integer key, Integer noOfAttributes,
 			String tableName, CsvEnumerator<Object[]> originalEnumerator) {
+
+		double deduplicateStartTime = System.currentTimeMillis();
 		Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
 
+		double blockingStartTime = System.currentTimeMillis();
 		QueryBlockIndex queryBlockIndex = new QueryBlockIndex();
 		queryBlockIndex.createBlockIndex(data, key);
 		queryBlockIndex.buildQueryBlocks();
-		Set<Integer> qIds = queryBlockIndex.getIds();
 		data.clear(); // no more need for query data
 		
 		List<AbstractBlock> blocks = queryBlockIndex
 				.joinBlockIndices(tableName);
+		double blockingEndTime = System.currentTimeMillis();
+		System.out.println("Blocking time: " + (blockingEndTime - blockingStartTime)/1000);
+
+		Set<Integer> qIds = queryBlockIndex.getIds();
+
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("QueryBLocking - Blocks Ready\t:\t" + blocks.size());
+		double metaBlockingStartTime = System.currentTimeMillis();
 		//Get ids of final entities
 		AbstractEfficiencyMethod blockPurging = new ComparisonsBasedBlockPurging();
 		blockPurging.applyProcessing(blocks);
@@ -660,6 +673,8 @@ public class DeduplicationJoinExecution {
 			if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 				DEDUPLICATION_EXEC_LOGGER.debug("B Filtering - Blocks Ready\t:\t" + blocks.size());
 		}
+		double metaBlockingEndTime = System.currentTimeMillis();
+		System.out.println("Meta Blocking time: " + (metaBlockingEndTime - metaBlockingStartTime)/1000);
 
 		List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
 		Set<Integer> totalIds = queryBlockIndex.blocksToEntities(uBlocks);	
@@ -670,8 +685,16 @@ public class DeduplicationJoinExecution {
 		
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("Joined Entity Profiles\t:\t" + entityMap.size());
+		double comparisonStartTime = System.currentTimeMillis();
+
 		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
+
 		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(uBlocks, qIds, key, noOfAttributes, hashType);
+		double comparisonEndTime = System.currentTimeMillis();
+		System.out.println("Comparison execution time: " + (comparisonEndTime - comparisonStartTime)/1000);
+		double deduplicateEndTime = System.currentTimeMillis();
+		System.out.println("Total Deduplication time: " + (deduplicateEndTime - deduplicateStartTime)/1000);
+
 		return entityResolvedTuple;
 	}
 	
