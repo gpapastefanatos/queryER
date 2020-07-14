@@ -103,8 +103,8 @@ public class Experiments {
 			}
 			// Set key field for each table
 		
-//			String[] keys = {"rec_id", "rec_id", "rec_id", "rec_id"};
-			String[] keys = {"id"};
+			String[] keys = {"rec_id", "rec_id", "rec_id", "rec_id"};
+//			String[] keys = {"id"};
 			for(String key : keys) {
 				if(fieldNames.contains(key)) {
 					table.setKey(fieldNames.indexOf(key));
@@ -249,8 +249,8 @@ public class Experiments {
 	private static void calculateGroundTruth(String calciteConnection, String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
 		// Trick to get table name from a single sp query
 		String tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1  , query.indexOf("WHERE"));
-//		String percent = query.substring(query.indexOf("rec_id, ") + ("rec_id, ").length(), query.indexOf(")"));
-		String percent = query.substring(query.indexOf("id, ") + ("id, ").length(), query.indexOf(")"));
+		String percent = query.substring(query.indexOf("rec_id, ") + ("rec_id, ").length(), query.indexOf(")"));
+//		String percent = query.substring(query.indexOf("id, ") + ("id, ").length(), query.indexOf(")"));
 
 		tableName = tableName.trim();
 		// Construct ground truth query

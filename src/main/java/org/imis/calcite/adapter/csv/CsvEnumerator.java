@@ -164,7 +164,8 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 
 	public static CSVReader openCsv(Source source) throws IOException {
 		final Reader fileReader = source.reader();
-		return new CSVReader(fileReader, '>');
+//		return new CSVReader(fileReader, '>');
+		return new CSVReader(fileReader, ',');
 	}
 
 	@Override

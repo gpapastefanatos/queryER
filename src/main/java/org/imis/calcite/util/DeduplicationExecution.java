@@ -112,17 +112,20 @@ public class DeduplicationExecution<T> {
 
 		EfficientEdgePruning eEP = new EfficientEdgePruning();
 		eEP.applyProcessing(blocks);
-		
+
+		double edgePruningEndTime = System.currentTimeMillis();
+
+		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((edgePruningEndTime - edgePruningStartTime)/1000) + ",");
+		}
+
 		try {
 			getBlockDistribution(blocks, tableName);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		double edgePruningEndTime = System.currentTimeMillis();
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((edgePruningEndTime - edgePruningStartTime)/1000) + ",");
-		}
+
 
 		//Get ids of final entities
 		//List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
