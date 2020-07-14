@@ -10,15 +10,6 @@
         "directory": "dirty",
         "flavor": "translatable"
       }
-    },
-    {
-      "name": "ground_truth",
-      "type": "custom",
-      "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
-      "operand": {
-        "directory": "dirty/ground_truth",
-        "flavor": "translatable"
-      }
     }
   ]
 }

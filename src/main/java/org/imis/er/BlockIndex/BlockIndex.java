@@ -40,7 +40,7 @@ public class BlockIndex {
 	protected Map<String, Set<Integer>> indexEntities(int sourceId, List<EntityProfile> profiles) {
 		invertedIndex = new HashMap<String, Set<Integer>>();
 		HashSet<String> stopwords = (HashSet<String>) SerializationUtilities
-				.loadSerializedObject("C://Works/ATHENA/Projects/ER/Code/DBLP-SCHOLAR/stopwords_SER");
+				.loadSerializedObject(getClass().getClassLoader().getResource("stopwords/stopwords_SER").getPath());
 		for (EntityProfile profile : profiles) {
 			for (Attribute attribute : profile.getAttributes()) {
 				if (attribute.getValue() == null)
