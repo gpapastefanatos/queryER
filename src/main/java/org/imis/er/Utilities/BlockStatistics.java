@@ -101,8 +101,8 @@ public class BlockStatistics implements Constants {
         return false;
     }
 
-    private void getBilateralBlockingCardinality() {
-        System.out.println("\n\nGetting bilateral BC...");
+    private void getBilateralBlockingCardinality() throws IOException {
+        //System.out.println("\n\nGetting bilateral BC...");
 
         double d1BlockAssignments = 0;
         double d2BlockAssignments = 0;
@@ -116,6 +116,8 @@ public class BlockStatistics implements Constants {
         System.out.println("iBC_1\t:\t" + d1BlockAssignments / noOfD1Entities);
         System.out.println("iBC_2\t:\t" + d2BlockAssignments / noOfD2Entities);
         System.out.println("oBC\t:\t" + ((d1BlockAssignments + d2BlockAssignments) / (noOfD1Entities + noOfD2Entities)));
+        
+        
     }
 
     private void getBlockingCardinality() throws IOException {
@@ -128,7 +130,7 @@ public class BlockStatistics implements Constants {
         }*/
     }
     
-    private void getDecomposedBlockingCardinality () {
+    private void getDecomposedBlockingCardinality () throws IOException {
         DecomposedBlock deBlock = (DecomposedBlock) blocks.get(0);
         if (deBlock.isCleanCleanER()) {
             double d1BlockAssignments = 0;
@@ -143,6 +145,11 @@ public class BlockStatistics implements Constants {
             System.out.println("iBC_1\t:\t" + d1BlockAssignments / noOfD1Entities);
             System.out.println("iBC_2\t:\t" + d2BlockAssignments / noOfD2Entities);
             System.out.println("oBC\t:\t" + ((d1BlockAssignments + d2BlockAssignments) / (noOfD1Entities + noOfD2Entities)));
+            csvWriter.append(d1BlockAssignments / blocks.size() + "-" + d2BlockAssignments / blocks.size() +
+            		Double.toString(d1BlockAssignments / blocks.size()) + "," +
+    				Double.toString(d1BlockAssignments / noOfD1Entities) + "," +
+            		Double.toString(d1BlockAssignments / noOfD2Entities) + "," +
+					Double.toString(((d1BlockAssignments + d2BlockAssignments) / (noOfD1Entities + noOfD2Entities))) + ","); 
         } else {
             double blockAssignments = 0;
             for (AbstractBlock block : blocks) {
@@ -172,7 +179,7 @@ public class BlockStatistics implements Constants {
         return aggregateCardinality;
     }
 
-    private void getDecomposedBlocksEntities(double totalComparisons) {
+    private void getDecomposedBlocksEntities(double totalComparisons) throws IOException {
         DecomposedBlock deBlock = (DecomposedBlock) blocks.get(0);
         final Set<Integer> entitiesD1 = new HashSet<Integer>((int)totalComparisons);
         if (deBlock.isCleanCleanER()) {
@@ -187,7 +194,8 @@ public class BlockStatistics implements Constants {
             }
             noOfD1Entities = entitiesD1.size();
             noOfD2Entities = entitiesD2.size();
-            System.out.println("Entities in blocks\t:\t" + (noOfD1Entities+noOfD2Entities));
+            //System.out.println("Entities in blocks\t:\t" + (noOfD1Entities+noOfD2Entities));
+            csvWriter.append(String.valueOf(noOfD1Entities+noOfD2Entities));
         } else {
             for (AbstractBlock block : blocks) {
                 ComparisonIterator iterator = block.getComparisonIterator();
@@ -198,7 +206,9 @@ public class BlockStatistics implements Constants {
                 }
             }
             noOfD1Entities = entitiesD1.size();
-            System.out.println("Entities in blocks\t:\t" + noOfD1Entities);
+            //System.out.println("Entities in blocks\t:\t" + noOfD1Entities);
+            csvWriter.append(String.valueOf(noOfD1Entities+noOfD2Entities) + ",");
+
         }
     }
     
@@ -206,7 +216,7 @@ public class BlockStatistics implements Constants {
         return detectedDuplicates;
     }
     
-    private void getDuplicatesOfDecomposedBlocks(double totalComparisons) {
+    private void getDuplicatesOfDecomposedBlocks(double totalComparisons) throws IOException {
         System.out.println("\n\nGetting duplicates...");
 
         for (AbstractBlock block : blocks) {
@@ -219,9 +229,10 @@ public class BlockStatistics implements Constants {
         detectedDuplicates = abstractDP.getNoOfDuplicates();
         pc = ((double)abstractDP.getNoOfDuplicates()) / abstractDP.getExistingDuplicates();
         pq = abstractDP.getNoOfDuplicates() / totalComparisons;
-        System.out.println("Detected duplicates\t:\t" + abstractDP.getNoOfDuplicates());
-        System.out.println("PC\t:\t" + pc);
-        System.out.println("PQ\t:\t" + pq);
+//        System.out.println("Detected duplicates\t:\t" + abstractDP.getNoOfDuplicates());
+//        System.out.println("PC\t:\t" + pc);
+//        System.out.println("PQ\t:\t" + pq);
+        csvWriter.append(abstractDP.getNoOfDuplicates() + "," + pc + "," + pq + ",");
         
     }
     

@@ -32,15 +32,15 @@ public class BlockIndex {
 	}
 
 	public void buildQueryBlocks() {
-		indexEntities(0, this.entityProfiles);
+		this.invertedIndex = indexEntities(0, this.entityProfiles);
 	}
 
 
 	@SuppressWarnings("unchecked")
-	protected void indexEntities(int sourceId, List<EntityProfile> profiles) {
+	protected Map<String, Set<Integer>> indexEntities(int sourceId, List<EntityProfile> profiles) {
+		invertedIndex = new HashMap<String, Set<Integer>>();
 		HashSet<String> stopwords = (HashSet<String>) SerializationUtilities
-				.loadSerializedObject("src/main/resources/stopwords/stopwords_SER");
-
+				.loadSerializedObject("C://Works/ATHENA/Projects/ER/Code/DBLP-SCHOLAR/stopwords_SER");
 		for (EntityProfile profile : profiles) {
 			for (Attribute attribute : profile.getAttributes()) {
 				if (attribute.getValue() == null)
@@ -51,18 +51,18 @@ public class BlockIndex {
 					if (2 < token.trim().length()) {
 						if (stopwords.contains(token.toLowerCase()))
 							continue;
-						Set<Integer> termEntities = this.invertedIndex.computeIfAbsent(token.trim(),
+						Set<Integer> termEntities = invertedIndex.computeIfAbsent(token.trim(),
 								x -> new HashSet<Integer>());
 
 						termEntities.add(Integer.parseInt(profile.getEntityUrl()));
+
 					}
 				}
 			}
 
 		}
-		//this.invertedIndex.forEach((key, value) -> System.out.println(key + ":" + value));
-
 		//System.out.println("Query Block Index size: " + invertedIndex.size());
+		return invertedIndex;
 	}
 
 	public void storeBlockIndex(String path, String tableName) {

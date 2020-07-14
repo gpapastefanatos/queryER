@@ -32,10 +32,12 @@ import org.apache.calcite.tools.ValidationException;
 import org.apache.commons.io.FileUtils;
 import org.imis.calcite.adapter.csv.CsvEnumerator;
 import org.imis.calcite.adapter.csv.CsvTranslatableTable;
+import org.imis.calcite.util.DeduplicationExecution;
 import org.imis.er.BlockIndex.BaseBlockIndex;
 import org.imis.er.DataStructures.UnilateralBlock;
 import org.imis.er.Utilities.SerializationUtilities;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.imis.er.Utilities.BlockStatistics;
 
 import org.imis.er.EfficiencyLayer.ComparisonRefinement.AbstractDuplicatePropagation;
@@ -68,7 +70,7 @@ public class Experiments {
 	private static String queryFilePath = "";
 	private static Integer totalRuns = 1;
 	private static String schemaName = "";
-	private static String calciteConnection = "";
+	private static String calciteConnectionString = "";
 
 	public static void main(String[] args)
 			throws  ClassNotFoundException, SQLException, ValidationException, RelConversionException, SqlParseException, IOException
@@ -79,7 +81,7 @@ public class Experiments {
 		Properties info = new Properties();
 		info.setProperty("lex", "JAVA");
 		Connection connection =
-				DriverManager.getConnection(calciteConnection, info);
+				DriverManager.getConnection(calciteConnectionString, info);
 		CalciteConnection calciteConnection =
 				connection.unwrap(CalciteConnection.class);
 
@@ -100,7 +102,9 @@ public class Experiments {
 
 			}
 			// Set key field for each table
-			String[] keys = {"rec_id", "rec_id", "rec_id"};
+		
+			String[] keys = {"rec_id", "rec_id", "rec_id", "rec_id"};
+			//String[] keys = {"id"};
 			for(String key : keys) {
 				if(fieldNames.contains(key)) {
 					table.setKey(fieldNames.indexOf(key));
@@ -199,8 +203,13 @@ public class Experiments {
         else FileUtils.forceMkdir(blocksDir); //create directory
         File queryFile = new File("./data/queryResults/queryResults.csv");
         FileWriter csvWriter = new FileWriter(queryFile);
-        csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ\n");
-  
+        //csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ\n");
+        csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,entities_in_blocks,detected_duplicates,PC,PQ\n");
+    	final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
+
+        if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
+			DEDUPLICATION_EXEC_LOGGER.debug("entities,blocking_time,query_blocks,purge_blocks,purge_time,filter_blocks,filter_time,"
+					+ "ep_time,matches_found,total_comparisons,comparison_time,total_dedup_time\n");
 		for(String query : queries) {
 			// Create results directory
 
@@ -208,10 +217,11 @@ public class Experiments {
             //FileWriter csvWriter = new FileWriter(queryFile);
             //csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ\n");
             double totalRunTime = 0.0;
+            ResultSet queryResults = null;
 			for(int i = 0; i < totalRuns; i++) {
 				Double runTime = 0.0;
 				double queryStartTime = System.currentTimeMillis();
-				ResultSet queryResults = runQuery(calciteConnection, query);
+				queryResults = runQuery(calciteConnection, query);
 				//printQueryContents(queryResults);
 				//exportQueryContent(queryResults, "./data/universities.csv");
 				double queryEndTime = System.currentTimeMillis();
@@ -223,7 +233,7 @@ public class Experiments {
 			System.out.println("Finished query: " + index + " runs: " + totalRuns + " time: " + totalRunTime/totalRuns);
 
 			// Get the ground truth for this query
-			//calculateGroundTruth(calciteConnection, query, schemaName, csvWriter);
+			calculateGroundTruth(calciteConnectionString, query, schemaName, csvWriter);
 			csvWriter.append("\n");
 			csvWriter.flush();
 			index ++;
@@ -236,26 +246,50 @@ public class Experiments {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static void calculateGroundTruth(CalciteConnection calciteConnection, String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
+	private static void calculateGroundTruth(String calciteConnection, String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
 		// Trick to get table name from a single sp query
-		String tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1  , query.indexOf("WHERE")); 
+		String tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1  , query.indexOf("WHERE"));
+		String percent = query.substring(query.indexOf("id, ") + ("id, ").length(), query.indexOf(")"));
+
 		tableName = tableName.trim();
 		// Construct ground truth query
-		String groundTruthQuery = "SELECT id_d, id_s FROM ground_truth.ground_truth_" + tableName;
-		ResultSet queryResults = runQuery(calciteConnection, groundTruthQuery);
+		
+		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
+		File blocksDir = new File("./data/ground_truth/" + tableName + percent);
+		if(blocksDir.exists()) {
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/ground_truth/" + tableName + percent);
+		}
+		else {
+			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject("./data/qIds");
+			for(Integer qId : qIds) {
+				Properties info = new Properties();
+				info.setProperty("lex", "JAVA");
+				Connection qConnection =
+						DriverManager.getConnection(calciteConnection, info);
+				CalciteConnection qCalciteConnection =
+						qConnection.unwrap(CalciteConnection.class);
+				String groundTruthQuery = "SELECT id_d, id_s FROM ground_truth.ground_truth_" + tableName +
+						" WHERE (id_s = " + qId + " OR id_d= " + qId + ")";
+				ResultSet gtQueryResults = runQuery(qCalciteConnection, groundTruthQuery);
+				qCalciteConnection.close();
+				while (gtQueryResults.next()) {
+					Integer id_d = Integer.parseInt(gtQueryResults.getString("id_d"));
+					Integer id_s = Integer.parseInt(gtQueryResults.getString("id_s"));
+					IdDuplicates idd = new IdDuplicates(id_d, id_s);
+					groundDups.add(idd);
+				}		
+			}
+			SerializationUtilities.storeSerializedObject(groundDups, "./data/ground_truth/" + tableName + percent);
+		}
+		
+
+		final AbstractDuplicatePropagation duplicatePropagation = new UnilateralDuplicatePropagation(groundDups);
+		System.out.println("Existing Duplicates\t:\t" + duplicatePropagation.getDuplicates().size());
+
+		duplicatePropagation.resetDuplicates();
 		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject("./data/blocks/" + tableName);
 		//remove file now
         FileUtils.forceDelete(new File("./data/blocks/" + tableName)); //delete directory
-
-		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
-		while (queryResults.next()) {
-			Integer id_d = Integer.parseInt(queryResults.getString("id_d"));
-			Integer id_s = Integer.parseInt(queryResults.getString("id_s"));
-			IdDuplicates idd = new IdDuplicates(id_d, id_s);
-			groundDups.add(idd);
-		}
-		final AbstractDuplicatePropagation duplicatePropagation = new UnilateralDuplicatePropagation(groundDups);
-		duplicatePropagation.resetDuplicates();
 		BlockStatistics bStats = new BlockStatistics(blocks, duplicatePropagation, csvWriter);
 		bStats.applyProcessing();		
 	}
@@ -287,7 +321,7 @@ public class Experiments {
 			queryFilePath = properties.getProperty(QUERY_FILE_PROPERTY);
             totalRuns = Integer.parseInt(properties.getProperty(QUERY_TOTAL_RUNS));
             schemaName = properties.getProperty(SCHEMA_NAME);
-            calciteConnection = properties.getProperty(CALCITE_CONNECTION);
+            calciteConnectionString = properties.getProperty(CALCITE_CONNECTION);
 		}
 	}
 	

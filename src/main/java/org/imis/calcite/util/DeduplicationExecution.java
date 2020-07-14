@@ -1,6 +1,8 @@
 package org.imis.calcite.util;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -14,11 +16,13 @@ import org.imis.calcite.adapter.csv.CsvEnumerator;
 import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.er.BlockIndex.QueryBlockIndex;
 import org.imis.er.DataStructures.AbstractBlock;
+import org.imis.er.DataStructures.DecomposedBlock;
 import org.imis.er.DataStructures.EntityResolvedTuple;
 import org.imis.er.DataStructures.UnilateralBlock;
 import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
 import org.imis.er.MetaBlocking.BlockFiltering;
 import org.imis.er.MetaBlocking.ComparisonsBasedBlockPurging;
+import org.imis.er.MetaBlocking.EfficientEdgePruning;
 import org.imis.er.Utilities.ExecuteBlockComparisons;
 import org.imis.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
@@ -49,19 +53,20 @@ public class DeduplicationExecution<T> {
 	 *  @param ab Used for the csv enumerator, nothing else
 	 *  
 	 *  @return EntityResolvedTuple contains the UnionFind + HashMap of the table to be used in merging/join
+	 * @throws IOException 
 	 */		
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
-		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab){
+		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
 		double deduplicateStartTime = System.currentTimeMillis();
 		
 		Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
 		CsvEnumerator<T> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
-		
+
 		List<T> queryData = enumerable.toList();
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("Query Entity Profiles\t:\t" + queryData.size());
-		
+			DEDUPLICATION_EXEC_LOGGER.debug(Integer.toString(queryData.size()) + ",");
+			
 		double blockingStartTime = System.currentTimeMillis();
 		QueryBlockIndex queryBlockIndex = new QueryBlockIndex();
 		queryBlockIndex.createBlockIndex(queryData, key);
@@ -71,56 +76,106 @@ public class DeduplicationExecution<T> {
 		List<AbstractBlock> blocks = queryBlockIndex
 				.joinBlockIndices(tableName);
 		double blockingEndTime = System.currentTimeMillis();
-		System.out.println("Blocking time: " + (blockingEndTime - blockingStartTime)/1000);
-		Set<Integer> qIds = queryBlockIndex.getIds();
-
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("QueryBLocking - Blocks Ready\t:\t" + blocks.size());
+			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockingEndTime - blockingStartTime)/1000) + ",");
+
+		Set<Integer> qIds = queryBlockIndex.getIds();
+		storeIds(qIds);
+		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
+			DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
 		
-		double metaBlockingStartTime = System.currentTimeMillis();
+		double blockPurgingStartTime = System.currentTimeMillis();
 		AbstractEfficiencyMethod blockPurging = new ComparisonsBasedBlockPurging();
 		blockPurging.applyProcessing(blocks);
-		//purge based on number of comparisons, the max_number is calculated dynamically
+		double blockPurgingEndTime = System.currentTimeMillis();
+
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("B Purging - Blocks Ready\t:\t" + blocks.size());
-		if (blocks.size() > 10) {
-			BlockFiltering bFiltering = new BlockFiltering(0.30);
-			bFiltering.applyProcessing(blocks);
-			if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-				DEDUPLICATION_EXEC_LOGGER.debug("B Filtering - Blocks Ready\t:\t" + blocks.size());
+			DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
+		//purge based on number of comparisons, the max_number is calculated dynamically
+		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockPurgingEndTime - blockPurgingStartTime)/1000) + ",");
 		}
-		double metaBlockingEndTime = System.currentTimeMillis();
-		System.out.println("Meta Blocking time: " + (metaBlockingEndTime - metaBlockingStartTime)/1000);
+
+		if (blocks.size() > 10) {
+			double blockFilteringStartTime = System.currentTimeMillis();
+			BlockFiltering bFiltering = new BlockFiltering(0.35);
+			bFiltering.applyProcessing(blocks);
+			double blockFilteringEndTime = System.currentTimeMillis();
+
+			if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+				DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
+				DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockFilteringEndTime - blockFilteringStartTime)/1000) + ",");
+			}
+			
+		}
+		double edgePruningStartTime = System.currentTimeMillis();
+
+		EfficientEdgePruning eEP = new EfficientEdgePruning();
+		eEP.applyProcessing(blocks);
+		
+		try {
+			getBlockDistribution(blocks, tableName);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		double edgePruningEndTime = System.currentTimeMillis();
+		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((edgePruningEndTime - edgePruningStartTime)/1000) + ",");
+		}
 
 		//Get ids of final entities
-		List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
-		Set<Integer> totalIds = queryBlockIndex.blocksToEntities(uBlocks);	
+		//List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
+		List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
+		Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(dBlocks);	
 		AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((CsvEnumerator<Object[]>) originalEnumerator, totalIds, key);
 		//TIntObjectHashMap<Object[]>  entityMap = createMapTrove(comparisonEnumerable, key);
 		//Int2ObjectOpenHashMap<Object[]> entityMap = createMapFast(comparisonEnumerable, key);
 		HashMap<Integer, Object[]>  entityMap = createMap(comparisonEnumerable, key);
 		
 		// To find ground truth statistics
-		//storeBlocks(uBlocks, tableName);
+		storeBlocks(dBlocks, tableName);
 		
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("Joined Entity Profiles\t:\t" + entityMap.size());
+
 		double comparisonStartTime = System.currentTimeMillis();
 		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
-		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(uBlocks, qIds, key, fieldTypes.size(), hashType);
+		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(dBlocks, qIds, key, fieldTypes.size(), hashType);
 		double comparisonEndTime = System.currentTimeMillis();
-		System.out.println("Comparison execution time: " + (comparisonEndTime - comparisonStartTime)/1000);
-
 		double deduplicateEndTime = System.currentTimeMillis();
-		System.out.println("Total Deduplication time: " + (deduplicateEndTime - deduplicateStartTime)/1000);
+		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
+			DEDUPLICATION_EXEC_LOGGER.debug(((comparisonEndTime - comparisonStartTime)/1000 + "," + (deduplicateEndTime - deduplicateStartTime)/1000));
 
+	
 		return entityResolvedTuple;
 	}
 	
-	private static void storeBlocks(List<UnilateralBlock> uBlocks, String tableName) {
+	private static void getBlockDistribution(List<AbstractBlock> blocks, String tableName) throws IOException {
+		// TODO Auto-generated method stub
+		File csvFile = new File("./data/blockDistr_" + tableName + ".csv");
+		double storeStartTime = System.currentTimeMillis();
+		FileWriter csvWriter = new FileWriter(csvFile);
+		csvWriter.append("size\n");
+		for(AbstractBlock block : blocks) {
+			csvWriter.append(Double.toString(block.getNoOfComparisons())+ "\n");
+		}
+		csvWriter.flush();
+		csvWriter.close();
+		double storeEndTime = System.currentTimeMillis();
+		System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime)/1000);
+		
+	}
+
+	private static void storeIds(Set<Integer> qIds) {
+		double storeStartTime = System.currentTimeMillis();
+		SerializationUtilities.storeSerializedObject(qIds, "./data/qIds");
+		double storeEndTime = System.currentTimeMillis();
+		System.out.println("Storing qIds time: " + (storeEndTime - storeStartTime)/1000);
+	}
+
+	private static void storeBlocks(List<DecomposedBlock> dBlocks, String tableName) {
 		if(new File("./data/blocks/" + tableName).exists()) return;
 		double storeStartTime = System.currentTimeMillis();
-		SerializationUtilities.storeSerializedObject(uBlocks, "./data/blocks/" + tableName);
+		SerializationUtilities.storeSerializedObject(dBlocks, "./data/blocks/" + tableName);
 		double storeEndTime = System.currentTimeMillis();
 		System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime)/1000);
 	}
@@ -135,8 +190,8 @@ public class DeduplicationExecution<T> {
 	public static<T> AbstractEnumerable<T> mergeEntities(EntityResolvedTuple entityResolvedTuple){
 //		if(entityResolvedTuple.uFind != null)
 //			entityResolvedTuple.sortEntities();
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("Final Size: " + entityResolvedTuple.finalData.size());
+//		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
+//			DEDUPLICATION_EXEC_LOGGER.debug("Final Size: " + entityResolvedTuple.finalData.size());
 		return entityResolvedTuple;
 
 	}

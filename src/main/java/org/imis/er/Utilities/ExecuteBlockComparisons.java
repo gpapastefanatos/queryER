@@ -107,8 +107,8 @@ public class ExecuteBlockComparisons<T> {
 
 		
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug("Matches Found " + matches.size());
-			DEDUPLICATION_EXEC_LOGGER.debug("Total Comparisons " + comparisons);
+			DEDUPLICATION_EXEC_LOGGER.debug(matches.size() + ",");
+			DEDUPLICATION_EXEC_LOGGER.debug(comparisons + ",");
 		}
 		EntityResolvedTuple eRT = new EntityResolvedTuple(newData, uFind);		
 		eRT.getAll();

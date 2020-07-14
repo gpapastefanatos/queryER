@@ -57,15 +57,10 @@ public class EntityGrouping {
 	}
 
 
-	public static List<Object[]> sortSimilar(UnionFind uFind, HashMap<Integer, Object[]> newData) {
+	public static List<Object[]> sortSimilar(HashMap<Integer, Set<Integer>> revUF, HashMap<Integer, Object[]> newData) {
 		// TODO Auto-generated method stub
-		HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
 		List<Object[]> finalData = new ArrayList<>();
-		for (int child : uFind.getParent().keySet()) {
-			//System.out.println(uFind.getParent().get(child));
-			revUF.computeIfAbsent(uFind.getParent().get(child), x -> new HashSet<>()).add(child);
-		}
-
+		
 		for (int id : revUF.keySet()) {
 			for (int idInner : revUF.get(id)) {
 				finalData.add(newData.get(idInner));

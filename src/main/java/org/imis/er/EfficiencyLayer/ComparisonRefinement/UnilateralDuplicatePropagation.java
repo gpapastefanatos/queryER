@@ -36,7 +36,6 @@ public class UnilateralDuplicatePropagation extends AbstractDuplicatePropagation
                 detectedDuplicates.contains(duplicatePair2)) {
             return true;
         }
-                
         if (duplicates.contains(duplicatePair1) || 
                 duplicates.contains(duplicatePair2)) {
             if (comparison.getEntityId1() < comparison.getEntityId2()) {

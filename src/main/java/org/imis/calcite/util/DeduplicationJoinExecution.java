@@ -20,6 +20,7 @@ import org.imis.calcite.adapter.csv.CsvEnumerator;
 import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.er.BlockIndex.QueryBlockIndex;
 import org.imis.er.DataStructures.AbstractBlock;
+import org.imis.er.DataStructures.DecomposedBlock;
 import org.imis.er.DataStructures.EntityResolvedTuple;
 import org.imis.er.DataStructures.UnilateralBlock;
 import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
@@ -668,7 +669,7 @@ public class DeduplicationJoinExecution {
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("B Purging - Blocks Ready\t:\t" + blocks.size());
 		if (blocks.size() > 10) {
-			BlockFiltering bFiltering = new BlockFiltering(0.30);
+			BlockFiltering bFiltering = new BlockFiltering(0.60);
 			bFiltering.applyProcessing(blocks);
 			if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 				DEDUPLICATION_EXEC_LOGGER.debug("B Filtering - Blocks Ready\t:\t" + blocks.size());
@@ -676,8 +677,8 @@ public class DeduplicationJoinExecution {
 		double metaBlockingEndTime = System.currentTimeMillis();
 		System.out.println("Meta Blocking time: " + (metaBlockingEndTime - metaBlockingStartTime)/1000);
 
-		List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
-		Set<Integer> totalIds = queryBlockIndex.blocksToEntities(uBlocks);	
+		List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
+		Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(dBlocks);	
 		AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable(originalEnumerator, totalIds, key);
 		//TIntObjectHashMap<Object[]>  entityMap = createMapTrove(comparisonEnumerable, key);
 		//Int2ObjectOpenHashMap<Object[]> entityMap = createMapFast(comparisonEnumerable, key);
@@ -689,7 +690,7 @@ public class DeduplicationJoinExecution {
 
 		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
 
-		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(uBlocks, qIds, key, noOfAttributes, hashType);
+		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(dBlocks, qIds, key, noOfAttributes, hashType);
 		double comparisonEndTime = System.currentTimeMillis();
 		System.out.println("Comparison execution time: " + (comparisonEndTime - comparisonStartTime)/1000);
 		double deduplicateEndTime = System.currentTimeMillis();

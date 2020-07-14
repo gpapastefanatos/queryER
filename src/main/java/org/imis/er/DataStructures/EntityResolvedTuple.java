@@ -91,14 +91,14 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	@SuppressWarnings("unchecked")
 	public void sortEntities() {
 		// TODO Auto-generated method stub
-		this.finalData = (List<T>) EntityGrouping.sortSimilar(this.uFind, this.data);	
+		this.finalData = (List<T>) EntityGrouping.sortSimilar(this.revUF, this.data);	
 
 	}
 	
 	@SuppressWarnings("unchecked")
 	public void groupEntities() {
 		// TODO Auto-generated method stub
-		this.finalData = (List<T>) EntityGrouping.sortSimilar(this.uFind, this.data);	
+		this.finalData = (List<T>) EntityGrouping.sortSimilar(this.revUF, this.data);	
 
 	}
 	
