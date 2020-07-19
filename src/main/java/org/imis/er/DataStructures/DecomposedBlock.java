@@ -1,10 +1,10 @@
 package org.imis.er.DataStructures;
 
 
-public class DecomposedBlock extends AbstractBlock {
-	/**
-	 *
-	 */
+import java.io.Serializable;
+
+public class DecomposedBlock extends AbstractBlock implements Serializable {
+
 	private static final long serialVersionUID = 7639907495476036743L;
 
 	// A type of block that comprises blocks of minimum size in the form of 2

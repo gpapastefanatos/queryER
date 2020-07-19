@@ -11,7 +11,6 @@ public class Comparison implements Serializable {
 	private final int entityId1;
 	private final int entityId2;
 	private double utilityMeasure;
-	private boolean hasQuery;
 
 	public Comparison (boolean ccER, int id1, int id2) {
 		cleanCleanER = ccER;
@@ -20,7 +19,23 @@ public class Comparison implements Serializable {
 		utilityMeasure = -1;
 	}
 
-	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final Comparison other = (Comparison) obj;
+		if (this.entityId1 != other.getEntityId1()) {
+			return false;
+		}
+		if (this.entityId2 != other.getEntityId2()) {
+			return false;
+		}
+		return true;
+	}
 
 	public int getEntityId1() {
 		return entityId1;
@@ -34,36 +49,13 @@ public class Comparison implements Serializable {
 		return utilityMeasure;
 	}
 
-	
-	
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + entityId1;
-		result = prime * result + entityId2;
-		return result;
+		int hash = 7;
+		hash = 61 * hash + this.entityId1;
+		hash = 61 * hash + this.entityId2;
+		return hash;
 	}
-
-
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Comparison other = (Comparison) obj;
-		if (entityId1 != other.entityId1)
-			return false;
-		if (entityId2 != other.entityId2)
-			return false;
-		return true;
-	}
-
-
 
 	public boolean isCleanCleanER() {
 		return cleanCleanER;
@@ -71,17 +63,5 @@ public class Comparison implements Serializable {
 
 	public void setUtilityMeasure(double utilityMeasure) {
 		this.utilityMeasure = utilityMeasure;
-	}
-
-
-
-	public boolean hasQuery() {
-		return this.hasQuery;
-	}
-
-
-
-	public void setHasQuery(boolean hasQuery) {
-		this.hasQuery = hasQuery;
 	}
 }

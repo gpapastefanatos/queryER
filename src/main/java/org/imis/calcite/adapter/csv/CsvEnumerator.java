@@ -18,6 +18,7 @@ package org.imis.calcite.adapter.csv;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -99,8 +100,20 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	public static Double estimateRowCount(Source source,  List<CsvFieldType> fieldTypes) {
 		try{
 			Long sizeBytes = new File(source.toString()).length();
-			//if avg 16 bytes per variable
-			int rowSize = fieldTypes.size() * 16;
+//			RandomAccessFile file = new RandomAccessFile(source.toString(), "r");
+//			int bytes =0;
+//			int counter=0;
+//			String str;
+//			while ((str = file.readLine()) != null) {
+//				bytes = bytes+ str.trim().getBytes().length;
+//				counter++;
+//				if(counter>10) break;
+//			}
+//			file.close();
+//			double avRowSize = (bytes*1.0)/counter;
+//			System.err.println(avRowSize);
+//			if avg 16 bytes per variable
+			int rowSize = fieldTypes.size() * 23;
 			return (double) (sizeBytes/rowSize);
 
 		}
@@ -165,6 +178,7 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	public static CSVReader openCsv(Source source) throws IOException {
 		final Reader fileReader = source.reader();
 		return new CSVReader(fileReader, '>');
+//		return new CSVReader(fileReader, ',');
 	}
 
 	@Override

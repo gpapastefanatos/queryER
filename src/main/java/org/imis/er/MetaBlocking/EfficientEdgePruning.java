@@ -6,10 +6,7 @@ import java.util.List;
 import org.imis.er.DataStructures.AbstractBlock;
 import org.imis.er.Utilities.MetaBlockingConfiguration.WeightingScheme;
 
-/**
- *
- * @author gap2
- */
+
 public class EfficientEdgePruning extends EdgePruning {
 
     public EfficientEdgePruning() {

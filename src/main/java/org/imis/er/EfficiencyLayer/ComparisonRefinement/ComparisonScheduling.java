@@ -9,10 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- *
- * @author gap2
- */
 
 public class ComparisonScheduling extends AbstractEfficiencyMethod {
 

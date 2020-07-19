@@ -16,7 +16,7 @@
       "type": "custom",
       "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {
-        "directory": "projects/ground_truth",
+        "directory": "ground_truth",
         "flavor": "translatable"
       }
     }
