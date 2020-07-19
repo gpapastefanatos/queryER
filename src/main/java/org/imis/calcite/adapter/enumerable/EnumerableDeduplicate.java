@@ -83,6 +83,7 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 		// TODO Auto-generated method stub
 		final RelOptCluster cluster = input.getCluster();
 		final RelMetadataQuery mq = cluster.getMetadataQuery();
+//		System.err.println("Row count blocks  "+mq.getRowCount(input));
 		final RelTraitSet traitSet =
 				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
 		return new EnumerableDeduplicate(cluster, traitSet, input, blockIndex, table, key, source, fieldTypes);

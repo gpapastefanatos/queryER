@@ -16,10 +16,7 @@
  */
 package org.imis.calcite.adapter.csv;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.google.common.collect.ImmutableList;
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelDistribution;
@@ -34,126 +31,135 @@ import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Source;
 import org.imis.er.KDebug;
 
-import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for table that reads CSV files.
  */
 public abstract class CsvTable extends AbstractTable {
-	protected final Source source;
-	protected final RelProtoDataType protoRowType;
-	protected List<CsvFieldType> fieldTypes;
-	protected RelDataType fullTypes;
-	protected int tableKey;
-	protected String tableName;
-	protected Double rows;
-	/** Creates a CsvTable. */
-	CsvTable(Source source, String name, RelProtoDataType protoRowType) {
-		this.source = source;
-		this.tableName = name;
-		this.protoRowType = protoRowType;
+    protected final Source source;
+    protected final RelProtoDataType protoRowType;
+    protected List<CsvFieldType> fieldTypes;
+    protected RelDataType fullTypes;
+    protected int tableKey;
+    protected String tableName;
+    protected Double rows;
 
-	}
+    /**
+     * Creates a CsvTable.
+     */
+    CsvTable(Source source, String name, RelProtoDataType protoRowType) {
+        this.source = source;
+        this.tableName = name;
+        this.protoRowType = protoRowType;
 
-	@Override
-	public RelDataType getRowType(RelDataTypeFactory typeFactory) {
-		if (protoRowType != null) {
-			return protoRowType.apply(typeFactory);
-		}
-		if (fieldTypes == null) {
-			fieldTypes = new ArrayList<>();
-			fullTypes =	CsvEnumerator.deduceRowType((JavaTypeFactory) typeFactory, source,
-					fieldTypes);
-			return fullTypes;
-		} else {
-			fullTypes = CsvEnumerator.deduceRowType((JavaTypeFactory) typeFactory, source,
-					null);
-			return fullTypes;
-		}
-	}
+    }
 
-	public String getName() {
-		return this.tableName;
-	}
-	public void setKey(int keyFieldIndex) {
-		this.tableKey = keyFieldIndex;
-	}
+    // For debugging
+    public static String getCallerClassName() {
+        StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+        String callerClassName = null;
+        for (int i = 1; i < stElements.length; i++) {
+            StackTraceElement ste = stElements[i];
+            if (!ste.getClassName().equals(KDebug.class.getName()) && ste.getClassName().indexOf("java.lang.Thread") != 0) {
+                if (callerClassName == null) {
+                    callerClassName = ste.getClassName();
+                } else if (!callerClassName.equals(ste.getClassName())) {
+                    return ste.getClassName();
+                }
+            }
+        }
+        return null;
+    }
 
-	public int getKey() {
-		return this.tableKey;
-	}
+    @Override
+    public RelDataType getRowType(RelDataTypeFactory typeFactory) {
+        if (protoRowType != null) {
+            return protoRowType.apply(typeFactory);
+        }
+        if (fieldTypes == null) {
+            fieldTypes = new ArrayList<>();
+            fullTypes = CsvEnumerator.deduceRowType((JavaTypeFactory) typeFactory, source,
+                    fieldTypes);
+            return fullTypes;
+        } else {
+            fullTypes = CsvEnumerator.deduceRowType((JavaTypeFactory) typeFactory, source,
+                    null);
+            return fullTypes;
+        }
+    }
 
+    public String getName() {
+        return this.tableName;
+    }
 
-	@Override  public Statistic getStatistic() {
-		//System.out.println(getCallerClassName());
-		return new Statistic() {
+    public int getKey() {
+        return this.tableKey;
+    }
 
-			@Override
-			public Double getRowCount() {
-				if(rows == null)
-					rows = CsvEnumerator.estimateRowCount(source, fieldTypes);
-				//System.out.println("Stats" + " " +rows);
-				return rows;
-			}
+    public void setKey(int keyFieldIndex) {
+        this.tableKey = keyFieldIndex;
+    }
 
-			@Override
-			public boolean isKey(ImmutableBitSet columns) {
-				return false;
-			}
+    @Override
+    public Statistic getStatistic() {
+        //System.out.println(getCallerClassName());
+        return new Statistic() {
 
-			@Override
-			public List<ImmutableBitSet> getKeys() {
-				return ImmutableList.of();
-			}
+            @Override
+            public Double getRowCount() {
+                if (rows == null)
+                    rows = CsvEnumerator.estimateRowCount(source, fieldTypes);
+//                System.out.println("Stats" + " " +rows);
+                return rows;
+            }
 
-			@Override
-			public List<RelReferentialConstraint> getReferentialConstraints() {
-				return ImmutableList.of();
-			}
+            @Override
+            public boolean isKey(ImmutableBitSet columns) {
+                return false;
+            }
 
-			@Override
-			public List<RelCollation> getCollations() {
-				return ImmutableList.of();
-			}
+            @Override
+            public List<ImmutableBitSet> getKeys() {
+                return ImmutableList.of();
+            }
 
-			@Override
-			public RelDistribution getDistribution() {
-				return RelDistributionTraitDef.INSTANCE.getDefault();
-			}
-		};
-	}
-	// For debugging
-		public static String getCallerClassName() {
-			StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
-			String callerClassName = null;
-			for (int i=1; i<stElements.length; i++) {
-				StackTraceElement ste = stElements[i];
-				if (!ste.getClassName().equals(KDebug.class.getName())&& ste.getClassName().indexOf("java.lang.Thread")!=0) {
-					if (callerClassName==null) {
-						callerClassName = ste.getClassName();
-					} else if (!callerClassName.equals(ste.getClassName())) {
-						return ste.getClassName();
-					}
-				}
-			}
-			return null;
-		}
+            @Override
+            public List<RelReferentialConstraint> getReferentialConstraints() {
+                return ImmutableList.of();
+            }
 
-	public Source getSource() {
-		return source;
-	}
+            @Override
+            public List<RelCollation> getCollations() {
+                return ImmutableList.of();
+            }
 
-	public List<CsvFieldType> getFieldTypes() {
-		return fieldTypes;
-	}
+            @Override
+            public RelDistribution getDistribution() {
+                return RelDistributionTraitDef.INSTANCE.getDefault();
+            }
+        };
+    }
 
-	public void setFieldTypes(List<CsvFieldType> fieldTypes) {
-		this.fieldTypes = fieldTypes;
-	}
-	/** Various degrees of table "intelligence". */
-	public enum Flavor {
-		TRANSLATABLE
-	}
+    public Source getSource() {
+        return source;
+    }
+
+    public List<CsvFieldType> getFieldTypes() {
+        return fieldTypes;
+    }
+
+    public void setFieldTypes(List<CsvFieldType> fieldTypes) {
+        this.fieldTypes = fieldTypes;
+    }
+
+    /**
+     * Various degrees of table "intelligence".
+     */
+    public enum Flavor {
+        TRANSLATABLE
+    }
 }
 
 // End CsvTable.java

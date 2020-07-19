@@ -1,9 +1,7 @@
 package org.imis.er.Utilities;
 
-import org.imis.er.DataStructures.AbstractBlock;
-import org.imis.er.DataStructures.Comparison;
-import org.imis.er.DataStructures.DecomposedBlock;
-import org.imis.er.DataStructures.EntityIndex;
+import org.apache.commons.lang.ArrayUtils;
+import org.imis.er.DataStructures.*;
 import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
 import org.imis.er.Utilities.ComparisonIterator;
 import org.imis.er.Utilities.Converter;
@@ -34,7 +32,15 @@ public abstract class AbstractMetablocking extends AbstractEfficiencyMethod {
         int[] entityIds2 = Converter.convertListToArray(entities2);
         return new DecomposedBlock(cleanCleanER, entityIds1, entityIds2);
     }
-    
+
+    protected UnilateralBlock getUnilateralBlock (boolean cleanCleanER, List<Integer> entities1, List<Integer> entities2) {
+        int[] entityIds1 = Converter.convertListToArray(entities1);
+        int[] entityIds2 = Converter.convertListToArray(entities2);
+        int[] entityIds = ArrayUtils.addAll(entityIds1,entityIds2);
+        return new UnilateralBlock(entityIds);
+    }
+
+
     protected DecomposedBlock getDecomposedBlock (boolean cleanCleanER, Iterator<Comparison> iterator) {
         final List<Integer> entities1 = new ArrayList<Integer>();
         final List<Integer> entities2 = new ArrayList<Integer>();

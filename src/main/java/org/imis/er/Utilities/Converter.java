@@ -7,12 +7,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- *
- * @author gap2
- */
 
 public class Converter {
+
+
+	public static int[] convertCollectionToArray(Collection<Integer> ids) {
+		int index = 0;
+		int[] array = new int[ids.size()];
+		for (Integer id : ids) {
+			array[index++] = id;
+		}
+
+		return array;
+	}
 
 	public static int[] convertListToArray(Collection<Integer> ids) {
 		int index = 0;

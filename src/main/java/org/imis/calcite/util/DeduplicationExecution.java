@@ -1,13 +1,7 @@
 package org.imis.calcite.util;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.apache.calcite.linq4j.AbstractEnumerable;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
@@ -18,260 +12,315 @@ import org.imis.er.BlockIndex.QueryBlockIndex;
 import org.imis.er.DataStructures.AbstractBlock;
 import org.imis.er.DataStructures.DecomposedBlock;
 import org.imis.er.DataStructures.EntityResolvedTuple;
-import org.imis.er.DataStructures.UnilateralBlock;
-import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
+import org.imis.er.EfficiencyLayer.BlockRefinement.ComparisonsBasedBlockPurging;
 import org.imis.er.MetaBlocking.BlockFiltering;
-import org.imis.er.MetaBlocking.ComparisonsBasedBlockPurging;
 import org.imis.er.MetaBlocking.EfficientEdgePruning;
 import org.imis.er.Utilities.ExecuteBlockComparisons;
 import org.imis.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /*
  * Single table deduplication execution.
  */
 public class DeduplicationExecution<T> {
-	
-	protected static final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
-	/**
-	 * Performs deduplication on a single table's entities.
-	 * The steps for performing the resolution are as follows:
-	 * 	1) Get filtered data from filter.
-	 * 	2) Create QueryBlockIndex
-	 *  3) BlockJoin
-	 *  4) Apply MetaBlocking
-	 *  5) Create an enumberable by index scanning with the IDs as derived from the MetaBlocking
-	 *  6) Execute Block Comparisons to find matches
-	 *  
-	 *  @param enumerable The data after the filter
-	 *  @param tableName Name of the table used to get the BlockIndex
-	 *  @param key Key column id of the table for block indexing
-	 *  @param source Source of the table data for the scan
-	 *  @param fieldTypes Types of the data 
-	 *  @param ab Used for the csv enumerator, nothing else
-	 *  
-	 *  @return EntityResolvedTuple contains the UnionFind + HashMap of the table to be used in merging/join
-	 * @throws IOException 
-	 */		
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
-		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
-		double deduplicateStartTime = System.currentTimeMillis();
-		
-		Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
-		CsvEnumerator<T> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
 
-		List<T> queryData = enumerable.toList();
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug(Integer.toString(queryData.size()) + ",");
-			
-		double blockingStartTime = System.currentTimeMillis();
-		QueryBlockIndex queryBlockIndex = new QueryBlockIndex();
-		queryBlockIndex.createBlockIndex(queryData, key);
-		queryBlockIndex.buildQueryBlocks();
-		queryData.clear(); // no more need for query data
-		
-		List<AbstractBlock> blocks = queryBlockIndex
-				.joinBlockIndices(tableName);
-		double blockingEndTime = System.currentTimeMillis();
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockingEndTime - blockingStartTime)/1000) + ",");
+    protected static final Logger DEDUPLICATION_EXEC_LOGGER = LoggerFactory.getLogger(DeduplicationExecution.class);
 
-		Set<Integer> qIds = queryBlockIndex.getIds();
-		storeIds(qIds);
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
-		
-		double blockPurgingStartTime = System.currentTimeMillis();
-		AbstractEfficiencyMethod blockPurging = new ComparisonsBasedBlockPurging();
-		blockPurging.applyProcessing(blocks);
-		double blockPurgingEndTime = System.currentTimeMillis();
+    /**
+     * Performs deduplication on a single table's entities.
+     * The steps for performing the resolution are as follows:
+     * 1) Get filtered data from filter.
+     * 2) Create QueryBlockIndex
+     * 3) BlockJoin
+     * 4) Apply MetaBlocking
+     * 5) Create an enumberable by index scanning with the IDs as derived from the MetaBlocking
+     * 6) Execute Block Comparisons to find matches
+     *
+     * @param enumerable The data after the filter
+     * @param tableName  Name of the table used to get the BlockIndex
+     * @param key        Key column id of the table for block indexing
+     * @param source     Source of the table data for the scan
+     * @param fieldTypes Types of the data
+     * @param ab         Used for the csv enumerator, nothing else
+     * @return EntityResolvedTuple contains the UnionFind + HashMap of the table to be used in merging/join
+     * @throws IOException
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
+                                                                      Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
+        double deduplicateStartTime = System.currentTimeMillis();
 
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
-		//purge based on number of comparisons, the max_number is calculated dynamically
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockPurgingEndTime - blockPurgingStartTime)/1000) + ",");
-		}
+        Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
+        CsvEnumerator<T> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
 
-		if (blocks.size() > 10) {
-			double blockFilteringStartTime = System.currentTimeMillis();
-			BlockFiltering bFiltering = new BlockFiltering(0.35);
-			bFiltering.applyProcessing(blocks);
-			double blockFilteringEndTime = System.currentTimeMillis();
+        List<T> queryData = enumerable.toList();
+        if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
+            DEDUPLICATION_EXEC_LOGGER.debug(Integer.toString(queryData.size()) + ",");
 
-			if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-				DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
-				DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockFilteringEndTime - blockFilteringStartTime)/1000) + ",");
-			}
-			
-		}
-		double edgePruningStartTime = System.currentTimeMillis();
+        double blockingStartTime = System.currentTimeMillis();
+        QueryBlockIndex queryBlockIndex = new QueryBlockIndex();
+        queryBlockIndex.createBlockIndex(queryData, key);
+        queryBlockIndex.buildQueryBlocks();
+        queryData.clear(); // no more need for query data
+        System.out.println("BlockJoin Started");
+        List<AbstractBlock> blocks = queryBlockIndex
+                .joinBlockIndices(tableName);
+        System.out.println("BlockJoin finished");
+        double blockingEndTime = System.currentTimeMillis();
+        if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
+            DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockingEndTime - blockingStartTime) / 1000) + ",");
 
-		EfficientEdgePruning eEP = new EfficientEdgePruning();
-		eEP.applyProcessing(blocks);
+        Set<Integer> qIds = queryBlockIndex.getIds();
+        storeIds(qIds);
+        if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
+            DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
 
-		double edgePruningEndTime = System.currentTimeMillis();
+        double totalComps = 0;
+        for (AbstractBlock block : blocks) {
+            totalComps += block.getNoOfComparisons();
+        }
 
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((edgePruningEndTime - edgePruningStartTime)/1000) + ",");
-		}
+        System.err.println("comps  " + totalComps);
 
-		try {
-			getBlockDistribution(blocks, tableName);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+        double blockPurgingStartTime = System.currentTimeMillis();
+        ComparisonsBasedBlockPurging blockPurging = new ComparisonsBasedBlockPurging();
+        blockPurging.applyProcessing(blocks);
+        double blockPurgingEndTime = System.currentTimeMillis();
 
 
-		//Get ids of final entities
-		//List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
-		List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
-		Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(dBlocks);	
-		AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((CsvEnumerator<Object[]>) originalEnumerator, totalIds, key);
-		//TIntObjectHashMap<Object[]>  entityMap = createMapTrove(comparisonEnumerable, key);
-		//Int2ObjectOpenHashMap<Object[]> entityMap = createMapFast(comparisonEnumerable, key);
-		HashMap<Integer, Object[]>  entityMap = createMap(comparisonEnumerable, key);
-		
-		// To find ground truth statistics
-		storeBlocks(dBlocks, tableName);
-		
+        if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
+            DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
+        //purge based on number of comparisons, the max_number is calculated dynamically
+        if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+            DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockPurgingEndTime - blockPurgingStartTime) / 1000) + ",");
+        }
 
-		double comparisonStartTime = System.currentTimeMillis();
-		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
-		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(dBlocks, qIds, key, fieldTypes.size(), hashType);
-		double comparisonEndTime = System.currentTimeMillis();
-		double deduplicateEndTime = System.currentTimeMillis();
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug(((comparisonEndTime - comparisonStartTime)/1000 + "," + (deduplicateEndTime - deduplicateStartTime)/1000));
+        if (blocks.size() > 10) {
 
-	
-		return entityResolvedTuple;
-	}
-	
-	private static void getBlockDistribution(List<AbstractBlock> blocks, String tableName) throws IOException {
-		// TODO Auto-generated method stub
-		File csvFile = new File("./data/blockDistr_" + tableName + ".csv");
-		double storeStartTime = System.currentTimeMillis();
-		FileWriter csvWriter = new FileWriter(csvFile);
-		csvWriter.append("size\n");
-		for(AbstractBlock block : blocks) {
-			csvWriter.append(Double.toString(block.getNoOfComparisons())+ "\n");
-		}
-		csvWriter.flush();
-		csvWriter.close();
-		double storeEndTime = System.currentTimeMillis();
-		System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime)/1000);
-		
-	}
+            totalComps = 0;
+            for (AbstractBlock block : blocks) {
+                totalComps += block.getNoOfComparisons();
+            }
 
-	private static void storeIds(Set<Integer> qIds) {
-		double storeStartTime = System.currentTimeMillis();
-		SerializationUtilities.storeSerializedObject(qIds, "./data/qIds");
-		double storeEndTime = System.currentTimeMillis();
-		System.out.println("Storing qIds time: " + (storeEndTime - storeStartTime)/1000);
-	}
+            System.err.println("comps  " + totalComps);
 
-	private static void storeBlocks(List<DecomposedBlock> dBlocks, String tableName) {
-		if(new File("./data/blocks/" + tableName).exists()) return;
-		double storeStartTime = System.currentTimeMillis();
-		SerializationUtilities.storeSerializedObject(dBlocks, "./data/blocks/" + tableName);
-		double storeEndTime = System.currentTimeMillis();
-		System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime)/1000);
-	}
 
-	/**
-	 * 
-	 * @param <T>
-	 * @param entityResolvedTuple The tuple as created by the deduplication/join
-	 * @return AbstractEnumerable that combines the hashmap and the UnionFind to create the merged/fusioned data
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static<T> AbstractEnumerable<T> mergeEntities(EntityResolvedTuple entityResolvedTuple){
+            double blockFilteringStartTime = System.currentTimeMillis();
+            BlockFiltering bFiltering = new BlockFiltering(0.55);
+            bFiltering.applyProcessing(blocks);
+            double blockFilteringEndTime = System.currentTimeMillis();
+
+            if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+                DEDUPLICATION_EXEC_LOGGER.debug(blocks.size() + ",");
+                DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockFilteringEndTime - blockFilteringStartTime) / 1000) + ",");
+            }
+
+            System.err.println("Filtering time " + (blockFilteringEndTime - blockFilteringStartTime) / 1000);
+            totalComps = 0;
+            for (AbstractBlock block : blocks) {
+                totalComps += block.getNoOfComparisons();
+            }
+
+            System.err.println("comps  " + totalComps);
+//            double comparisonPropagationStartTime = System.currentTimeMillis();
+//            ComparisonPropagation cp = new ComparisonPropagation();
+//            cp.applyProcessing(blocks);
+//            double comparisonPropagationEndTime = System.currentTimeMillis();
+//            if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+//                DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((comparisonPropagationEndTime - comparisonPropagationStartTime) / 1000) + ",");
+//            }
+
+            double edgePruningStartTime = System.currentTimeMillis();
+            EfficientEdgePruning eEP = new EfficientEdgePruning();
+            eEP.applyProcessing(blocks);
+            double edgePruningEndTime = System.currentTimeMillis();
+            if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
+                DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000) + ",");
+            }
+            System.err.println("Edge Pruning time " + (edgePruningEndTime - edgePruningStartTime) / 1000);
+
+            totalComps = 0;
+            for (AbstractBlock block : blocks) {
+                totalComps += block.getNoOfComparisons();
+            }
+
+            System.err.println("comps  " + totalComps);
+
+//            FastComparisonPropagation fcp = new FastComparisonPropagation();
+//            fcp.applyProcessing(blocks);
+//
+//            totalComps=0;
+//            for(AbstractBlock block : blocks) {
+//                totalComps+=block.getNoOfComparisons();
+//            }
+//
+//            System.err.println("comps  "+totalComps);
+
+        }
+
+
+        try {
+            getBlockDistribution(blocks, tableName);
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+
+        //Get ids of final entities
+        //List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
+        List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
+        Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(dBlocks);
+        AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((CsvEnumerator<Object[]>) originalEnumerator, totalIds, key);
+        //TIntObjectHashMap<Object[]>  entityMap = createMapTrove(comparisonEnumerable, key);
+        //Int2ObjectOpenHashMap<Object[]> entityMap = createMapFast(comparisonEnumerable, key);
+        HashMap<Integer, Object[]> entityMap = createMap(comparisonEnumerable, key);
+
+        // To find ground truth statistics
+        storeBlocks(dBlocks, tableName);
+
+
+        double comparisonStartTime = System.currentTimeMillis();
+        ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
+        EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(dBlocks, qIds, key, fieldTypes.size(), hashType);
+        double comparisonEndTime = System.currentTimeMillis();
+        double deduplicateEndTime = System.currentTimeMillis();
+        if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
+            DEDUPLICATION_EXEC_LOGGER.debug(((comparisonEndTime - comparisonStartTime) / 1000 + "," + (deduplicateEndTime - deduplicateStartTime) / 1000));
+
+
+        return entityResolvedTuple;
+    }
+
+    private static void getBlockDistribution(List<AbstractBlock> blocks, String tableName) throws IOException {
+        // TODO Auto-generated method stub
+        File csvFile = new File("./data/blockDistr_" + tableName + ".csv");
+        double storeStartTime = System.currentTimeMillis();
+        FileWriter csvWriter = new FileWriter(csvFile);
+        csvWriter.append("size\n");
+        for (AbstractBlock block : blocks) {
+            csvWriter.append(Double.toString(block.getNoOfComparisons()) + "\n");
+        }
+        csvWriter.flush();
+        csvWriter.close();
+        double storeEndTime = System.currentTimeMillis();
+        System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime) / 1000);
+
+    }
+
+    private static void storeIds(Set<Integer> qIds) {
+        double storeStartTime = System.currentTimeMillis();
+        SerializationUtilities.storeSerializedObject(qIds, "./data/qIds");
+        double storeEndTime = System.currentTimeMillis();
+        System.out.println("Storing qIds time: " + (storeEndTime - storeStartTime) / 1000);
+    }
+
+    private static void storeBlocks(List<DecomposedBlock> dBlocks, String tableName) {
+        if (new File("./data/blocks/" + tableName).exists()) return;
+        double storeStartTime = System.currentTimeMillis();
+        SerializationUtilities.storeSerializedObject(dBlocks, "./data/blocks/" + tableName);
+        double storeEndTime = System.currentTimeMillis();
+        System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime) / 1000);
+    }
+
+    /**
+     * @param <T>
+     * @param entityResolvedTuple The tuple as created by the deduplication/join
+     * @return AbstractEnumerable that combines the hashmap and the UnionFind to create the merged/fusioned data
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public static <T> AbstractEnumerable<T> mergeEntities(EntityResolvedTuple entityResolvedTuple) {
 //		if(entityResolvedTuple.uFind != null)
 //			entityResolvedTuple.sortEntities();
 //		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 //			DEDUPLICATION_EXEC_LOGGER.debug("Final Size: " + entityResolvedTuple.finalData.size());
-		return entityResolvedTuple;
+        return entityResolvedTuple;
 
-	}
-	/**
-	 * 
-	 * @param enumerable Data of the table
-	 * @param key Key column of the table
-	 * @return HashMap from key to entity
-	 */
-	private static HashMap<Integer, Object[]> createMap(AbstractEnumerable<Object[]> enumerable, Integer key) {
-		List<Object[]> entityList = enumerable.toList();
-		HashMap<Integer, Object[]>entityMap = new HashMap<Integer, Object[]>(entityList.size());
-		for(Object[] entity : entityList) {
-			entityMap.put(Integer.parseInt(entity[key].toString()), entity);
-		}
-		return entityMap;
-	}
-	
-	
-	
-	private static TIntObjectHashMap< Object[]> createMapTrove(AbstractEnumerable<Object[]> enumerable, Integer key) {
-		List<Object[]> entityList = enumerable.toList();
-		TIntObjectHashMap<Object[]>entityMap = new TIntObjectHashMap<Object[]>(entityList.size());
-		for(Object[] entity : entityList) {
-			entityMap.put(Integer.parseInt(entity[key].toString()), entity);
-		}
-		return entityMap;
-	}
-	
-	private static Int2ObjectOpenHashMap<Object[]> createMapFast(AbstractEnumerable<Object[]> enumerable,
-			Integer key) {
-				
-		List<Object[]> entityList = enumerable.toList();
-		Int2ObjectOpenHashMap<Object[]>entityMap = new Int2ObjectOpenHashMap<Object[]>(entityList.size());
-		for(Object[] entity : entityList) {
-			entityMap.put(Integer.parseInt(entity[key].toString()), entity);
-		}
-		return entityMap;
-	}
-	
-	/**
-	 * 
-	 * @param enumerator Enumerator data
-	 * @param qIds Qids to pick from enumerator
-	 * @param key Key column
-	 * @return AbstractEnumerable filtered by ids
-	 */
-	private static AbstractEnumerable<Object[]> createEnumerable(CsvEnumerator<Object[]> enumerator, Set<Integer> qIds, Integer key) {
-		return new AbstractEnumerable<Object[]>() {
-			@Override
-			public Enumerator<Object[]> enumerator() {
-				return new Enumerator<Object[]>() {
-					@Override
-					public Object[] current() {
-						return enumerator.current();
-					}
-					@Override
-					public boolean moveNext() {
-						while (enumerator.moveNext()) {
-							final Object[] current = enumerator.current();
-							String entityKey = current[key].toString();
-							if(entityKey.contentEquals("")) continue;
-							if (qIds.contains(Integer.parseInt(current[key].toString()))) {
-								return true;
-							}
-						}
-						return false;
-					}
-					@Override
-					public void reset() {
-					}
-					@Override
-					public void close() {
-					}
-				};
-			}
+    }
 
-		};
-	}
+    /**
+     * @param enumerable Data of the table
+     * @param key        Key column of the table
+     * @return HashMap from key to entity
+     */
+    private static HashMap<Integer, Object[]> createMap(AbstractEnumerable<Object[]> enumerable, Integer key) {
+        List<Object[]> entityList = enumerable.toList();
+        HashMap<Integer, Object[]> entityMap = new HashMap<Integer, Object[]>(entityList.size());
+        for (Object[] entity : entityList) {
+            entityMap.put(Integer.parseInt(entity[key].toString()), entity);
+        }
+        return entityMap;
+    }
+
+
+    private static TIntObjectHashMap<Object[]> createMapTrove(AbstractEnumerable<Object[]> enumerable, Integer key) {
+        List<Object[]> entityList = enumerable.toList();
+        TIntObjectHashMap<Object[]> entityMap = new TIntObjectHashMap<Object[]>(entityList.size());
+        for (Object[] entity : entityList) {
+            entityMap.put(Integer.parseInt(entity[key].toString()), entity);
+        }
+        return entityMap;
+    }
+
+    private static Int2ObjectOpenHashMap<Object[]> createMapFast(AbstractEnumerable<Object[]> enumerable,
+                                                                 Integer key) {
+
+        List<Object[]> entityList = enumerable.toList();
+        Int2ObjectOpenHashMap<Object[]> entityMap = new Int2ObjectOpenHashMap<Object[]>(entityList.size());
+        for (Object[] entity : entityList) {
+            entityMap.put(Integer.parseInt(entity[key].toString()), entity);
+        }
+        return entityMap;
+    }
+
+    /**
+     * @param enumerator Enumerator data
+     * @param qIds       Qids to pick from enumerator
+     * @param key        Key column
+     * @return AbstractEnumerable filtered by ids
+     */
+    private static AbstractEnumerable<Object[]> createEnumerable(CsvEnumerator<Object[]> enumerator, Set<Integer> qIds, Integer key) {
+        return new AbstractEnumerable<Object[]>() {
+            @Override
+            public Enumerator<Object[]> enumerator() {
+                return new Enumerator<Object[]>() {
+                    @Override
+                    public Object[] current() {
+                        return enumerator.current();
+                    }
+
+                    @Override
+                    public boolean moveNext() {
+                        while (enumerator.moveNext()) {
+                            final Object[] current = enumerator.current();
+                            String entityKey = current[key].toString();
+                            if (entityKey.contentEquals("")) continue;
+                            if (qIds.contains(Integer.parseInt(current[key].toString()))) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public void reset() {
+                    }
+
+                    @Override
+                    public void close() {
+                    }
+                };
+            }
+
+        };
+    }
 }
