@@ -19,8 +19,13 @@ package org.imis.calcite.adapter.csv;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -34,7 +39,8 @@ import org.imis.er.BlockIndex.BlockIndexStatistic;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-
+import static java.util.stream.Collectors.*;
+import static java.util.Map.Entry.*;
 /**
  * Schema mapped onto a directory of CSV files. Each table in the schema
  * is a CSV file in that directory.
@@ -116,21 +122,19 @@ public class CsvSchema extends AbstractSchema {
 					fieldTypes.add(field.getType().toString());
 
 				}
-				//String[] keys = {"rec_id", "rec_id", "rec_id", "rec_id"};
-				String[] keys = {"id"};
+				String[] keys = {"rec_id", "id"};
 				for(String key : keys) {
 					if(fieldNames.contains(key)) {
 						table.setKey(fieldNames.indexOf(key));
 						break;
 					}
-					else {
-						System.out.println("Column name does not exist!");
-					}
 				}
+				
 				// Compute CsvTableStatistic
 				if(!new File("./data/tableStats/table" + tableName + ".json").exists()) {
 					AtomicBoolean ab = new AtomicBoolean();
 					ab.set(false);
+					@SuppressWarnings({ "unchecked", "rawtypes" })
 					CsvEnumerator csvEnumerator = new CsvEnumerator(table.getSource(), ab,
 							table.getFieldTypes());
 					CsvTableStatistic csvTableStatistic = new CsvTableStatistic(csvEnumerator,
@@ -156,8 +160,51 @@ public class CsvSchema extends AbstractSchema {
 					blockIndex.buildQueryBlocks();
 					blockIndex.storeBlockIndex("./data/blockIndex/", tableName );
 					BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), tableName);
+					blockIndexStatistic.setTfIdf(blockIndex.getTfIdf());
 					blockIndex.setBlockIndexStatistic(blockIndexStatistic);
 					//blockIndexStatistic.getStatistics();
+					// Compare histogram with tfidf
+					Map<String, Integer> sortedHistogram = blockIndexStatistic.getBlocksHistogram().entrySet()
+								        .stream()
+								        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+								        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2,
+								        LinkedHashMap::new));
+					Map<String, Integer> sortedTfIdf =  blockIndexStatistic.getTfIdf().entrySet()
+				        .stream()
+				        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
+				        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2,
+			        	LinkedHashMap::new));
+					
+					int histSize = sortedHistogram.size();
+					int tfIdfSize = sortedTfIdf.size();
+					System.out.println("Histogram size: "+ histSize);
+					System.out.println("TfIdf size: " + tfIdfSize);
+					
+					System.out.println("Histogram top 10: "+ histSize);
+					
+					Set<String> shKeys = sortedHistogram.keySet();
+					int getBest = 10;
+					int index = 0;
+					for(String shKey : shKeys) {
+						if(index <  getBest) 
+							System.out.print(shKey + ": " + sortedHistogram.get(shKey) + ", ");
+						else break;
+						index+=1;
+					}
+					System.out.println();
+
+					System.out.println("TfIdf top 10: "+ histSize);
+					Set<String> tfKeys = sortedHistogram.keySet();
+
+					index = 0;
+					for(String tfKey : tfKeys) {
+						if(index < getBest) 
+							System.out.print(tfKey + ": " + sortedTfIdf.get(tfKey) + ", ");
+						else break;
+						index+=1;
+					}
+					System.out.println();
+
 					try {
 						blockIndexStatistic.storeStatistics();
 					} catch (IOException e) {
@@ -183,6 +230,8 @@ public class CsvSchema extends AbstractSchema {
 		}
 		return builder.build();
 	}
+	
+
 
 	/** Creates table */
 	private CsvTranslatableTable createTable(Source source, String name) {

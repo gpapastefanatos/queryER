@@ -16,7 +16,7 @@ import com.google.common.collect.ImmutableMap;
 import org.imis.er.BlockIndex.BlockIndex;
 public enum NewBuiltInMethod {
 	DEDUPLICATE_ENUM(DeduplicationExecution.class, "deduplicateEnumerator", Enumerable.class,
-			String.class, Integer.class, String.class, List.class, AtomicBoolean.class, BlockIndex.class),
+			String.class, Integer.class, String.class, List.class, AtomicBoolean.class),
 	MERGE_ENTITIES(DeduplicationExecution.class, "mergeEntities", EntityResolvedTuple.class), 
 	HASH_JOIN_DIRTY_RIGHT(DeduplicationJoinExecution.class, "dirtyRightJoin", EntityResolvedTuple.class, Enumerable.class,
 			Function1.class,

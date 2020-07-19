@@ -56,7 +56,7 @@ public class DeduplicationExecution<T> {
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
-                                                                      Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
+    		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
         double deduplicateStartTime = System.currentTimeMillis();
 
         Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
@@ -112,7 +112,6 @@ public class DeduplicationExecution<T> {
             }
 
             System.err.println("comps  " + totalComps);
-
 
             double blockFilteringStartTime = System.currentTimeMillis();
             BlockFiltering bFiltering = new BlockFiltering(0.55);

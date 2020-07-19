@@ -177,7 +177,11 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 
 	public static CSVReader openCsv(Source source) throws IOException {
 		final Reader fileReader = source.reader();
-		return new CSVReader(fileReader, '>');
+		char seperator = ',';
+		if(source.toString().contains("publications"))
+			seperator = '>';
+		
+		return new CSVReader(fileReader, seperator);
 //		return new CSVReader(fileReader, ',');
 	}
 

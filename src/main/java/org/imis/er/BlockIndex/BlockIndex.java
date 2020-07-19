@@ -48,12 +48,13 @@ implements  TranslatableTable {
 	public List<EntityProfile> entityProfiles;
 	protected Map<String, Set<Integer>> invertedIndex;
 	protected BlockIndexStatistic blockIndexStatistic;
-
+	protected Map<String, Integer> tfIdf;
 	protected Set<Integer> joinedIds;
 
 	public BlockIndex() {
 		this.entityProfiles = new ArrayList<EntityProfile>();
 		this.invertedIndex = new HashMap<String, Set<Integer>>();
+		this.blockIndexStatistic = new BlockIndexStatistic();
 	}
 
 	public BlockIndex(String path) {
@@ -71,6 +72,7 @@ implements  TranslatableTable {
 		invertedIndex = new HashMap<String, Set<Integer>>();
 		HashSet<String> stopwords = (HashSet<String>) SerializationUtilities
 				.loadSerializedObject("C://Works/ATHENA/Projects/ER/Code/DBLP-SCHOLAR/stopwords_SER");
+		HashMap<String, Integer> tfIdf = new HashMap<>();
 		for (EntityProfile profile : profiles) {
 			for (Attribute attribute : profile.getAttributes()) {
 				if (attribute.getValue() == null)
@@ -85,12 +87,14 @@ implements  TranslatableTable {
 								x -> new HashSet<Integer>());
 
 						termEntities.add(Integer.parseInt(profile.getEntityUrl()));
-
+						int tokenCount = tfIdf.containsKey(token) ? tfIdf.get(token) : 0;
+						tfIdf.put(token, tokenCount + 1);
 					}
 				}
 			}
 
 		}
+		this.setTfIdf(tfIdf);
 		//System.out.println("Query Block Index size: " + invertedIndex.size());
 		return invertedIndex;
 	}
@@ -149,6 +153,12 @@ implements  TranslatableTable {
 		return LogicalBlockIndexScan.create(context.getCluster(), relOptTable);
 	}
 
+	public Map<String, Integer> getTfIdf() {
+		return tfIdf;
+	}
+	public void setTfIdf(Map<String, Integer> tfIdf) {
+		this.tfIdf = tfIdf;
+	}
 	
 	
 }

@@ -22,6 +22,7 @@ public class BlockIndexStatistic {
 
 	private String tableName;
 	protected Map<String, Integer> blocksHistogram;
+	protected Map<String, Integer> tfIdf;
 	protected double totalBlocks;
 	protected double validComparisons;
 	protected double[] comparisonsPerBlock;
@@ -34,9 +35,10 @@ public class BlockIndexStatistic {
 	public BlockIndexStatistic() {
 		super();
 	}
-	public BlockIndexStatistic(Map<String, Integer> blocksHistogram, double totalBlocks, double validComparisons,
+	public BlockIndexStatistic(Map<String, Integer> tfIdf, Map<String, Integer> blocksHistogram, double totalBlocks, double validComparisons,
 			double[] comparisonsPerBlock, double[] redundantCPE, double[] comparisonsPerEntity,
 			List<AbstractBlock> blocks, EntityIndex entityIndex) {
+		this.tfIdf = tfIdf;
 		this.blocksHistogram = blocksHistogram;
 		this.totalBlocks = totalBlocks;
 		this.validComparisons = validComparisons;
@@ -166,6 +168,13 @@ public class BlockIndexStatistic {
 
 	public void setEntityIndex(EntityIndex entityIndex) {
 		this.entityIndex = entityIndex;
+	}
+	
+	public Map<String, Integer> getTfIdf() {
+		return tfIdf;
+	}
+	public void setTfIdf(Map<String, Integer> tfIdf) {
+		this.tfIdf = tfIdf;
 	}
 	
 	

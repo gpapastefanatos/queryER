@@ -144,8 +144,7 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 				Expressions.constant(this.key),
 				Expressions.constant(this.source.toString()),
 				Expressions.constant(this.fieldTypes),
-				Expressions.constant(ab),
-				blockIndex
+				Expressions.constant(ab)
 		)));
 		return implementor.result(physType, builder.toBlock());
 
