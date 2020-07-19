@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.function.EqualityComparer;
 import org.apache.calcite.linq4j.function.Function1;
@@ -14,10 +13,10 @@ import org.apache.calcite.linq4j.function.Predicate2;
 import org.apache.calcite.linq4j.tree.Types;
 import org.imis.er.DataStructures.EntityResolvedTuple;
 import com.google.common.collect.ImmutableMap;
-
+import org.imis.er.BlockIndex.BlockIndex;
 public enum NewBuiltInMethod {
 	DEDUPLICATE_ENUM(DeduplicationExecution.class, "deduplicateEnumerator", Enumerable.class,
-			String.class, Integer.class, String.class, List.class, AtomicBoolean.class),
+			String.class, Integer.class, String.class, List.class, AtomicBoolean.class, BlockIndex.class),
 	MERGE_ENTITIES(DeduplicationExecution.class, "mergeEntities", EntityResolvedTuple.class), 
 	HASH_JOIN_DIRTY_RIGHT(DeduplicationJoinExecution.class, "dirtyRightJoin", EntityResolvedTuple.class, Enumerable.class,
 			Function1.class,

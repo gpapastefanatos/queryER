@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -22,6 +23,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.sql.DataSource;
+
 import org.apache.calcite.jdbc.CalciteConnection;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -31,13 +34,20 @@ import org.apache.calcite.tools.RelConversionException;
 import org.apache.calcite.tools.ValidationException;
 import org.apache.commons.io.FileUtils;
 import org.imis.calcite.adapter.csv.CsvEnumerator;
+import org.imis.calcite.adapter.csv.CsvTableStatistic;
 import org.imis.calcite.adapter.csv.CsvTranslatableTable;
 import org.imis.calcite.util.DeduplicationExecution;
 import org.imis.er.BlockIndex.BaseBlockIndex;
+import org.imis.er.BlockIndex.BlockIndexStatistic;
+import org.imis.er.ConnectionPool.CalciteConnectionPool;
 import org.imis.er.DataStructures.UnilateralBlock;
 import org.imis.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.imis.er.Utilities.BlockStatistics;
 
 import org.imis.er.EfficiencyLayer.ComparisonRefinement.AbstractDuplicatePropagation;
@@ -71,67 +81,22 @@ public class Experiments {
 	private static Integer totalRuns = 1;
 	private static String schemaName = "";
 	private static String calciteConnectionString = "";
-
+	private static CalciteConnectionPool calciteConnectionPool = null;
+	
 	public static void main(String[] args)
 			throws  ClassNotFoundException, SQLException, ValidationException, RelConversionException, SqlParseException, IOException
 	{
-		setProperties();
+		setProperties();	
 		// Create Connection
-		Class.forName("org.apache.calcite.jdbc.Driver");
-		Properties info = new Properties();
-		info.setProperty("lex", "JAVA");
-		Connection connection =
-				DriverManager.getConnection(calciteConnectionString, info);
-		CalciteConnection calciteConnection =
-				connection.unwrap(CalciteConnection.class);
-
-		// Create and add schema
-		SchemaPlus rootSchema = calciteConnection.getRootSchema();
-
-		// Create big Block Indexes for each table
-		for(String tableName : rootSchema.getSubSchema(schemaName).getTableNames()){
-			CsvTranslatableTable table = (CsvTranslatableTable) rootSchema.getSubSchema(schemaName).getTable(tableName);
-			System.out.println(tableName + ": " + table.getRowType(new JavaTypeFactoryImpl()));
-			List<RelDataTypeField> fields = (table.getRowType(new JavaTypeFactoryImpl()).getFieldList());
-			List<String> fieldNames = new ArrayList<String>();
-			List<String> fieldTypes = new ArrayList<String>();
-			// Instantiate keyFieldName here
-			for(RelDataTypeField field : fields) {
-				fieldNames.add(field.getName());
-				fieldTypes.add(field.getType().toString());
-
-			}
-			// Set key field for each table
-		
-			String[] keys = {"rec_id", "rec_id", "rec_id", "rec_id"};
-			//String[] keys = {"id"};
-			for(String key : keys) {
-				if(fieldNames.contains(key)) {
-					table.setKey(fieldNames.indexOf(key));
-					break;
-				}
-				else {
-					System.out.println("Column name does not exist!");
-				}
-			}
-			// Create Block index and store into data folder (only if not already created)
-			if(!new File("./data/blockIndex/" + tableName + "InvertedIndex").exists()) {
-				System.out.println("Creating Block Index..");
-				AtomicBoolean ab = new AtomicBoolean();
-				ab.set(false);
-				@SuppressWarnings({ "unchecked", "rawtypes" })
-				CsvEnumerator<Object[]> enumerator = new CsvEnumerator(table.getSource(), ab,
-						table.getFieldTypes());
-				BaseBlockIndex blockIndex = new BaseBlockIndex();
-				blockIndex.createBlockIndex(enumerator, table.getKey());
-				blockIndex.buildQueryBlocks();
-				blockIndex.storeBlockIndex("./data/blockIndex/", tableName );
-				// Print block Index Statistics
-			}
-			else {
-				System.out.println("Block Index already created!");
-			}
+		calciteConnectionPool = new CalciteConnectionPool();
+		CalciteConnection calciteConnection = null;
+		try {
+			calciteConnection = (CalciteConnection) calciteConnectionPool.setUp(calciteConnectionString);
+		} catch (Exception e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
 		}
+		
 		// Enter a query or read query from file
 		List<String> queries = new ArrayList<>();
 		
@@ -211,19 +176,14 @@ public class Experiments {
 			DEDUPLICATION_EXEC_LOGGER.debug("entities,blocking_time,query_blocks,purge_blocks,purge_time,filter_blocks,filter_time,"
 					+ "ep_time,matches_found,total_comparisons,comparison_time,total_dedup_time\n");
 		for(String query : queries) {
-			// Create results directory
-
-            //File queryFile = new File("./data/queryResults/query" + index + ".csv");
-            //FileWriter csvWriter = new FileWriter(queryFile);
-            //csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ\n");
-            double totalRunTime = 0.0;
+			double totalRunTime = 0.0;
             ResultSet queryResults = null;
 			for(int i = 0; i < totalRuns; i++) {
 				Double runTime = 0.0;
 				double queryStartTime = System.currentTimeMillis();
 				queryResults = runQuery(calciteConnection, query);
 				//printQueryContents(queryResults);
-				//exportQueryContent(queryResults, "./data/universities.csv");
+				//exportQueryContent(queryResults, "./data/queryResults.csv");
 				double queryEndTime = System.currentTimeMillis();
 				runTime = (queryEndTime - queryStartTime)/1000;
 				Integer run = i + 1;
@@ -231,9 +191,8 @@ public class Experiments {
 			}
 			csvWriter.append("\"" + query + "\"" + "," + totalRuns + "," + totalRunTime/totalRuns + ",");
 			System.out.println("Finished query: " + index + " runs: " + totalRuns + " time: " + totalRunTime/totalRuns);
-
 			// Get the ground truth for this query
-			calculateGroundTruth(calciteConnectionString, query, schemaName, csvWriter);
+			// calculateGroundTruth(query, schemaName, csvWriter);
 			csvWriter.append("\n");
 			csvWriter.flush();
 			index ++;
@@ -246,28 +205,30 @@ public class Experiments {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static void calculateGroundTruth(String calciteConnection, String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
+	private static void calculateGroundTruth(String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
 		// Trick to get table name from a single sp query
 		String tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1  , query.indexOf("WHERE"));
-		String percent = query.substring(query.indexOf("rec_id, ") + ("rec_id, ").length(), query.indexOf(")"));
+		//String percent = query.substring(query.indexOf("rec_id, ") + ("rec_id, ").length(), query.indexOf(")"));
+		String percent = query.substring(query.indexOf("id, ") + ("id, ").length(), query.indexOf(")"));
 
 		tableName = tableName.trim();
 		// Construct ground truth query
 		
 		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
-		File blocksDir = new File("./data/ground_truth/" + tableName + percent);
+		File blocksDir = new File("./data/groundTruth/" + tableName + percent);
 		if(blocksDir.exists()) {
-			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/ground_truth/" + tableName + percent);
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/groundTruth/" + tableName + percent);
 		}
 		else {
 			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject("./data/qIds");
 			for(Integer qId : qIds) {
-				Properties info = new Properties();
-				info.setProperty("lex", "JAVA");
-				Connection qConnection =
-						DriverManager.getConnection(calciteConnection, info);
-				CalciteConnection qCalciteConnection =
-						qConnection.unwrap(CalciteConnection.class);
+				CalciteConnection qCalciteConnection = null;
+				try {
+					qCalciteConnection = (CalciteConnection) calciteConnectionPool.setUp(calciteConnectionString);
+				} catch (Exception e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 				String groundTruthQuery = "SELECT id_d, id_s FROM ground_truth.ground_truth_" + tableName +
 						" WHERE (id_s = " + qId + " OR id_d= " + qId + ")";
 				ResultSet gtQueryResults = runQuery(qCalciteConnection, groundTruthQuery);
@@ -279,7 +240,7 @@ public class Experiments {
 					groundDups.add(idd);
 				}		
 			}
-			SerializationUtilities.storeSerializedObject(groundDups, "./data/ground_truth/" + tableName + percent);
+			SerializationUtilities.storeSerializedObject(groundDups, "./data/groundTruth/" + tableName + percent);
 		}
 		
 

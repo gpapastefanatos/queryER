@@ -18,8 +18,10 @@ package org.apache.calcite.sql2rel;
 
 import static org.apache.calcite.sql.SqlUtil.stripAs;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.nio.file.Paths;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -41,16 +43,20 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import org.apache.calcite.avatica.util.Spaces;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.Ord;
 import org.apache.calcite.plan.Convention;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptSamplingParameters;
+import org.apache.calcite.plan.RelOptSchema;
 import org.apache.calcite.plan.RelOptTable;
 import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.plan.ViewExpanders;
+import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.prepare.Prepare;
+import org.apache.calcite.prepare.Prepare.PreparingTable;
 import org.apache.calcite.prepare.RelOptTableImpl;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelCollationTraitDef;
@@ -117,6 +123,7 @@ import org.apache.calcite.rex.RexWindowBound;
 import org.apache.calcite.schema.ColumnStrategy;
 import org.apache.calcite.schema.ModifiableTable;
 import org.apache.calcite.schema.ModifiableView;
+import org.apache.calcite.schema.Path;
 import org.apache.calcite.schema.Table;
 import org.apache.calcite.schema.TranslatableTable;
 import org.apache.calcite.schema.Wrapper;
@@ -202,10 +209,11 @@ import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
 import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.calcite.adapter.csv.CsvTableScan;
+import org.imis.calcite.rel.logical.LogicalBlockIndexScan;
 import org.imis.calcite.rel.logical.LogicalDeduplicate;
 import org.imis.calcite.rel.logical.LogicalDeduplicateJoin;
 import org.imis.calcite.rel.logical.LogicalMergeEntities;
-import org.imis.calcite.rel.planner.RelBlockIndex;
+import org.imis.er.BlockIndex.BlockIndex;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
@@ -2450,6 +2458,7 @@ public class SqlToRelConverter {
 		RelOptTable table =
 				SqlValidatorUtil.getRelOptTable(fromNamespace, catalogReader,
 						datasetName, usedDataset);
+		
 		if (extendedColumns != null && extendedColumns.size() > 0) {
 			assert table != null;
 			final SqlValidatorTable validatorTable =
@@ -2479,10 +2488,15 @@ public class SqlToRelConverter {
 		bb.setRoot(tableRel, true);
 
 		if(deduplicate) {
-			RelBlockIndex blockIndex = new RelBlockIndex(table.getQualifiedName().get(1), key, fieldTypes);
+			//TODO change rowtype
+			List<String> tableName = new ArrayList<>(2);
+			tableName.add(table.getQualifiedName().get(0));
+			tableName.add("./data/blockIndex/"+ table.getQualifiedName().get(1) +"InvertedIndex");
+			RelOptTable relBlockIndex = catalogReader.getTable(tableName);
+			RelNode blockIndexScan = LogicalBlockIndexScan.create(cluster, relBlockIndex);
 			RelNode newRoot = LogicalDeduplicate.create(tableRel.getCluster(),
-					tableRel.getTraitSet().replace(Convention.NONE), tableRel, blockIndex, 
-						table, key, source, fieldTypes);
+					tableRel.getTraitSet().replace(Convention.NONE), tableRel, 
+					blockIndexScan,	table, key, source, fieldTypes);
 			bb.setRoot(newRoot, false);	
 		}
 		if (usedDataset[0]) {

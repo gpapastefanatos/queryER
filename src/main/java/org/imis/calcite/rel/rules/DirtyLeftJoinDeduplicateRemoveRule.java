@@ -54,7 +54,7 @@ public class DirtyLeftJoinDeduplicateRemoveRule extends RelOptRule {
 			leftTableName = tableLeft.get(1);
 		}
 
-		newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(), join.getRight(), join.getCondition(),
+		newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), join.getRight(), join.getCondition(),
 				join.getVariablesSet(), join.getJoinType(), deduplicateLeft.getKey(), null,
 				leftTableName, null, deduplicateLeft.getFieldTypes().size(), null, true);	
 		

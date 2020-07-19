@@ -17,8 +17,9 @@
 package org.imis.calcite.adapter.csv;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+
 import java.util.List;
+
 
 import org.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.rel.RelCollation;
@@ -33,8 +34,8 @@ import org.apache.calcite.schema.impl.AbstractTable;
 import org.apache.calcite.util.ImmutableBitSet;
 import org.apache.calcite.util.Source;
 import org.imis.er.KDebug;
-
 import com.google.common.collect.ImmutableList;
+
 
 /**
  * Base class for table that reads CSV files.
@@ -47,6 +48,9 @@ public abstract class CsvTable extends AbstractTable {
 	protected int tableKey;
 	protected String tableName;
 	protected Double rows;
+	protected Boolean statsComputed;
+	protected CsvTableStatistic csvTableStatistic;
+
 	/** Creates a CsvTable. */
 	CsvTable(Source source, String name, RelProtoDataType protoRowType) {
 		this.source = source;
@@ -85,13 +89,13 @@ public abstract class CsvTable extends AbstractTable {
 
 
 	@Override  public Statistic getStatistic() {
-		//System.out.println(getCallerClassName());
-		return new Statistic() {
 
+		return new Statistic() {
+			
 			@Override
 			public Double getRowCount() {
 				if(rows == null)
-					rows = CsvEnumerator.estimateRowCount(source, fieldTypes);
+					rows = Double.parseDouble(csvTableStatistic.columnCardinalities.get(tableKey).toString());
 				//System.out.println("Stats" + " " +rows);
 				return rows;
 			}
@@ -119,7 +123,7 @@ public abstract class CsvTable extends AbstractTable {
 			@Override
 			public RelDistribution getDistribution() {
 				return RelDistributionTraitDef.INSTANCE.getDefault();
-			}
+			}	
 		};
 	}
 	// For debugging
@@ -150,10 +154,26 @@ public abstract class CsvTable extends AbstractTable {
 	public void setFieldTypes(List<CsvFieldType> fieldTypes) {
 		this.fieldTypes = fieldTypes;
 	}
+	
+	public Boolean getStatsComputed() {
+		return statsComputed;
+	}
+
+	public void setStatsComputed(Boolean statsComputed) {
+		this.statsComputed = statsComputed;
+	}
 	/** Various degrees of table "intelligence". */
 	public enum Flavor {
 		TRANSLATABLE
 	}
+	public CsvTableStatistic getCsvTableStatistic() {
+		return csvTableStatistic;
+	}
+
+	public void setCsvTableStatistic(CsvTableStatistic csvTableStatistic) {
+		this.csvTableStatistic = csvTableStatistic;
+	}
+	
 }
 
 // End CsvTable.java

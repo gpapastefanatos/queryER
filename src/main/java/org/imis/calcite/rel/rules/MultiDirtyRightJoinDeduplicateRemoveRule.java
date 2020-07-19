@@ -73,13 +73,13 @@ public class MultiDirtyRightJoinDeduplicateRemoveRule extends RelOptRule{
 		RelNode newJoin = null;
 	
 		if(join.getJoinType() == JoinRelType.DIRTY_RIGHT) {
-			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(), join.getCondition(),
+			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(0), join.getCondition(),
 					join.getVariablesSet(), join.getJoinType(), join.getKeyLeft(), join.getKeyRight(),
 					join.getTableNameLeft(), join.getTableNameRight(), join.getFieldLeft(), join.getFieldRight(), true);
 			
 		}
 		else if(join.getJoinType() == JoinRelType.DIRTY) {
-			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(), join.getCondition(),
+			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(0), join.getCondition(),
 					join.getVariablesSet(), JoinRelType.DIRTY_RIGHT, join.getKeyLeft(), join.getKeyRight(),
 					join.getTableNameLeft(), join.getTableNameRight(), join.getFieldLeft(), join.getFieldRight(), false);
 		}			

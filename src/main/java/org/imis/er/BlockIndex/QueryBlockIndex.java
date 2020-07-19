@@ -16,7 +16,7 @@ import org.imis.er.Utilities.SerializationUtilities;
 public class QueryBlockIndex extends BlockIndex {
 
 	protected Set<Integer> qIds;
-
+	
 	public QueryBlockIndex() {
 		this.qIds = new HashSet<>();
 	}
@@ -46,15 +46,15 @@ public class QueryBlockIndex extends BlockIndex {
 	public List<AbstractBlock> joinBlockIndices(String name) {
 		final Map<String, Set<Integer>> bBlocks = (Map<String, Set<Integer>>) SerializationUtilities
 				.loadSerializedObject("./data/blockIndex/" + name + "InvertedIndex");
-//		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-//			DEDUPLICATION_EXEC_LOGGER.debug("BlockIndex size: " + bBlocks.size());
 		bBlocks.keySet().retainAll(this.invertedIndex.keySet());
-//		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-//			DEDUPLICATION_EXEC_LOGGER.debug("JoinedBlockIndex size " + bBlocks.size());
 		return parseIndex(bBlocks);
 
 	}
 
+	public List<AbstractBlock> joinBlockIndices(Map<String, Set<Integer>> bBlocks ) {
+		bBlocks.keySet().retainAll(this.invertedIndex.keySet());
+		return parseIndex(bBlocks);
+	}
 
 	
 	public Set<Integer> blocksToEntitiesU(List<UnilateralBlock> blocks){

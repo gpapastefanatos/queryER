@@ -27,10 +27,12 @@ public class EnumerableDeduplicateRule extends ConverterRule {
 	@Override
 	public RelNode convert(RelNode rel) {
 		final LogicalDeduplicate deduplicate = (LogicalDeduplicate) rel;
+		RelNode input = deduplicate.getInput(0);
+		RelNode blockInput = deduplicate.getInput(1);
 		return EnumerableDeduplicate.create(
-				convert(deduplicate.getInput(),
-						deduplicate.getInput().getTraitSet()
-						.replace(EnumerableConvention.INSTANCE)), deduplicate.getBlockIndex(), 
+				convert(input,
+						input.getTraitSet()
+						.replace(EnumerableConvention.INSTANCE)), blockInput,
 				deduplicate.getRelTable(),	deduplicate.getKey(), deduplicate.getSource(), deduplicate.getFieldTypes());
 	}
 }

@@ -1,14 +1,34 @@
 package org.imis.er.BlockIndex;
 
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Set;
 
+import org.apache.calcite.DataContext;
+import org.apache.calcite.linq4j.AbstractEnumerable;
+import org.apache.calcite.linq4j.Enumerable;
+import org.apache.calcite.linq4j.Enumerator;
+import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.plan.RelOptTable.ToRelContext;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.apache.calcite.schema.QueryableTable;
+import org.apache.calcite.schema.TranslatableTable;
+import org.apache.calcite.schema.impl.AbstractTable;
+import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.calcite.util.Pair;
+import org.imis.calcite.adapter.csv.CsvEnumerator;
+import org.imis.calcite.adapter.csv.CsvTableScan;
+import org.imis.calcite.rel.logical.LogicalBlockIndexScan;
 import org.imis.calcite.util.DeduplicationExecution;
 import org.imis.er.DataStructures.AbstractBlock;
 import org.imis.er.DataStructures.Attribute;
@@ -19,16 +39,26 @@ import org.imis.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockIndex {
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+public class BlockIndex extends AbstractTable 
+implements  TranslatableTable {
 	protected static final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
 
 	public List<EntityProfile> entityProfiles;
 	protected Map<String, Set<Integer>> invertedIndex;
+	protected BlockIndexStatistic blockIndexStatistic;
+
 	protected Set<Integer> joinedIds;
 
 	public BlockIndex() {
 		this.entityProfiles = new ArrayList<EntityProfile>();
 		this.invertedIndex = new HashMap<String, Set<Integer>>();
+	}
+
+	public BlockIndex(String path) {
+		this.invertedIndex = (Map<String, Set<Integer>>) SerializationUtilities.loadSerializedObject(path);
+		ObjectMapper objectMapper = new ObjectMapper();
 	}
 
 	public void buildQueryBlocks() {
@@ -68,8 +98,13 @@ public class BlockIndex {
 	public void storeBlockIndex(String path, String tableName) {
 		SerializationUtilities.storeSerializedObject(this.invertedIndex, path + tableName + "InvertedIndex" );
 	}
+	
+	public void loadBlockIndex(String path, String tableName) {
+		this.invertedIndex = (Map<String, Set<Integer>>) SerializationUtilities.loadSerializedObject(path + tableName + "InvertedIndex" );
+	}
+	
 
-	protected List<AbstractBlock> parseIndex(Map<String, Set<Integer>> invertedIndex) {
+	public static List<AbstractBlock> parseIndex(Map<String, Set<Integer>> invertedIndex) {
 		final List<AbstractBlock> blocks = new ArrayList<AbstractBlock>();
 		for (Entry<String, Set<Integer>> term : invertedIndex.entrySet()) {
 			if (1 < term.getValue().size()) {
@@ -81,6 +116,39 @@ public class BlockIndex {
 		invertedIndex.clear();
 		return blocks;
 	}
+	
+	public Map<String, Set<Integer>> getInvertedIndex() {
+		return invertedIndex;
+	}
 
+	public void setInvertedIndex(Map<String, Set<Integer>> invertedIndex) {
+		this.invertedIndex = invertedIndex;
+	}
 
+	@Override
+	public RelDataType getRowType(RelDataTypeFactory typeFactory) {
+		final List<RelDataType> types = new ArrayList<>();
+		final List<String> names = new ArrayList<>();
+		if (names.isEmpty()) {
+			names.add("line");
+			types.add(typeFactory.createSqlType(SqlTypeName.VARCHAR));
+		}
+		return typeFactory.createStructType(Pair.zip(names, types));
+	}
+
+	public BlockIndexStatistic getBlockIndexStatistic() {
+		return blockIndexStatistic;
+	}
+
+	public void setBlockIndexStatistic(BlockIndexStatistic blockIndexStatistic) {
+		this.blockIndexStatistic = blockIndexStatistic;
+	}
+
+	@Override
+	public RelNode toRel(ToRelContext context, RelOptTable relOptTable) {
+		return LogicalBlockIndexScan.create(context.getCluster(), relOptTable);
+	}
+
+	
+	
 }

@@ -16,15 +16,18 @@
  */
 package org.imis.calcite.adapter.enumerable;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.calcite.adapter.enumerable.EnumUtils;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.adapter.enumerable.EnumerableRel;
 import org.apache.calcite.adapter.enumerable.EnumerableRelImplementor;
 import org.apache.calcite.adapter.enumerable.PhysType;
+import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.tree.BlockBuilder;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.linq4j.tree.Expressions;
@@ -32,13 +35,13 @@ import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptCost;
 import org.apache.calcite.plan.RelOptPlanner;
 import org.apache.calcite.plan.RelOptTable;
+import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.util.Source;
 import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.calcite.rel.core.Deduplicate;
-import org.imis.calcite.rel.planner.RelBlockIndex;
 import org.imis.calcite.util.NewBuiltInMethod;
 import org.imis.er.BlockIndex.BlockIndex;
 import org.imis.er.Utilities.SerializationUtilities;
@@ -66,68 +69,64 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 			RelOptCluster cluster,
 			RelTraitSet traitSet,
 			RelNode input,
-			RelBlockIndex blockIndex,
+			RelNode blockInput,
 			RelOptTable table,
 			Integer key,
 			Source source,
 			List<CsvFieldType> fieldTypes){
-		super(cluster, traitSet,  input, blockIndex, table, key, source, fieldTypes);
+		super(cluster, traitSet,  input, blockInput, table, key, source, fieldTypes);
 		this.traitSet =
 				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
 		
 	}
 
 
-	public static RelNode create( RelNode input, RelBlockIndex blockIndex, RelOptTable table, Integer key,
+	public static RelNode create( RelNode input, RelNode blockInput, RelOptTable table, Integer key,
 			Source source, List<CsvFieldType> fieldTypes) {
 		// TODO Auto-generated method stub
 		final RelOptCluster cluster = input.getCluster();
 		final RelMetadataQuery mq = cluster.getMetadataQuery();
 		final RelTraitSet traitSet =
 				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
-		return new EnumerableDeduplicate(cluster, traitSet, input, blockIndex, table, key, source, fieldTypes);
+		return new EnumerableDeduplicate(cluster, traitSet, input, blockInput, table, key, source, fieldTypes);
 	}
 
 
-	@Override public  EnumerableDeduplicate copy(RelTraitSet traitSet,  RelNode input){
-		return new EnumerableDeduplicate(getCluster(), traitSet, input, this.blockIndex, this.table, this.key, this.source, this.fieldTypes);
+	@Override public  EnumerableDeduplicate copy(RelTraitSet traitSet,  RelNode input, RelNode blockInput){
+		return new EnumerableDeduplicate(getCluster(), traitSet, input, blockInput, this.table, this.key, this.source, this.fieldTypes);
 	}
 
-	@Override public RelOptCost computeSelfCost(RelOptPlanner planner,
-			RelMetadataQuery mq) {
-		// Multiply the cost by a factor that makes a scan more attractive if it
-		// has significantly fewer fields than the original scan.
-		//
-		// The "+ 2D" on top and bottom keeps the function fairly smooth.
-		//
-		// For example, if table has 3 fields, project has 1 field,
-		// then factor = (1 + 2) / (3 + 2) = 0.6
-		//System.out.println("Computing cost");
-		RelOptCost cost =  super.computeSelfCost(planner, mq)
-				.multiplyBy((fieldTypes.size() + 2D)
-						/ (table.getRowType().getFieldCount() + 2D));
-		return cost;
-	}
 	/**
 	 * Calls the java function that implements the deduplication
 	 * For inputs we get the tableName, source, key and fieldTypes
 	 * as directed by the LogicalPlan and the parsing.
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public Result implement(EnumerableRelImplementor implementor, Prefer pref) {
 
 		final BlockBuilder builder = new BlockBuilder();
 
-		final EnumerableRel child = (EnumerableRel) getInput();
+		final EnumerableRel child = (EnumerableRel) getInputs().get(0);
+		final EnumerableRel blocksChild = (EnumerableRel) getInputs().get(1);
 
 		final Result result =
 				implementor.visitChild(this, 0, child, pref);
+		
+		final Result blocksResult =
+				implementor.visitChild(this, 0, blocksChild, pref);
 
 		final PhysType physType = result.physType;
+		final PhysType blocksPhysType = blocksResult.physType;
+
 		final Expression inputEnumerable =
 				builder.append(
 						"inputEnumerable", result.block, false);
-
+		
+		final Expression blockIndex =
+				builder.append(
+						"blockIndex", blocksResult.block, false);
+		
 		String schemaName = "";
 		String tableName = "";
 
@@ -137,6 +136,7 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 		}
 		AtomicBoolean ab = new AtomicBoolean();
 		ab.set(false);
+		System.out.println(blockIndex);
 		builder.add(Expressions.return_(null, Expressions.call(
 				NewBuiltInMethod.DEDUPLICATE_ENUM.method,
 				inputEnumerable,
@@ -144,9 +144,9 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 				Expressions.constant(this.key),
 				Expressions.constant(this.source.toString()),
 				Expressions.constant(this.fieldTypes),
-				Expressions.constant(ab)
-				)));
-
+				Expressions.constant(ab),
+				blockIndex
+		)));
 		return implementor.result(physType, builder.toBlock());
 
 	}

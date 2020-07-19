@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,11 +15,12 @@ import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.util.Sources;
 import org.imis.calcite.adapter.csv.CsvEnumerator;
 import org.imis.calcite.adapter.csv.CsvFieldType;
+import org.imis.er.BlockIndex.BlockIndex;
+import org.imis.er.BlockIndex.BlockIndexStatistic;
 import org.imis.er.BlockIndex.QueryBlockIndex;
 import org.imis.er.DataStructures.AbstractBlock;
 import org.imis.er.DataStructures.DecomposedBlock;
 import org.imis.er.DataStructures.EntityResolvedTuple;
-import org.imis.er.DataStructures.UnilateralBlock;
 import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
 import org.imis.er.MetaBlocking.BlockFiltering;
 import org.imis.er.MetaBlocking.ComparisonsBasedBlockPurging;
@@ -57,7 +59,7 @@ public class DeduplicationExecution<T> {
 	 */		
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
-		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
+		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab, BlockIndex blockIndex) {
 		double deduplicateStartTime = System.currentTimeMillis();
 		
 		Integer hashType = 0; //0 = JDK, 1 = TROVE, 2 = FAST
@@ -72,10 +74,21 @@ public class DeduplicationExecution<T> {
 		queryBlockIndex.createBlockIndex(queryData, key);
 		queryBlockIndex.buildQueryBlocks();
 		queryData.clear(); // no more need for query data
+
+		// Get QueryBlock Index Statistics
+		BlockIndexStatistic queryBlockIndexStatistic = new BlockIndexStatistic(queryBlockIndex.getInvertedIndex());
+		Map<String, Integer> histogram = queryBlockIndexStatistic.getBlocksHistogram();
 		
+		// BlockJoin
 		List<AbstractBlock> blocks = queryBlockIndex
 				.joinBlockIndices(tableName);
 		double blockingEndTime = System.currentTimeMillis();
+		
+		/* Get block Statistics after the BlockJoin
+		 * Consider to calculate statistics of big BI, and find other Statistics too.
+		*/
+		//System.out.println(blockIndex.getStatistic());
+		
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((blockingEndTime - blockingStartTime)/1000) + ",");
 
@@ -98,7 +111,7 @@ public class DeduplicationExecution<T> {
 
 		if (blocks.size() > 10) {
 			double blockFilteringStartTime = System.currentTimeMillis();
-			BlockFiltering bFiltering = new BlockFiltering(0.35);
+			BlockFiltering bFiltering = new BlockFiltering(0.55);
 			bFiltering.applyProcessing(blocks);
 			double blockFilteringEndTime = System.currentTimeMillis();
 
@@ -108,25 +121,33 @@ public class DeduplicationExecution<T> {
 			}
 			
 		}
+		int noOfComps = 0;
+		
+		for(AbstractBlock block : blocks) {
+			noOfComps += block.getNoOfComparisons();
+		}
+		
+		System.out.println(noOfComps);
 		double edgePruningStartTime = System.currentTimeMillis();
 
 		EfficientEdgePruning eEP = new EfficientEdgePruning();
 		eEP.applyProcessing(blocks);
 		
-		try {
-			getBlockDistribution(blocks, tableName);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		double edgePruningEndTime = System.currentTimeMillis();
 		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
 			DEDUPLICATION_EXEC_LOGGER.debug(Double.toString((edgePruningEndTime - edgePruningStartTime)/1000) + ",");
 		}
-
+		noOfComps = 0;
+		
+		for(AbstractBlock block : blocks) {
+			noOfComps += block.getNoOfComparisons();
+		}
+		
+		System.out.println(noOfComps);
 		//Get ids of final entities
 		//List<UnilateralBlock> uBlocks = (List<UnilateralBlock>) (List<? extends AbstractBlock>) blocks;
 		List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
+		
 		Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(dBlocks);	
 		AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((CsvEnumerator<Object[]>) originalEnumerator, totalIds, key);
 		//TIntObjectHashMap<Object[]>  entityMap = createMapTrove(comparisonEnumerable, key);
@@ -149,6 +170,8 @@ public class DeduplicationExecution<T> {
 		return entityResolvedTuple;
 	}
 	
+	
+
 	private static void getBlockDistribution(List<AbstractBlock> blocks, String tableName) throws IOException {
 		// TODO Auto-generated method stub
 		File csvFile = new File("./data/blockDistr_" + tableName + ".csv");
@@ -161,7 +184,7 @@ public class DeduplicationExecution<T> {
 		csvWriter.flush();
 		csvWriter.close();
 		double storeEndTime = System.currentTimeMillis();
-		System.out.println("Storing blocks time: " + (storeEndTime - storeStartTime)/1000);
+		System.out.println("Storing # of comparisons time: " + (storeEndTime - storeStartTime)/1000);
 		
 	}
 

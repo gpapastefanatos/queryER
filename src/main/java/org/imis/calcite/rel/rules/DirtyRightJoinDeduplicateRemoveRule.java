@@ -54,7 +54,7 @@ public class DirtyRightJoinDeduplicateRemoveRule extends RelOptRule {
 		if(tableRight.size() > 0) {
 			rightTableName = tableRight.get(1);
 		}
-		newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(), join.getCondition(),
+		newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(0), join.getCondition(),
 				join.getVariablesSet(), join.getJoinType(), null, deduplicateRight.getKey(),
 				null, rightTableName, null,  deduplicateRight.getFieldTypes().size(), true);	
 		

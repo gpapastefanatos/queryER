@@ -89,6 +89,7 @@ import org.apache.calcite.util.ReflectiveVisitDispatcher;
 import org.apache.calcite.util.ReflectiveVisitor;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.mapping.Mappings;
+import org.imis.calcite.rel.logical.LogicalBlockIndexScan;
 import org.imis.calcite.rel.logical.LogicalDeduplicate;
 
 import com.google.common.collect.Lists;
@@ -503,6 +504,10 @@ public class RelStructuredTypeFlattener implements ReflectiveVisitor {
 
 
 	public void rewriteRel(LogicalDeduplicate rel) {
+		rewriteGeneric(rel);
+	}
+	
+	public void rewriteRel(LogicalBlockIndexScan rel) {
 		rewriteGeneric(rel);
 	}
 

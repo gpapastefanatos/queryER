@@ -3,6 +3,7 @@ package org.imis.calcite.rel.rules;
 import org.apache.calcite.plan.RelOptRule;
 import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.RelOptRuleOperand;
+import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.RelFactories;
@@ -48,9 +49,8 @@ public class FilterDeduplicateTransposeRule extends RelOptRule {
 		// TODO Auto-generated method stub
 		final Filter filter = call.rel(0);
 		final Deduplicate deduplicate = call.rel(1);
-		RelNode newFilterRel = filter.copy(filter.getTraitSet(), deduplicate.getInput(), filter.getCondition()); // change input of filter with dedups
-		RelNode newDedupRel = deduplicate.copy(deduplicate.getTraitSet(), newFilterRel);
-
+		RelNode newFilterRel = filter.copy(filter.getTraitSet(), deduplicate.getInput(0), filter.getCondition()); // change input of filter with dedups
+		RelNode newDedupRel = deduplicate.copy(deduplicate.getTraitSet(), newFilterRel, deduplicate.getInput(1));
 		call.transformTo(newDedupRel);
 
 	}
