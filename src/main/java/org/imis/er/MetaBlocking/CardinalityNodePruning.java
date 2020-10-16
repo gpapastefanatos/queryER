@@ -13,51 +13,51 @@
  */
 
 package org.imis.er.MetaBlocking;
-
-
-import org.imis.er.Comparators.ComparisonWeightComparator;
-import org.imis.er.DataStructures.AbstractBlock;
-import org.imis.er.DataStructures.Comparison;
-import org.imis.er.MetaBlocking.AbstractNodePruning;
-
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Queue;
-
-public class CardinalityNodePruning extends AbstractNodePruning {
-
-    protected int kThreshold;
-
-    public CardinalityNodePruning(WeightingScheme scheme) {
-        this("Cardinality Node Pruning", scheme);
-    }
-    
-    public CardinalityNodePruning(String description, WeightingScheme scheme) {
-        super(description, scheme);
-        kThreshold = -1;
-    }
-
-    @Override
-    protected void processPartition(int firstId, int lastId, List<AbstractBlock> blocks) {
-        kThreshold = (int) Math.max(1, blockAssingments / entityIndex.getNoOfEntities());
-        for (int i = firstId; i < lastId; i++) {
-            final Integer[] neighbors = getAdjacentEntities(i);
-            if (neighbors == null) {
-                continue;
-            }
-
-            Queue<Comparison> nearestEntities = new PriorityQueue<Comparison>((int) (2 * kThreshold), new ComparisonWeightComparator());
-            for (int neighborId : neighbors) {
-                Comparison comparison = getComparison(i, neighborId);
-                comparison.setUtilityMeasure(getWeight(comparison));
-
-                nearestEntities.add(comparison);
-                if (kThreshold < nearestEntities.size()) {
-                    nearestEntities.poll();
-                }
-            }
-
-            blocks.add(getDecomposedBlock(cleanCleanER, nearestEntities));
-        }
-    }
-}
+//
+//
+//import org.imis.er.Comparators.ComparisonWeightComparator;
+//import org.imis.er.DataStructures.AbstractBlock;
+//import org.imis.er.DataStructures.Comparison;
+//import org.imis.er.MetaBlocking.AbstractNodePruning;
+//
+//import java.util.List;
+//import java.util.PriorityQueue;
+//import java.util.Queue;
+//
+//public class CardinalityNodePruning extends AbstractNodePruning {
+//
+//    protected int kThreshold;
+//
+//    public CardinalityNodePruning(WeightingScheme scheme) {
+//        this("Cardinality Node Pruning", scheme);
+//    }
+//    
+//    public CardinalityNodePruning(String description, WeightingScheme scheme) {
+//        super(description, scheme);
+//        kThreshold = -1;
+//    }
+//
+//    @Override
+//    protected void processPartition(int firstId, int lastId, List<AbstractBlock> blocks) {
+//        kThreshold = (int) Math.max(1, blockAssingments / entityIndex.getNoOfEntities());
+//        for (int i = firstId; i < lastId; i++) {
+//            final Integer[] neighbors = getAdjacentEntities(i);
+//            if (neighbors == null) {
+//                continue;
+//            }
+//
+//            Queue<Comparison> nearestEntities = new PriorityQueue<Comparison>((int) (2 * kThreshold), new ComparisonWeightComparator());
+//            for (int neighborId : neighbors) {
+//                Comparison comparison = getComparison(i, neighborId);
+//                comparison.setUtilityMeasure(getWeight(comparison));
+//
+//                nearestEntities.add(comparison);
+//                if (kThreshold < nearestEntities.size()) {
+//                    nearestEntities.poll();
+//                }
+//            }
+//
+//            blocks.add(getDecomposedBlock(cleanCleanER, nearestEntities));
+//        }
+//    }
+//}

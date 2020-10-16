@@ -22,6 +22,7 @@ import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelDistribution;
 import org.apache.calcite.rel.RelDistributionTraitDef;
 import org.apache.calcite.rel.RelReferentialConstraint;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.ImmutableBitSet;
 
 import com.google.common.collect.ImmutableList;
@@ -64,6 +65,11 @@ public class Statistics {
 		@Override
 		public RelDistribution getDistribution() {
 			return RelDistributionTraitDef.INSTANCE.getDefault();
+		}
+
+		@Override
+		public Double getComparisons(List<RexNode> paramList) {
+			return null;
 		}
 	};
 
@@ -128,6 +134,12 @@ public class Statistics {
 			@Override
 			public RelDistribution getDistribution() {
 				return RelDistributionTraitDef.INSTANCE.getDefault();
+			}
+
+			@Override
+			public Double getComparisons(List<RexNode> paramList) {
+				// TODO Auto-generated method stub
+				return null;
 			}
 		};
 	}

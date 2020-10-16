@@ -75,8 +75,6 @@ import org.imis.calcite.rel.rules.FilterDeduplicateTransposeRule;
 import org.imis.calcite.rel.rules.FilterMergeTransposeRule;
 import org.imis.calcite.rel.rules.DirtyJoinDeduplicateRemoveRule;
 import org.imis.calcite.rel.rules.MultiDirtyRightJoinDeduplicateRemoveRule;
-import org.imis.calcite.rel.rules.DirtyLeftJoinDeduplicateRemoveRule;
-import org.imis.calcite.rel.rules.DirtyRightJoinDeduplicateRemoveRule;
 import org.imis.calcite.rel.rules.JoinConvertToDuplicateRule;
 
 import com.google.common.collect.ImmutableList;
@@ -126,11 +124,8 @@ public class RelOptRules {
 					FilterDeduplicateTransposeRule.INSTANCE,
 					FilterMergeTransposeRule.INSTANCE,
 					DirtyJoinDeduplicateRemoveRule.INSTANCE,
-					DirtyRightJoinDeduplicateRemoveRule.INSTANCE,
-					DirtyLeftJoinDeduplicateRemoveRule.INSTANCE,
-					//DeduplicateScanRemoveRule.INSTANCE,
-					MultiDirtyRightJoinDeduplicateRemoveRule.INSTANCE,
-					//JoinConvertToDuplicateRule.INSTANCE,
+//					MultiDirtyLeftJoinDeduplicateRemoveRule.INSTANCE,
+//					MultiDirtyRightJoinDeduplicateRemoveRule.INSTANCE,
 					ProjectFilterTransposeRule.INSTANCE,
 					FilterProjectTransposeRule.INSTANCE,
 					FilterJoinRule.FILTER_ON_JOIN,

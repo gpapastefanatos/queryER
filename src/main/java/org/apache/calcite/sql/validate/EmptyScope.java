@@ -163,7 +163,7 @@ class EmptyScope implements SqlValidatorScope {
 					final RelOptSchema relOptSchema =
 							validator.catalogReader.unwrap(RelOptSchema.class);
 					final RelDataType rowType = table.getRowType(validator.typeFactory);
-					table2 = RelOptTableImpl.create(relOptSchema, rowType, entry, null);
+					table2 = RelOptTableImpl.create(relOptSchema, rowType, entry, null, null);
 				}
 				namespace = new TableNamespace(validator, table2);
 				resolved.found(namespace, false, null, path, remainingNames);

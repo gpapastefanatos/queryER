@@ -14,27 +14,27 @@
 
 package org.imis.er.EfficiencyLayer.BlockRefinement;
 
-
-import org.imis.er.Comparators.BlockUtilityComparator;
-import org.imis.er.DataStructures.AbstractBlock;
-import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
-
-import java.util.Collections;
-import java.util.List;
-
-
-
-public class BlockScheduling extends AbstractEfficiencyMethod {
-    
-    public BlockScheduling() {
-        super("Block Scheduling");
-    }
-    
-    @Override
-    public void applyProcessing(List<AbstractBlock> blocks) {
-        for (AbstractBlock block : blocks) {
-            block.setUtilityMeasure();
-        }
-        Collections.sort(blocks, new BlockUtilityComparator());
-    }
-} 
+//
+//import org.imis.er.Comparators.BlockUtilityComparator;
+//import org.imis.er.DataStructures.AbstractBlock;
+//import org.imis.er.EfficiencyLayer.AbstractEfficiencyMethod;
+//
+//import java.util.Collections;
+//import java.util.List;
+//
+//
+//
+//public class BlockScheduling extends AbstractEfficiencyMethod {
+//    
+//    public BlockScheduling() {
+//        super("Block Scheduling");
+//    }
+//    
+//    @Override
+//    public void applyProcessing(List<AbstractBlock> blocks) {
+//        for (AbstractBlock block : blocks) {
+//            block.setUtilityMeasure();
+//        }
+//        Collections.sort(blocks, new BlockUtilityComparator());
+//    }
+//} 

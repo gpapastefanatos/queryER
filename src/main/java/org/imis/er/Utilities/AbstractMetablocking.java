@@ -81,6 +81,29 @@ public abstract class AbstractMetablocking extends AbstractEfficiencyMethod {
             }
         }
     }
+    
+    protected void getValidComparisons(List<AbstractBlock> blocks) {
+    	initializeEntityIndex(blocks);
+        
+        validComparisons = 0;
+   
+        for (AbstractBlock block : blocks) {
+            ComparisonIterator iterator = block.getComparisonIterator();
+            while (iterator.hasNext()) {
+                Comparison comparison = iterator.next();     
+                if (!entityIndex.isRepeated(block.getBlockIndex(), comparison)) {
+                    validComparisons++;    
+                }
+            }
+        }
+		System.out.println("Valid comps real: " + validComparisons);
+    }
+    
+    protected void initializeEntityIndex(List<AbstractBlock> blocks) {
+    	 if (entityIndex == null) {
+             entityIndex = new EntityIndex(blocks);
+         }
+    }
 
     protected double getWeight(int blockIndex, Comparison comparison) {
         switch (weightingScheme) {

@@ -18,53 +18,18 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 public class ExecuteBlockComparisons<T> {
 
-	private HashMap<Integer, EntityProfile> dataset = new HashMap<>();
 	private HashMap<Integer, Object[]> newData = new HashMap<>();
-	private TIntObjectHashMap<Object[]> newData2 = new TIntObjectHashMap<>();
-	private Int2ObjectOpenHashMap<Object[]> newData3 = new Int2ObjectOpenHashMap<>();
 	protected static final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
-
-	public ExecuteBlockComparisons(List<EntityProfile> profiles) {
-		for (EntityProfile ep : profiles) {
-			dataset.put(Integer.parseInt(ep.getEntityUrl()), ep);
-		}
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("Dataset size\t:\t" + dataset.size());
-	}
-
 
 	public ExecuteBlockComparisons(HashMap<Integer, Object[]> newData) {
 		this.newData = newData;
 	}
 
-	public ExecuteBlockComparisons(TIntObjectHashMap<Object[]> newData2) {
-		this.newData2 = newData2;
-	}
-
-	public ExecuteBlockComparisons(Int2ObjectOpenHashMap<Object[]> newData3) {
-		this.newData3 = newData3;
-	}
-
-
 	public EntityResolvedTuple comparisonExecutionAll(List<AbstractBlock> blocks, Set<Integer> qIds,
-			Integer keyIndex, Integer noOfFields, Integer hashType) {
-		
-		if(hashType == 0) {
-			return comparisonExecutionJdk(blocks, qIds, keyIndex, noOfFields);
-		}
-		else if(hashType == 1) {
-			return comparisonExecutionTrove(blocks, qIds, keyIndex, noOfFields);
-		}
-		else if(hashType == 2) {
-			return comparisonExecutionFast(blocks, qIds, keyIndex, noOfFields);
-
-		}
-		else {
-			return null;
-		}
+			Integer keyIndex, Integer noOfFields) {
+		return comparisonExecutionJdk(blocks, qIds, keyIndex, noOfFields);
 	}
 
-	
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public EntityResolvedTuple comparisonExecutionJdk(List<AbstractBlock> blocks, Set<Integer> qIds,
@@ -75,14 +40,14 @@ public class ExecuteBlockComparisons<T> {
 		Set<String> matches = new HashSet<>();
 		Set<AbstractBlock> nBlocks = new HashSet<>(blocks);
 		Set<String> uComparisons = new HashSet<>();
+		double compTime = 0.0;
 		for (AbstractBlock block : nBlocks) {
 			ComparisonIterator iterator = block.getComparisonIterator();
 			while (iterator.hasNext()) {
 				Comparison comparison = iterator.next();
-
 				if (!qIds.contains(comparison.getEntityId1()) && !qIds.contains(comparison.getEntityId2()))
 					continue;
-
+				
 				String uniqueComp = "";
 				if (comparison.getEntityId1() > comparison.getEntityId2())
 					uniqueComp = comparison.getEntityId1() + "u" + comparison.getEntityId2();
@@ -92,126 +57,27 @@ public class ExecuteBlockComparisons<T> {
 					continue;
 				uComparisons.add(uniqueComp);
 
-				double similarity = ProfileComparison.getJaroSimilarity(
-						newData.get(comparison.getEntityId1()),
-						newData.get(comparison.getEntityId2()),
-						keyIndex);
-
+				Object[] entity1 = newData.get(comparison.getEntityId1());
+				Object[] entity2 = newData.get(comparison.getEntityId2());
+				if(entity1 == null || entity2 == null) continue;
+				double compStartTime = System.currentTimeMillis();
+				double similarity = ProfileComparison.getJaroSimilarity(entity1, entity2, keyIndex);
+				double compEndTime = System.currentTimeMillis();
+				compTime += compEndTime - compStartTime;
 				comparisons++;
-				if (similarity >= 0.92 ) {
+				if (similarity >= 0.92) {
 					matches.add(uniqueComp);
 					uFind.union(comparison.getEntityId1(), comparison.getEntityId2());
 				}
 			}
-		}
-
-		
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug(matches.size() + ",");
-			DEDUPLICATION_EXEC_LOGGER.debug(comparisons + ",");
-		}
-		EntityResolvedTuple eRT = new EntityResolvedTuple(newData, uFind);		
+		}	
+		EntityResolvedTuple eRT = new EntityResolvedTuple(newData, uFind, keyIndex, noOfFields);	
+		eRT.setComparisons(comparisons);
+		eRT.setMatches(matches.size());
+		eRT.setCompTime(compTime/1000);
 		eRT.getAll();
 		return eRT;
 
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public EntityResolvedTuple comparisonExecutionTrove(List<AbstractBlock> blocks, Set<Integer> qIds,
-			Integer keyIndex, Integer noOfFields) {
-		int comparisons = 0;
-		UnionFind uFind = new UnionFind(qIds);
-		
-		Set<String> matches = new HashSet<>();
-		Set<AbstractBlock> nBlocks = new HashSet<>(blocks);
-		Set<String> uComparisons = new HashSet<>();
-		for (AbstractBlock block : nBlocks) {
-			ComparisonIterator iterator = block.getComparisonIterator();
-			while (iterator.hasNext()) {
-				Comparison comparison = iterator.next();
-
-				if (!qIds.contains(comparison.getEntityId1()) && !qIds.contains(comparison.getEntityId2()))
-					continue;
-
-				String uniqueComp = "";
-				if (comparison.getEntityId1() > comparison.getEntityId2())
-					uniqueComp = comparison.getEntityId1() + "u" + comparison.getEntityId2();
-				else
-					uniqueComp = comparison.getEntityId2() + "u" + comparison.getEntityId1();
-				if (uComparisons.contains(uniqueComp))
-					continue;
-				uComparisons.add(uniqueComp);
-
-				double similarity = ProfileComparison.getJaroSimilarity(
-						newData2.get(comparison.getEntityId1()),
-						newData2.get(comparison.getEntityId2()),
-						keyIndex);
-
-				comparisons++;
-				if (similarity >= 0.92 ) {
-					matches.add(uniqueComp);
-					uFind.union(comparison.getEntityId1(), comparison.getEntityId2());
-				}
-			}
-		}
-
-
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug("Matches Found " + matches.size());
-			DEDUPLICATION_EXEC_LOGGER.debug("Total Comparisons " + comparisons);
-		}
-		EntityResolvedTuple eRT = new EntityResolvedTuple(newData2, uFind);		
-		eRT.getAll2();
-		return eRT;
-
-	}
-	
-	private EntityResolvedTuple comparisonExecutionFast(List<AbstractBlock> blocks, Set<Integer> qIds, Integer keyIndex,
-			Integer noOfFields) {
-		int comparisons = 0;
-		UnionFind uFind = new UnionFind(qIds);
-		
-		Set<String> matches = new HashSet<>();
-		Set<AbstractBlock> nBlocks = new HashSet<>(blocks);
-		Set<String> uComparisons = new HashSet<>();
-		for (AbstractBlock block : nBlocks) {
-			ComparisonIterator iterator = block.getComparisonIterator();
-			while (iterator.hasNext()) {
-				Comparison comparison = iterator.next();
-
-				if (!qIds.contains(comparison.getEntityId1()) && !qIds.contains(comparison.getEntityId2()))
-					continue;
-
-				String uniqueComp = "";
-				if (comparison.getEntityId1() > comparison.getEntityId2())
-					uniqueComp = comparison.getEntityId1() + "u" + comparison.getEntityId2();
-				else
-					uniqueComp = comparison.getEntityId2() + "u" + comparison.getEntityId1();
-				if (uComparisons.contains(uniqueComp))
-					continue;
-				uComparisons.add(uniqueComp);
-
-				double similarity = ProfileComparison.getJaroSimilarity(
-						newData3.get(comparison.getEntityId1()),
-						newData3.get(comparison.getEntityId2()),
-						keyIndex);
-
-				comparisons++;
-				if (similarity >= 0.92 ) {
-					matches.add(uniqueComp);
-					uFind.union(comparison.getEntityId1(), comparison.getEntityId2());
-				}
-			}
-		}
-
-
-		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) {
-			DEDUPLICATION_EXEC_LOGGER.debug("Matches Found " + matches.size());
-			DEDUPLICATION_EXEC_LOGGER.debug("Total Comparisons " + comparisons);
-		}
-		EntityResolvedTuple eRT = new EntityResolvedTuple(newData3, uFind);		
-		eRT.getAll3();
-		return eRT;
-	}
-
 }

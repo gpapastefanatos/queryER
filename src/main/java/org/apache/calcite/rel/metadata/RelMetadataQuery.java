@@ -213,6 +213,7 @@ public class RelMetadataQuery extends RelMetadataQueryBase {
 		}
 	}
 
+	
 	/**
 	 * Returns the
 	 * {@link BuiltInMetadata.MaxRowCount#getMaxRowCount()}

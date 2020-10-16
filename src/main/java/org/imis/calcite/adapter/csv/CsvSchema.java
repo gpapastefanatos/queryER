@@ -105,8 +105,7 @@ public class CsvSchema extends AbstractSchema {
 		for (File file : files) {
 			Source source = Sources.of(file);
 			Source sourceSansGz = source.trim(".gz");
-			final Source sourceSansJson = sourceSansGz.trimOrNull(".json");
-
+			
 			final Source sourceSansCsv = sourceSansGz.trimOrNull(".csv");
 			if (sourceSansCsv != null) {
 				final CsvTranslatableTable table = createTable(source, sourceSansCsv.relative(baseSource).path());
@@ -138,7 +137,7 @@ public class CsvSchema extends AbstractSchema {
 					CsvEnumerator csvEnumerator = new CsvEnumerator(table.getSource(), ab,
 							table.getFieldTypes());
 					CsvTableStatistic csvTableStatistic = new CsvTableStatistic(csvEnumerator,
-							table.getFieldTypes().size(), table.getKey());
+							tableName, table.getFieldTypes().size(), table.getKey(), files, source);
 					csvTableStatistic.getStatistics();
 					csvTableStatistic.storeStatistics();
 					table.setCsvTableStatistic(csvTableStatistic);
@@ -146,9 +145,9 @@ public class CsvSchema extends AbstractSchema {
 				builder.put(sourceSansCsv.relative(baseSource).path(), table);
 
 				// Create Block index and store into data folder (only if not already created)
+				if(tableName.contains("ground_truth")) continue;
 				BaseBlockIndex blockIndex = new BaseBlockIndex();
-				if(!new File("./data/blockIndex/" + tableName + "InvertedIndex").exists() ||
-				   !new File("./data/tableStats/blockIndex/" + tableName + ".json").exists() ) {
+				if((!new File("./data/blockIndex/" + tableName + "InvertedIndex").exists())) {
 					System.out.println("Creating Block Index..");
 					AtomicBoolean ab = new AtomicBoolean();
 					ab.set(false);
@@ -157,72 +156,38 @@ public class CsvSchema extends AbstractSchema {
 							table.getFieldTypes());
 					
 					blockIndex.createBlockIndex(enumerator, table.getKey());
-					blockIndex.buildQueryBlocks();
+					blockIndex.buildBlocks();
+					blockIndex.sortIndex();
 					blockIndex.storeBlockIndex("./data/blockIndex/", tableName );
-					BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), tableName);
-					blockIndexStatistic.setTfIdf(blockIndex.getTfIdf());
+					BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
+							blockIndex.getEntitiesToBlocks(), tableName);
 					blockIndex.setBlockIndexStatistic(blockIndexStatistic);
-					//blockIndexStatistic.getStatistics();
-					// Compare histogram with tfidf
-					Map<String, Integer> sortedHistogram = blockIndexStatistic.getBlocksHistogram().entrySet()
-								        .stream()
-								        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-								        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2,
-								        LinkedHashMap::new));
-					Map<String, Integer> sortedTfIdf =  blockIndexStatistic.getTfIdf().entrySet()
-				        .stream()
-				        .sorted(Collections.reverseOrder(Map.Entry.comparingByValue()))
-				        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2,
-			        	LinkedHashMap::new));
-					
-					int histSize = sortedHistogram.size();
-					int tfIdfSize = sortedTfIdf.size();
-					System.out.println("Histogram size: "+ histSize);
-					System.out.println("TfIdf size: " + tfIdfSize);
-					
-					System.out.println("Histogram top 10: "+ histSize);
-					
-					Set<String> shKeys = sortedHistogram.keySet();
-					int getBest = 10;
-					int index = 0;
-					for(String shKey : shKeys) {
-						if(index <  getBest) 
-							System.out.print(shKey + ": " + sortedHistogram.get(shKey) + ", ");
-						else break;
-						index+=1;
-					}
-					System.out.println();
-
-					System.out.println("TfIdf top 10: "+ histSize);
-					Set<String> tfKeys = sortedHistogram.keySet();
-
-					index = 0;
-					for(String tfKey : tfKeys) {
-						if(index < getBest) 
-							System.out.print(tfKey + ": " + sortedTfIdf.get(tfKey) + ", ");
-						else break;
-						index+=1;
-					}
-					System.out.println();
-
 					try {
 						blockIndexStatistic.storeStatistics();
-					} catch (IOException e) {
-						e.printStackTrace();
+					} catch (IOException e1) {
+						e1.printStackTrace();
 					}
-					// Print block Index Statistics
+					System.out.println("Block Index created!");
 				}
 				else {
 					System.out.println("Block Index already created!");
-					//blockIndex.loadBlockIndex("./data/blockIndex/", tableName);
-					ObjectMapper objectMapper = new ObjectMapper();
+					blockIndex.loadBlockIndex("./data/blockIndex/", tableName);
+					ObjectMapper objectMapper = new ObjectMapper();  
 					try {
-						blockIndex.setBlockIndexStatistic(objectMapper.readValue(new File("./data/tableStats/blockIndex/" + tableName + ".json"),
+						blockIndex.setBlockIndexStatistic(objectMapper.readValue(new File("./data/tableStats/blockIndexStats/" + tableName + ".json"),
 								BlockIndexStatistic.class));
 					} catch (IOException e) {
-						e.printStackTrace();
+						BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
+								blockIndex.getEntitiesToBlocks(), tableName);
+						blockIndex.setBlockIndexStatistic(blockIndexStatistic);
+						try {
+							blockIndexStatistic.storeStatistics();
+						} catch (IOException e1) {
+							e1.printStackTrace();
+						}
+						
 					}
-
+					
 				}
 				builder.put("./data/blockIndex/" + tableName + "InvertedIndex", blockIndex);
 			}

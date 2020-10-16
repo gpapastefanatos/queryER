@@ -15,15 +15,11 @@ import gnu.trove.map.hash.TIntObjectHashMap;
  */
 public class EntityGrouping {
 	
-	public static List<Object[]> groupSimilar(UnionFind uFind, HashMap<Integer, Object[]> newData, 
-			Set<Integer> qIds, Integer keyIndex, Integer noOfFields) {
+	public static List<Object[]> groupSimilar(HashMap<Integer, Set<Integer>> revUF, 
+			HashMap<Integer, Object[]> newData, Integer keyIndex, Integer noOfFields) {
 		// TODO Auto-generated method stub
-		HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
 		List<Object[]> finalData = new ArrayList<>();
-		for (int child : uFind.getParent().keySet()) {
-			//System.out.println(uFind.getParent().get(child));
-			revUF.computeIfAbsent(uFind.getParent().get(child), x -> new HashSet<>()).add(child);
-		}
+
 		for (int id : revUF.keySet()) {
 			Object[] groupedObj = new Object[noOfFields]; //length
 			for (int idInner : revUF.get(id)) {
@@ -32,13 +28,7 @@ public class EntityGrouping {
 				if(datum != null) {
 					while(i < noOfFields) {
 						if(groupedObj[i] == null && !(datum[i].equals("") || datum[i].equals("[\\W_]"))) {
-							if(i == keyIndex) { 
-								if(qIds.contains(Integer.parseInt(datum[i].toString())))
-									groupedObj[i] = datum[i];
-							}
-							else {
-								groupedObj[i] = datum[i];
-							}
+							groupedObj[i] = datum[i];
 						}
 						else if (groupedObj[i] != null && !(datum[i].equals("") || datum[i].equals("[\\W_]"))) {
 							if(!groupedObj[i].equals(datum[i]) && i != keyIndex)
@@ -68,23 +58,5 @@ public class EntityGrouping {
 		}
 		return finalData;
 	}
-	
-	public static List<Object[]> sortSimilar2(UnionFind uFind, TIntObjectHashMap<Object[]> newData) {
-		// TODO Auto-generated method stub
-		HashMap<Integer, Set<Integer>> revUF = new HashMap<>();
-		List<Object[]> finalData = new ArrayList<>();
-		for (int child : uFind.getParent().keySet()) {
-			//System.out.println(uFind.getParent().get(child));
-			revUF.computeIfAbsent(uFind.getParent().get(child), x -> new HashSet<>()).add(child);
-		}
 
-		for (int id : revUF.keySet()) {
-			for (int idInner : revUF.get(id)) {
-				finalData.add(newData.get(idInner));
-			}
-		}
-		return finalData;
-	}
-	
-	
 }

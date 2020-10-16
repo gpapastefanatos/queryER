@@ -1,22 +1,34 @@
 package org.imis.er.BlockIndex;
 
+import static java.util.stream.Collectors.toMap;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.imis.er.DataStructures.AbstractBlock;
+import org.imis.er.DataStructures.Attribute;
 import org.imis.er.DataStructures.DecomposedBlock;
 import org.imis.er.DataStructures.EntityProfile;
 import org.imis.er.DataStructures.UnilateralBlock;
+import org.imis.er.Utilities.Converter;
 import org.imis.er.Utilities.SerializationUtilities;
 
 public class QueryBlockIndex extends BlockIndex {
 
 	protected Set<Integer> qIds;
-	
+
 	public QueryBlockIndex() {
 		this.qIds = new HashSet<>();
 	}
@@ -38,8 +50,12 @@ public class QueryBlockIndex extends BlockIndex {
 				index ++;
 			}
 			this.entityProfiles.add(eP);
-			
+
 		}
+	}
+
+	public void buildQueryBlocks() {
+		this.invertedIndex = indexEntities(0, entityProfiles);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -48,39 +64,67 @@ public class QueryBlockIndex extends BlockIndex {
 				.loadSerializedObject("./data/blockIndex/" + name + "InvertedIndex");
 		bBlocks.keySet().retainAll(this.invertedIndex.keySet());
 		return parseIndex(bBlocks);
-
 	}
 
-	public List<AbstractBlock> joinBlockIndices(Map<String, Set<Integer>> bBlocks ) {
-		bBlocks.keySet().retainAll(this.invertedIndex.keySet());
-		return parseIndex(bBlocks);
-	}
 
-	
-	public Set<Integer> blocksToEntitiesU(List<UnilateralBlock> blocks){
+	public Set<Integer> blocksToEntities(List<AbstractBlock> blocks){
 		Set<Integer> joinedEntityIds = new HashSet<>();
-		for(UnilateralBlock block : blocks) {
-			int[] entities = block.getEntities();
+		for(AbstractBlock block : blocks) {
+			UnilateralBlock uBlock = (UnilateralBlock) block;
+			int[] entities = uBlock.getEntities();
 			joinedEntityIds.addAll(Arrays.stream(entities).boxed().collect(Collectors.toSet()));
 		}
 		return joinedEntityIds;
 	}
 	
-	public Set<Integer> blocksToEntitiesD(List<DecomposedBlock> blocks){
+
+	public Set<Integer> blocksToEntitiesD(List<AbstractBlock> blocks){
 		Set<Integer> joinedEntityIds = new HashSet<>();
-		for(DecomposedBlock block : blocks) {
-			int[] entities1 = block.getEntities1();
-			int[] entities2 = block.getEntities2();
+		for(AbstractBlock block : blocks) {
+			DecomposedBlock dBlock = (DecomposedBlock) block;
+
+			int[] entities1 = dBlock.getEntities1();
+			int[] entities2 = dBlock.getEntities2();
 			joinedEntityIds.addAll(Arrays.stream(entities1).boxed().collect(Collectors.toSet()));
 			joinedEntityIds.addAll(Arrays.stream(entities2).boxed().collect(Collectors.toSet()));
 
 		}
 		return joinedEntityIds;
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	protected Map<String, Set<Integer>> indexEntities(int sourceId, List<EntityProfile> profiles) {
+		invertedIndex = new HashMap<String, Set<Integer>>();
+		HashSet<String> stopwords = (HashSet<String>) SerializationUtilities
+				.loadSerializedObject("resources/stopwords/stopwords_SER");
+
+		HashMap<String, Integer> tfIdf = new HashMap<>();
+		for (EntityProfile profile : profiles) {
+			for (Attribute attribute : profile.getAttributes()) {
+				if (attribute.getValue() == null)
+					continue;
+				String cleanValue = attribute.getValue().replaceAll("_", " ").trim().replaceAll("\\s*,\\s*$", "")
+						.toLowerCase();
+				for (String token : cleanValue.split("[\\W_]")) {
+					if (2 < token.trim().length()) {
+						if (stopwords.contains(token.toLowerCase()))
+							continue;
+						Set<Integer> termEntities = invertedIndex.computeIfAbsent(token.trim(),
+								x -> new HashSet<Integer>());
+
+						termEntities.add(Integer.parseInt(profile.getEntityUrl()));
+						//int tokenCount = tfIdf.containsKey(token) ? tfIdf.get(token) : 0;
+						//tfIdf.put(token, tokenCount + 1);
+					}
+				}
+			}
+
+		}
+		//this.setTfIdf(tfIdf);
+		return invertedIndex;
+	}
 
 	public Set<Integer> getIds() {
-		// TODO Auto-generated method stub
 		return qIds;
 	}
 

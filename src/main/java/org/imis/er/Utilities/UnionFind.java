@@ -47,18 +47,18 @@ public class UnionFind {
 
 		if (root2 == root1) return;
 
-		if(!_rank.containsKey(root1))
-			_rank.put(root1, 0);
-		if(!_rank.containsKey(root2))
-			_rank.put(root2, 0);
+		if(!get_rank().containsKey(root1))
+			get_rank().put(root1, 0);
+		if(!get_rank().containsKey(root2))
+			get_rank().put(root2, 0);
 
-		if (_rank.get(root1) > _rank.get(root2)) {
+		if (get_rank().get(root1) > get_rank().get(root2)) {
 			_parent.put(root2, root1);
-		} else if ( _rank.get(root2) >  _rank.get(root1)) {
+		} else if ( get_rank().get(root2) >  get_rank().get(root1)) {
 			_parent.put(root1, root2);
 		} else {
 			_parent.put(root2, root1);
-			_rank.put(root1, _rank.get(root1) + 1);
+			get_rank().put(root1, get_rank().get(root1) + 1);
 		}
 	}
 
@@ -67,8 +67,18 @@ public class UnionFind {
 
 		for (int i : set) {
 			_parent.put(i, i);
-			_rank.put(i, 0);
+			get_rank().put(i, 0);
 		}
+	}
+
+
+	public HashMap<Integer,Integer> get_rank() {
+		return _rank;
+	}
+
+
+	public void set_rank(HashMap<Integer,Integer> _rank) {
+		this._rank = _rank;
 	}
 
 }

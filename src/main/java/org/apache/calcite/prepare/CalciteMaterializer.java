@@ -137,7 +137,7 @@ class CalciteMaterializer extends CalcitePrepareImpl.CalcitePreparingStmt {
 			assert table instanceof StarTable;
 			RelOptTableImpl starRelOptTable =
 					RelOptTableImpl.create(catalogReader, table.getRowType(typeFactory),
-							starTable, null);
+							starTable, null, null);
 			final RelNode rel3 =
 					RelOptMaterialization.tryUseStar(rel2, starRelOptTable);
 			if (rel3 != null) {

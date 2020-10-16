@@ -2488,15 +2488,13 @@ public class SqlToRelConverter {
 		bb.setRoot(tableRel, true);
 
 		if(deduplicate) {
-			//TODO change rowtype
-			List<String> tableName = new ArrayList<>(2);
-			tableName.add(table.getQualifiedName().get(0));
-			tableName.add("./data/blockIndex/"+ table.getQualifiedName().get(1) +"InvertedIndex");
-			RelOptTable relBlockIndex = catalogReader.getTable(tableName);
-			RelNode blockIndexScan = LogicalBlockIndexScan.create(cluster, relBlockIndex);
-			RelNode newRoot = LogicalDeduplicate.create(tableRel.getCluster(),
-					tableRel.getTraitSet().replace(Convention.NONE), tableRel, 
-					blockIndexScan,	table, key, source, fieldTypes);
+			 List<String> tableName = new ArrayList<>(2);
+		      tableName.add(table.getQualifiedName().get(0));
+		      tableName.add("./data/blockIndex/" + (String)table.getQualifiedName().get(1) + "InvertedIndex");
+		      Prepare.PreparingTable preparingTable = this.catalogReader.getTable(tableName);
+		      RelNode newRoot = LogicalDeduplicate.create(tableRel.getCluster(), tableRel
+		          .getTraitSet().replace(Convention.NONE), tableRel, table, preparingTable, null, 
+		          key, source, fieldTypes, null);
 			bb.setRoot(newRoot, false);	
 		}
 		if (usedDataset[0]) {

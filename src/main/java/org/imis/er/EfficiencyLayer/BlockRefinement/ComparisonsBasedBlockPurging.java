@@ -102,7 +102,6 @@ public class ComparisonsBasedBlockPurging extends AbstractEfficiencyMethod {
                 break;
             }
         }
-        
         return previousSize;
     }
 }

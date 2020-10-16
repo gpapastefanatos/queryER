@@ -35,6 +35,22 @@ public class EntityIndex implements Serializable {
         indexEntities(blocks);
     }
 
+    public EntityIndex (List<AbstractBlock> blocks, boolean isStats) {
+        if (blocks.isEmpty()) {
+            System.err.println("Entity index received an empty block collection as input!");
+            return;
+        }
+
+        if (blocks.get(0) instanceof DecomposedBlock) {
+            System.err.println("The entity index is incompatible with a set of decomposed blocks!");
+            System.err.println("Its functionalities can be carried out with same efficiency through a linear search of all comparisons!");
+            return;
+        }
+       
+        setNoOfEntities(blocks);
+        indexEntities(blocks);
+    }
+    
     private void enumerateBlocks(List<AbstractBlock> blocks) {
         int blockIndex = 0;
         for (AbstractBlock block : blocks) {

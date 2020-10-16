@@ -4,6 +4,7 @@ import java.util.function.Predicate;
 
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.apache.calcite.plan.Convention;
+import org.apache.calcite.plan.RelTrait;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.convert.ConverterRule;
 import org.apache.calcite.rel.core.RelFactories;
@@ -26,13 +27,14 @@ public class EnumerableDeduplicateRule extends ConverterRule {
 
 	@Override
 	public RelNode convert(RelNode rel) {
-		final LogicalDeduplicate deduplicate = (LogicalDeduplicate) rel;
+		LogicalDeduplicate deduplicate = (LogicalDeduplicate)rel;
 		RelNode input = deduplicate.getInput(0);
-		RelNode blockInput = deduplicate.getInput(1);
 		return EnumerableDeduplicate.create(
-				convert(input,
-						input.getTraitSet()
-						.replace(EnumerableConvention.INSTANCE)), blockInput,
-				deduplicate.getRelTable(),	deduplicate.getKey(), deduplicate.getSource(), deduplicate.getFieldTypes());
+				convert(input, input
+						.getTraitSet()
+						.replace(EnumerableConvention.INSTANCE)), deduplicate
+				.getRelTable(), deduplicate.getBlockIndex(), deduplicate
+				.getConjuctions(), deduplicate.getKey(), deduplicate.getSource(), deduplicate
+				.getFieldTypes(), deduplicate.getComparisons());
 	}
 }

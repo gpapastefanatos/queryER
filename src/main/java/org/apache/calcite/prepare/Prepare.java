@@ -153,7 +153,7 @@ public abstract class Prepare {
 			final JavaTypeFactory typeFactory = context.getTypeFactory();
 			final RelOptTableImpl starRelOptTable =
 					RelOptTableImpl.create(catalogReader,
-							starTable.getTable().getRowType(typeFactory), starTable, null);
+							starTable.getTable().getRowType(typeFactory), starTable, null, null);
 			latticeList.add(
 					new RelOptLattice(lattice.getLattice(), starRelOptTable));
 		}

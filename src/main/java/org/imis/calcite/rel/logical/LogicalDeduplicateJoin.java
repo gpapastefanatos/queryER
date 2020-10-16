@@ -106,7 +106,7 @@ public class LogicalDeduplicateJoin extends Join {
 	@Override public RelOptCost computeSelfCost(RelOptPlanner planner,
 			RelMetadataQuery mq) {
 		double rowCount = mq.getRowCount(this);
-
+		
 		// Joins can be flipped, and for many algorithms, both versions are viable
 		// and have the same cost. To make the results stable between versions of
 		// the planner, make one of the versions slightly more expensive.
@@ -115,11 +115,13 @@ public class LogicalDeduplicateJoin extends Join {
 				if (RelNodes.COMPARATOR.compare(left, right) > 0) {
 					rowCount = RelMdUtil.addEpsilon(rowCount);
 				}
-			case ANTI:
+			case DIRTY:
 				// SEMI and ANTI join cannot be flipped
 				break;
-			case RIGHT:
+			case DIRTY_RIGHT:
 				rowCount = RelMdUtil.addEpsilon(rowCount);
+				break;
+			case DIRTY_LEFT:
 				break;
 			default:
 				if (RelNodes.COMPARATOR.compare(left, right) > 0) {

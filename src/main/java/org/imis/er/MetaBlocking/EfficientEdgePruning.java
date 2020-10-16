@@ -16,7 +16,8 @@ public class EfficientEdgePruning extends EdgePruning {
 
     @Override
     public void applyProcessing(List<AbstractBlock> blocks) {
-        getStatistics(blocks);
+    	getStatistics(blocks);
+    	//initializeEntityIndex(blocks);
         filterComparisons(blocks);
     }
 }

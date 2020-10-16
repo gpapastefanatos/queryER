@@ -147,7 +147,8 @@ public class AggregateStarTableRule extends RelOptRule {
 						table.getRelOptSchema(),
 						aggregateTableRowType,
 						tableEntry,
-						rowCount);
+						rowCount,
+						null);
 		relBuilder.push(aggregateRelOptTable.toRel(ViewExpanders.simpleContext(cluster)));
 		if (tileKey == null) {
 			if (CalciteSystemProperty.DEBUG.value()) {

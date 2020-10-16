@@ -148,9 +148,7 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			case DIRTY_RIGHT:
 				return implementHashJoinDirtyRight(implementor, pref);
 			case DIRTY_LEFT:
-				return implementHashJoinDirtyLeft(implementor, pref);
-			case DIRTY:
-				return implementHashJoinDirty(implementor, pref);
+				return implementHashJoinDirtyLeft(implementor, pref);			
 			case CLEAN:
 				return implementHashJoinClean(implementor, pref);
 			default:
@@ -311,80 +309,6 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 				physType, builder.toBlock());
 	}
 	
-	
-	/**
-	 * 
-	 * @param implementor
-	 * @param pref
-	 * @return Result
-	 * 
-	 * Implementation of the dirty-dirty JOIN, by passing to the function the data needed to potentially
-	 * deduplicate the left table.
-	 */
-	private Result implementHashJoinDirty(EnumerableRelImplementor implementor, Prefer pref) {
-		// TODO Auto-generated method stub
-		final BlockBuilder builder = new BlockBuilder();
-
-		final Result leftResult =
-				implementor.visitChild(this, 0, (EnumerableRel) left, pref);
-		Expression leftExpression =
-				builder.append(
-						"left", leftResult.block);
-	
-		final Result rightResult =
-				implementor.visitChild(this, 1, (EnumerableRel) right, pref);
-		
-		Expression rightExpression =
-				builder.append(
-						"right", rightResult.block);
-		
-		PhysType physType = PhysTypeImpl.of(
-						implementor.getTypeFactory(), getRowType(), pref.prefer(leftResult.format));
-
-		final PhysType keyPhysType =
-				leftResult.physType.project(
-						joinInfo.leftKeys, JavaRowFormat.LIST);
-		Expression predicate = Expressions.constant(null);
-		if (!joinInfo.nonEquiConditions.isEmpty()) {
-			RexNode nonEquiCondition = RexUtil.composeConjunction(
-					getCluster().getRexBuilder(), joinInfo.nonEquiConditions, true);
-			if (nonEquiCondition != null) {
-				predicate = EnumUtils.generatePredicate(implementor, getCluster().getRexBuilder(),
-						left, right, leftResult.physType, rightResult.physType, nonEquiCondition);
-			}
-		}
-		builder.add(
-				Expressions.return_(null, Expressions.call(
-						NewBuiltInMethod.HASH_JOIN_DIRTY.method,
-						Expressions.list(
-								leftExpression,
-								rightExpression,
-								leftResult.physType.generateAccessor(joinInfo.leftKeys),
-								rightResult.physType.generateAccessor(joinInfo.rightKeys),
-								EnumUtils.joinSelector(joinType,
-										physType,
-										ImmutableList.of(
-												leftResult.physType, rightResult.physType)),
-								Expressions.constant(this.getKeyLeft()),
-								Expressions.constant(this.getTableNameLeft()),
-								Expressions.constant(this.getFieldLeft()),
-								Expressions.constant(this.getKeyRight()),
-								Expressions.constant(this.getTableNameRight()),
-								Expressions.constant(this.getFieldRight()))
-						.append(
-								Util.first(keyPhysType.comparer(),
-										Expressions.constant(null)))
-						.append(
-								Expressions.constant(joinType.generatesNullsOnLeft()))
-						.append(
-								Expressions.constant(
-										joinType.generatesNullsOnRight()))
-						.append(predicate))));
-		//System.out.println(builder.toBlock());
-
-		return implementor.result(
-				physType, builder.toBlock());
-	}
 	
 	
 	/**

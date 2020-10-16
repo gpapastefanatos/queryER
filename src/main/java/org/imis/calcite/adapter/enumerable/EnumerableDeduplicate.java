@@ -39,6 +39,7 @@ import org.apache.calcite.plan.RelOptUtil;
 import org.apache.calcite.plan.RelTraitSet;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.Source;
 import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.calcite.rel.core.Deduplicate;
@@ -69,33 +70,30 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 			RelOptCluster cluster,
 			RelTraitSet traitSet,
 			RelNode input,
-			RelNode blockInput,
 			RelOptTable table,
+			RelOptTable blockIndex, 
+			List<RexNode> conjuctions, 
 			Integer key,
-			Source source,
-			List<CsvFieldType> fieldTypes){
-		super(cluster, traitSet,  input, blockInput, table, key, source, fieldTypes);
-		this.traitSet =
-				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
+			Source source, 
+			List<CsvFieldType> fieldTypes, 
+			Double comparisons){
+		super(cluster, traitSet, input, table, blockIndex, conjuctions, key, source, fieldTypes, comparisons);
+	    this
+	      .traitSet = cluster.traitSet().replace(EnumerableConvention.INSTANCE);
 		
 	}
 
 
-	public static RelNode create( RelNode input, RelNode blockInput, RelOptTable table, Integer key,
-			Source source, List<CsvFieldType> fieldTypes) {
-		// TODO Auto-generated method stub
-		final RelOptCluster cluster = input.getCluster();
-		final RelMetadataQuery mq = cluster.getMetadataQuery();
-		final RelTraitSet traitSet =
-				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
-		return new EnumerableDeduplicate(cluster, traitSet, input, blockInput, table, key, source, fieldTypes);
-	}
-
-
-	@Override public  EnumerableDeduplicate copy(RelTraitSet traitSet,  RelNode input, RelNode blockInput){
-		return new EnumerableDeduplicate(getCluster(), traitSet, input, blockInput, this.table, this.key, this.source, this.fieldTypes);
-	}
-
+	public static RelNode create(RelNode input, RelOptTable table, RelOptTable blockIndex, List<RexNode> conjuctions, Integer key, Source source, List<CsvFieldType> fieldTypes, Double comparisons) {
+	    RelOptCluster cluster = input.getCluster();
+	    RelMetadataQuery mq = cluster.getMetadataQuery();
+	    RelTraitSet traitSet = cluster.traitSet().replace(EnumerableConvention.INSTANCE);
+	    return new EnumerableDeduplicate(cluster, traitSet, input, table, blockIndex, conjuctions, key, source, fieldTypes, comparisons);
+	  }
+	  
+	  public EnumerableDeduplicate copy(RelTraitSet traitSet, RelNode input) {
+	    return new EnumerableDeduplicate(getCluster(), traitSet, input, this.table, this.blockIndex, this.conjuctions, this.key, this.source, this.fieldTypes, this.comparisons);
+	  }
 	/**
 	 * Calls the java function that implements the deduplication
 	 * For inputs we get the tableName, source, key and fieldTypes
@@ -108,24 +106,16 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 		final BlockBuilder builder = new BlockBuilder();
 
 		final EnumerableRel child = (EnumerableRel) getInputs().get(0);
-		final EnumerableRel blocksChild = (EnumerableRel) getInputs().get(1);
 
 		final Result result =
 				implementor.visitChild(this, 0, child, pref);
-		
-		final Result blocksResult =
-				implementor.visitChild(this, 0, blocksChild, pref);
 
 		final PhysType physType = result.physType;
-		final PhysType blocksPhysType = blocksResult.physType;
 
 		final Expression inputEnumerable =
 				builder.append(
 						"inputEnumerable", result.block, false);
-		
-		final Expression blockIndex =
-				builder.append(
-						"blockIndex", blocksResult.block, false);
+
 		
 		String schemaName = "";
 		String tableName = "";

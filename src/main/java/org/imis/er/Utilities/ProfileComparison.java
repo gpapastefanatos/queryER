@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 import org.imis.er.DataStructures.Attribute;
@@ -163,6 +164,16 @@ public class ProfileComparison {
 				+ ((matches - transpositions / 2.0) / matches)) / 3.0;
 	}
 
+	// Function to remove the element 
+	public static Object[] removeArrayElement(Object[] oddArray,  
+			int index) { 
+		// delete the element at specified index and return the array 
+		int size = oddArray.length;
+		Object[] cleanArr = new Object[size];
+		System.arraycopy(oddArray, index + 1, cleanArr, index, size - 1 - index);
+		return cleanArr;
+	}
+
 	public static Set<String> getDistinctTokens(Set<Attribute> nameValuePairs) {
 		final Set<String> tokensFrequency = new HashSet<String>(5 * nameValuePairs.size());
 		for (Attribute attribute : nameValuePairs) {
@@ -174,10 +185,39 @@ public class ProfileComparison {
 
 		return tokensFrequency;
 	}
+	
+	public static Set<String> getDistinctTokens(Object[] nameValuePairs) {
+		final Set<String> tokensFrequency = new HashSet<String>(5 * (nameValuePairs.length - 1));
+		for (Object attr : nameValuePairs) {
+			if(attr != null) {
+				String attrStr = attr.toString();
+				if (attrStr.equals(""))
+					continue;
+				String[] tokens = attrStr.split("[\\W_]");
+				tokensFrequency.addAll(Arrays.asList(tokens));
+			}
+		}
+
+		return tokensFrequency;
+	}
 
 	public static double getJaccardSimilarity(Set<Attribute> profile1, Set<Attribute> profile2) {
 		final Set<String> tokenizedProfile1 = getDistinctTokens(profile1);
 		final Set<String> tokenizedProfile2 = getDistinctTokens(profile2);
+
+		final Set<String> allTokens = new HashSet<String>(tokenizedProfile1);
+		allTokens.addAll(tokenizedProfile2);
+
+		tokenizedProfile1.retainAll(tokenizedProfile2);
+		return ((double) tokenizedProfile1.size()) / allTokens.size();
+	}
+	
+	public static double getJaccardSimilarity(Object[] profile1, Object[] profile2, Integer keyIndex) {
+		Object[] profile1Cleaned = removeArrayElement(profile1, keyIndex);
+		Object[] profile2Cleaned = removeArrayElement(profile2, keyIndex);
+
+		final Set<String> tokenizedProfile1 = getDistinctTokens(profile1Cleaned);
+		final Set<String> tokenizedProfile2 = getDistinctTokens(profile2Cleaned);
 
 		final Set<String> allTokens = new HashSet<String>(tokenizedProfile1);
 		allTokens.addAll(tokenizedProfile2);
@@ -204,6 +244,7 @@ public class ProfileComparison {
 			}
 			index += 1;
 		}
+		length = entity2.length;
 		index = 0;
 		while (index < length) {
 			if(index != keyIndex) {
@@ -235,6 +276,8 @@ public class ProfileComparison {
 		return mean;
 		
 	}
+
+	
 
 	
 

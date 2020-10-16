@@ -76,17 +76,24 @@ public class Experiments {
 	private static final String QUERY_TOTAL_RUNS = "query.runs";
 	private static final String SCHEMA_NAME = "schema.name";
 	private static final String CALCITE_CONNECTION = "calcite.connection";
+	private static final String CALCULATE_GROUND_TRUTH = "ground_truth.calculate";
+	private static final String DIVIDE_GROUND_TRUTH = "ground_truth.divide";
+
 	
 	private static String queryFilePath = "";
+	private static Integer groundTruthDivide = 500;
 	private static Integer totalRuns = 1;
 	private static String schemaName = "";
 	private static String calciteConnectionString = "";
+	private static Boolean calculateGroundTruth = false;
 	private static CalciteConnectionPool calciteConnectionPool = null;
 	
 	public static void main(String[] args)
 			throws  ClassNotFoundException, SQLException, ValidationException, RelConversionException, SqlParseException, IOException
 	{
-		setProperties();	
+		setProperties();
+		// Create output folders
+		generateDumpDirectories();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -96,6 +103,7 @@ public class Experiments {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
 		
 		// Enter a query or read query from file
 		List<String> queries = new ArrayList<>();
@@ -110,6 +118,7 @@ public class Experiments {
 		runQueries(calciteConnection, queries, totalRuns, schemaName);
 		
 	}
+
 
 	private static void readQueries(List<String> queries, String queryFilePath) {
 		// read query line by line
@@ -173,8 +182,9 @@ public class Experiments {
     	final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
 
         if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("entities,blocking_time,query_blocks,purge_blocks,purge_time,filter_blocks,filter_time,"
-					+ "ep_time,matches_found,total_comparisons,comparison_time,total_dedup_time\n");
+			DEDUPLICATION_EXEC_LOGGER.debug("table_name,query_entities,block_join_time,blocking_time,query_blocks,max_query_block_size,avg_query_block_size,total_query_comps,block_entities,"
+					+ "purge_blocks,purge_time,max_purge_block_size,avg_purge_block_size,total_purge_comps,purge_entities,filter_blocks,filter_time,max_filter_block_size,avg_filter_block_size,"
+					+ "total_filter_comps,filter_entities,ep_time,ep_comps,ep_entities,matches_found,executed_comparisons,table_scan_time,jaro_time,comparison_time,rev_uf_creation_time,total_entities,total_dedup_time\n");
 		for(String query : queries) {
 			double totalRunTime = 0.0;
             ResultSet queryResults = null;
@@ -186,13 +196,13 @@ public class Experiments {
 				//exportQueryContent(queryResults, "./data/queryResults.csv");
 				double queryEndTime = System.currentTimeMillis();
 				runTime = (queryEndTime - queryStartTime)/1000;
-				Integer run = i + 1;
 				totalRunTime += runTime;
 			}
 			csvWriter.append("\"" + query + "\"" + "," + totalRuns + "," + totalRunTime/totalRuns + ",");
 			System.out.println("Finished query: " + index + " runs: " + totalRuns + " time: " + totalRunTime/totalRuns);
 			// Get the ground truth for this query
-			// calculateGroundTruth(query, schemaName, csvWriter);
+			if(calculateGroundTruth)
+				calculateGroundTruth(calciteConnection, query, schemaName, csvWriter);
 			csvWriter.append("\n");
 			csvWriter.flush();
 			index ++;
@@ -205,34 +215,57 @@ public class Experiments {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static void calculateGroundTruth(String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
+	private static void calculateGroundTruth(CalciteConnection calciteConnection, String query, String schemaName, FileWriter csvWriter) throws SQLException, IOException {
 		// Trick to get table name from a single sp query
-		String tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1  , query.indexOf("WHERE"));
-		//String percent = query.substring(query.indexOf("rec_id, ") + ("rec_id, ").length(), query.indexOf(")"));
-		String percent = query.substring(query.indexOf("id, ") + ("id, ").length(), query.indexOf(")"));
-
-		tableName = tableName.trim();
-		// Construct ground truth query
-		
-		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
-		File blocksDir = new File("./data/groundTruth/" + tableName + percent);
-		if(blocksDir.exists()) {
-			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/groundTruth/" + tableName + percent);
+		if(!query.contains("DEDUP")) return;
+		final String tableName;
+		if(query.indexOf("WHERE") != -1) {
+			tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1  , query.indexOf("WHERE")).trim();;
 		}
 		else {
+			tableName = query.substring(query.indexOf(schemaName) + schemaName.length() + 1, query.length()).trim();;
+		}
+		String name = query.replace("'", "").replace("*","ALL").replace(">", "BIGGER").replace("<", "LESS");
+	
+		// Construct ground truth query
+		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
+		File blocksDir = new File("./data/groundTruth/" + name);
+		if(blocksDir.exists()) {
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/groundTruth/" + name);
+		}
+		else {
+			System.out.println("Calculating ground truth..");
+
+			CalciteConnection qCalciteConnection = null;
+			try {
+				qCalciteConnection = (CalciteConnection) calciteConnectionPool.setUp(calciteConnectionString);
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject("./data/qIds");
-			for(Integer qId : qIds) {
-				CalciteConnection qCalciteConnection = null;
-				try {
-					qCalciteConnection = (CalciteConnection) calciteConnectionPool.setUp(calciteConnectionString);
-				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+			List<Set<Integer>> inIdsSets = new ArrayList<>();
+			Set<Integer> currSet = null;
+			for (Integer value : qIds) {
+			    if (currSet == null || currSet.size() == groundTruthDivide)
+			    	inIdsSets.add(currSet = new HashSet<>());
+			    currSet.add(value);
+			}
+			List<String> inIds = new ArrayList<>();
+			inIdsSets.forEach(inIdSet -> {
+				String inId = "(";
+				for(Integer qId : inIdSet) {
+					inId += qId + ",";
 				}
+				inId = inId.substring(0, inId.length() - 1) + ")";
+				inIds.add(inId);
+			});
+			System.out.println("Will execute " + inIds.size() + " queries");
+
+			for(String inIdd : inIds) {
 				String groundTruthQuery = "SELECT id_d, id_s FROM ground_truth.ground_truth_" + tableName +
-						" WHERE (id_s = " + qId + " OR id_d= " + qId + ")";
-				ResultSet gtQueryResults = runQuery(qCalciteConnection, groundTruthQuery);
-				qCalciteConnection.close();
+						" WHERE id_s IN " + inIdd + " OR id_d IN " + inIdd ;
+				ResultSet gtQueryResults = runQuery(calciteConnection, groundTruthQuery);
 				while (gtQueryResults.next()) {
 					Integer id_d = Integer.parseInt(gtQueryResults.getString("id_d"));
 					Integer id_s = Integer.parseInt(gtQueryResults.getString("id_s"));
@@ -240,7 +273,7 @@ public class Experiments {
 					groundDups.add(idd);
 				}		
 			}
-			SerializationUtilities.storeSerializedObject(groundDups, "./data/groundTruth/" + tableName + percent);
+			SerializationUtilities.storeSerializedObject(groundDups, "./data/groundTruth/" + name);
 		}
 		
 
@@ -257,7 +290,6 @@ public class Experiments {
 
 	private static void exportQueryContent(ResultSet queryResults, String path) throws SQLException, IOException {
 		 CSVWriter writer = new CSVWriter(new FileWriter(path),',');
-
 	     writer.writeAll(queryResults, true);
 		 
 	}
@@ -283,6 +315,8 @@ public class Experiments {
             totalRuns = Integer.parseInt(properties.getProperty(QUERY_TOTAL_RUNS));
             schemaName = properties.getProperty(SCHEMA_NAME);
             calciteConnectionString = properties.getProperty(CALCITE_CONNECTION);
+            calculateGroundTruth = Boolean.parseBoolean(properties.getProperty(CALCULATE_GROUND_TRUTH));
+            groundTruthDivide = Integer.parseInt(properties.getProperty(DIVIDE_GROUND_TRUTH));
 		}
 	}
 	
@@ -298,6 +332,28 @@ public class Experiments {
             ex.printStackTrace();
         }
 		return prop;
+	}
+	private static void generateDumpDirectories() throws IOException {
+		File logsDir = new File("./data/logs");
+		File blockIndexDir = new File("./data/blockIndex");
+		File groundTruthDir = new File("./data/groundTruth");
+		File tableStatsDir = new File("./data/tableStats/tableStats");
+		File blockIndexStats = new File("./data/tableStats/blockIndexStats");
+		if(!logsDir.exists()) {
+            FileUtils.forceMkdir(logsDir); //create directory
+		}
+		if(!blockIndexDir.exists()) {
+            FileUtils.forceMkdir(blockIndexDir); //create directory
+		}
+		if(!groundTruthDir.exists()) {
+            FileUtils.forceMkdir(groundTruthDir); //create directory
+		}
+		if(!tableStatsDir.exists()) {
+            FileUtils.forceMkdir(tableStatsDir); //create directory
+		}
+		if(!blockIndexStats.exists()) {
+            FileUtils.forceMkdir(blockIndexStats); //create directory
+		}
 	}
 	
 	

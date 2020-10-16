@@ -35,6 +35,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.util.Pair;
 import org.apache.calcite.util.Source;
 import org.apache.commons.lang3.time.FastDateFormat;
+import org.imis.er.KDebug;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -43,16 +44,31 @@ import au.com.bytecode.opencsv.CSVReader;
  * @param <E> Row type
  */
 public class CsvEnumerator<E> implements Enumerator<E> {
+	
+	 public static String getCallerClassName() {
+		    StackTraceElement[] stElements = Thread.currentThread().getStackTrace();
+		    for (int i = 1; i < stElements.length; i++) {
+		      StackTraceElement ste = stElements[i];
+		      if (!ste.getClassName().equals(KDebug.class.getName()) && ste.getClassName().indexOf("java.lang.Thread") != 0)
+		        return ste.getClassName(); 
+		    } 
+		    return null;
+		  }
+		  
 	private  CSVReader reader;
 	private  String[] filterValues;
 	private  AtomicBoolean cancelFlag;
 	private  RowConverter<E> rowConverter;
 	private  E current;
 	private int position;
+	private List<CsvFieldType> fieldTypes;
+
 	private static final FastDateFormat TIME_FORMAT_DATE;
 	private static final FastDateFormat TIME_FORMAT_TIME;
 	private static final FastDateFormat TIME_FORMAT_TIMESTAMP;
-
+	public List<String> fieldNames;
+	  
+	private Source source;
 	static {
 		final TimeZone gmt = TimeZone.getTimeZone("GMT");
 		TIME_FORMAT_DATE = FastDateFormat.getInstance("yyyy-MM-dd", gmt);
@@ -61,7 +77,6 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 				FastDateFormat.getInstance("yyyy-MM-dd HH:mm:ss", gmt);
 	}
 
-	public List<String> fieldNames;
 
 	public CsvEnumerator(Source source, AtomicBoolean cancelFlag,
 			List<CsvFieldType> fieldTypes) {
@@ -71,15 +86,16 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	CsvEnumerator(Source source, AtomicBoolean cancelFlag,
 			List<CsvFieldType> fieldTypes, Integer[] fields) {
 		//noinspection unchecked
-		this(source, cancelFlag,  null,
+		this(source, fieldTypes, cancelFlag,
 				(RowConverter<E>) converter(fieldTypes, fields));
 	}
 
-	CsvEnumerator(Source source, AtomicBoolean cancelFlag,
-			String[] filterValues, RowConverter<E> rowConverter) {
+	CsvEnumerator(Source source, List<CsvFieldType> fieldTypes, AtomicBoolean cancelFlag, RowConverter<E> rowConverter) {
 		this.cancelFlag = cancelFlag;
+		this.source = source;
 		this.rowConverter = rowConverter;
-		this.filterValues = filterValues;
+		this.cancelFlag = cancelFlag;
+		this.fieldTypes = fieldTypes;
 		try {
 			this.position = 0;
 			this.reader = openCsv(source);
@@ -178,7 +194,7 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	public static CSVReader openCsv(Source source) throws IOException {
 		final Reader fileReader = source.reader();
 		char seperator = ',';
-		if(source.toString().contains("publications"))
+		if(source.toString().contains("publications") || source.toString().contains("venues"))
 			seperator = '>';
 		
 		return new CSVReader(fileReader, seperator);
@@ -379,6 +395,20 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 		}
 
 
+	}
+
+	public AtomicBoolean getCancelFlag() {
+		return this.cancelFlag;
+	}
+
+
+	public Source getSource() {
+		return this.source;
+	}
+
+	public List<CsvFieldType> getFieldTypes() {
+		
+		return fieldTypes;
 	}
 
 

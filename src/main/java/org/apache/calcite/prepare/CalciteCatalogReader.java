@@ -130,7 +130,7 @@ public class CalciteCatalogReader implements Prepare.CatalogReader {
 				}
 			}
 			return RelOptTableImpl.create(this,
-					table.getRowType(typeFactory), entry, null);
+					table.getRowType(typeFactory), entry, null, null);
 		}
 		return null;
 	}

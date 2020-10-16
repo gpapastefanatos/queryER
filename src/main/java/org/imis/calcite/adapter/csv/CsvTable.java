@@ -29,6 +29,7 @@ import org.apache.calcite.rel.RelReferentialConstraint;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelProtoDataType;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.Statistic;
 import org.apache.calcite.schema.impl.AbstractTable;
 import org.apache.calcite.util.ImmutableBitSet;
@@ -123,6 +124,12 @@ public abstract class CsvTable extends AbstractTable {
 			@Override
 			public RelDistribution getDistribution() {
 				return RelDistributionTraitDef.INSTANCE.getDefault();
+			}
+
+			@Override
+			public Double getComparisons(List<RexNode> paramList) {
+				// TODO Auto-generated method stub
+				return null;
 			}	
 		};
 	}

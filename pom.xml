@@ -278,8 +278,7 @@
 		    <groupId>net.agkn</groupId>
 		    <artifactId>hll</artifactId>
 		    <version>1.6.0</version>
-		</dependency>
-		
+		</dependency>	
 		
         
     </dependencies>
@@ -304,6 +303,19 @@
 	                    </execution>
 	                </executions>
 	            </plugin>
+	             <plugin>
+			      <artifactId>maven-assembly-plugin</artifactId>
+			      <configuration>
+			        <archive>
+			          <manifest>
+			            <mainClass>org.imis.er.Experiments</mainClass>
+			          </manifest>
+			        </archive>
+			        <descriptorRefs>
+			          <descriptorRef>jar-with-dependencies</descriptorRef>
+			        </descriptorRefs>
+			      </configuration>
+				</plugin>
 	            <plugin>
 	                <groupId>com.helger.maven</groupId>
 	                <artifactId>ph-javacc-maven-plugin</artifactId>

@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.calcite.rel.RelCollation;
 import org.apache.calcite.rel.RelDistribution;
 import org.apache.calcite.rel.RelReferentialConstraint;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.ImmutableBitSet;
 
 /**
@@ -39,6 +40,7 @@ public interface Statistic {
 	 */
 	boolean isKey(ImmutableBitSet columns);
 
+	Double getComparisons(List<RexNode> paramList);
 	/** Returns a list of unique keys, or null if no key exist. */
 	List<ImmutableBitSet> getKeys();
 
