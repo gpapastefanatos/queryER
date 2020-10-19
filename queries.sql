@@ -17,31 +17,31 @@ SELECT DEDUP * FROM all.projects WHERE fundingLevel0 LIKE '%Directorate%'
 SELECT DEDUP * FROM all.projects WHERE funder LIKE '%National%' 
 
 --  PEOPLE --
-SELECT DEDUP id FROM all.people200k WHERE state = 'vic'
+SELECT DEDUP * FROM all.people200k WHERE state = 'vic'
 SELECT DEDUP * FROM all.people200k WHERE state = 'nsw'
 SELECT DEDUP * FROM all.people200k WHERE state = 'vic' OR state = 'nsw'
 SELECT DEDUP * FROM all.people200k WHERE age > 27
 SELECT DEDUP * FROM all.people200k WHERE age > 19
 
-SELECT DEDUP id FROM all.people500k WHERE state = 'vic'
+SELECT DEDUP * FROM all.people500k WHERE state = 'vic'
 SELECT DEDUP * FROM all.people500k WHERE state = 'nsw'
 SELECT DEDUP * FROM all.people500k WHERE state = 'vic' OR state = 'nsw'
 SELECT DEDUP * FROM all.people500k WHERE age > 27
 SELECT DEDUP * FROM all.people500k WHERE age > 19
 
-SELECT DEDUP id FROM all.people1m WHERE state = 'vic'
+SELECT DEDUP * FROM all.people1m WHERE state = 'vic'
 SELECT DEDUP * FROM all.people1m WHERE state = 'nsw'
 SELECT DEDUP * FROM all.people1m WHERE state = 'vic' OR state = 'nsw'
 SELECT DEDUP * FROM all.people1m WHERE age > 27
 SELECT DEDUP * FROM all.people1m WHERE age > 19
 
-SELECT DEDUP id FROM all.people1m5k WHERE state = 'vic'
+SELECT DEDUP * FROM all.people1m5k WHERE state = 'vic'
 SELECT DEDUP * FROM all.people1m5k WHERE state = 'nsw'
 SELECT DEDUP * FROM all.people1m5k WHERE state = 'vic' OR state = 'nsw'
 SELECT DEDUP * FROM all.people1m5k WHERE age > 27
 SELECT DEDUP * FROM all.people1m5k WHERE age > 19
 
-SELECT DEDUP id FROM all.people2m WHERE state = 'vic'
+SELECT DEDUP * FROM all.people2m WHERE state = 'vic'
 SELECT DEDUP * FROM all.people2m WHERE state = 'nsw'
 SELECT DEDUP * FROM all.people2m WHERE state = 'vic' OR state = 'nsw'
 SELECT DEDUP * FROM all.people2m WHERE age > 27
