@@ -1,0 +1,33 @@
+{
+  "version": "1.0",
+  "defaultSchema": "synth",
+  "schemas": [
+    {
+      "name": "synthetic",
+      "type": "custom",
+      "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
+      "operand": {
+        "directory": "projects",
+        "flavor": "translatable"
+      }
+    },
+     {
+      "name": "DIRTY",
+      "type": "custom",
+      "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
+      "operand": {
+        "directory": "dirty",
+        "flavor": "translatable"
+      }
+    },
+    {
+      "name": "ground_truth",
+      "type": "custom",
+      "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
+      "operand": {
+        "directory": "ground_truth",
+        "flavor": "translatable"
+      }
+    }
+  ]
+}
