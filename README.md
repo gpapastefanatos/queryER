@@ -20,6 +20,9 @@ For debugging and experimental purposes, the following can also be provided.<br>
 **query.filepath=resources/tests/test_synth.sql** {Path to an sql file, if not provided the framework will ask the user for a query input}<br>
 **ground_truth.calculate**:{Boolean} Whether to calculate Ground Truth and find the Pair Completeness. Used only for SP queries.<br>
 
+### Results
+The results of a query can be viewed at data/queryResults.csv
+
 ### Run
 To create the jar file, run: **`mvn clean compile assembly:single`**
 To run the jar file, copy and paste the following command to the console:
