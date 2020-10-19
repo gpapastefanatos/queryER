@@ -3,11 +3,11 @@
 -- Q1-Q5
 
 -- publications
-SELECT DEDUP * FROM DIRTY.publications WHERE authors LIKE '%A' OR authors LIKE '%a'
-SELECT DEDUP * FROM DIRTY.publications WHERE year > 1995
-SELECT DEDUP * FROM DIRTY.publications WHERE year >= 1991
-SELECT DEDUP * FROM DIRTY.publications WHERE year >= 1900
-SELECT DEDUP * FROM DIRTY.publications WHERE year >= 1900 OR authors LIKE '%e%'
+SELECT DEDUP * FROM all.publications WHERE authors LIKE '%A' OR authors LIKE '%a'
+SELECT DEDUP * FROM all.publications WHERE year > 1995
+SELECT DEDUP * FROM all.publications WHERE year >= 1991
+SELECT DEDUP * FROM all.publications WHERE year >= 1900
+SELECT DEDUP * FROM all.publications WHERE year >= 1900 OR authors LIKE '%e%'
 
 -- projects
 SELECT DEDUP * FROM all.projects WHERE funder LIKE '%European%'
