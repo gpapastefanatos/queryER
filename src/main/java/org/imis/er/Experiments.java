@@ -87,7 +87,7 @@ public class Experiments {
 	private static String calciteConnectionString = "";
 	private static Boolean calculateGroundTruth = false;
 	private static CalciteConnectionPool calciteConnectionPool = null;
-	
+
 	public static void main(String[] args)
 			throws  ClassNotFoundException, SQLException, ValidationException, RelConversionException, SqlParseException, IOException
 	{
@@ -109,14 +109,42 @@ public class Experiments {
 		List<String> queries = new ArrayList<>();
 		
 		if(queryFilePath == null) {
-			String query = readQuery();
-			queries.add(query);
+			
+			initializeDB(calciteConnection, schemaName);
+			while(true) {
+				String query = readQuery();
+				Double runTime = 0.0;
+				double queryStartTime = System.currentTimeMillis();
+				ResultSet queryResults = runQuery(calciteConnection, query);
+				double queryEndTime = System.currentTimeMillis();
+				runTime = (queryEndTime - queryStartTime)/1000;
+				exportQueryContent(queryResults, "./data/queryResults.csv");
+				System.out.println("Finished query, time: " + runTime);
+
+			}
 		}
 		else {
 			readQueries(queries, queryFilePath);
+			runQueries(calciteConnection, queries, totalRuns, schemaName);
 		}
-		runQueries(calciteConnection, queries, totalRuns, schemaName);
 		
+	}
+
+
+	private static void initializeDB(CalciteConnection calciteConnection, String schemaName) throws SQLException {
+		System.out.println("Initializing Database...");
+		Set<String> tables = calciteConnection.getRootSchema().getSubSchema(schemaName).getTableNames();
+		String fTable = "";
+		for(String table : tables) {
+			if(!table.contains("/")) {
+				fTable = table;
+				break;
+			}
+		}
+		String query = "SELECT 1 FROM " + schemaName + "." + fTable;
+		runQuery(calciteConnection, query);	
+		System.out.println("Initializing Finished!");
+
 	}
 
 
@@ -142,17 +170,17 @@ public class Experiments {
 
 
 	private static String readQuery() throws IOException {
-		Scanner  reader = new Scanner(new BufferedInputStream(System.in));;
+//		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+		Scanner scanner = new Scanner(System.in).useDelimiter("\n");
 		System.out.println("Enter a query: ");
 		String query = "";
 		String line;
-		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
-		while ((line = stdin.readLine()) != null && line.length()!= 0) {
-			query += line;
-		}
+		query = scanner.next();
+//		while ((line = scanner.next()) != null && line.length()!= 0) {
+//			query += line;
+//		}
 		query = query.replaceAll("[\r\n]+", " ");
-		reader.close();
-
+//		scanner.close();
 		return query;
 	}
 
@@ -211,6 +239,7 @@ public class Experiments {
 	}
 
 	private static ResultSet runQuery(CalciteConnection calciteConnection, String query) throws SQLException {
+		System.out.println("Running query...");
 		return calciteConnection.createStatement().executeQuery(query);
 	}
 	
