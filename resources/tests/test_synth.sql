@@ -2,21 +2,19 @@
 -- SINGLE TABLE --
 SELECT 1 FROM synthetic.organisations
 
--- SELECT DEDUP * FROM synthetic.projects
--- SELECT DEDUP * FROM synthetic.people100k
-
+SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.people100k ON people100k.organisation = name WHERE state = 'vic'
 
 -- SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.full200k ON full200k.organisation = name  INNER JOIN synthetic.projects ON projects.organisation = name WHERE MOD(organisations.rec_id, 2) < 1 AND MOD(projects.rec_id, 10) < 1
 
--- SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.full200k ON full200k.organisation = name  INNER JOIN synthetic.projects ON projects.organisation = name WHERE country LIKE '%Sweden%'
+-- SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.full200k ON full200k.organisation = name  INNER JOIN synthetic.projects ON projects.organisation = name WHERE state = 'vic'
 --  PEOPLE --
 -- 15%, 25%, 35%, 55%, 70% 
-SELECT DEDUP * FROM synthetic.people100k WHERE state = 'qld' 
-SELECT DEDUP * FROM synthetic.people100k WHERE state = 'vic'
-SELECT DEDUP * FROM synthetic.people100k WHERE state = 'nsw'
-SELECT DEDUP * FROM synthetic.people100k WHERE state = 'vic' OR state = 'nsw'
-SELECT DEDUP * FROM synthetic.people100k WHERE age > 27
-SELECT DEDUP * FROM synthetic.people100k WHERE age > 19
+-- SELECT DEDUP * FROM synthetic.people100k WHERE state = 'qld' 
+-- SELECT DEDUP id FROM synthetic.people100k WHERE state = 'vic'
+-- SELECT DEDUP * FROM synthetic.people100k WHERE state = 'nsw'
+-- SELECT DEDUP * FROM synthetic.people100k WHERE state = 'vic' OR state = 'nsw'
+-- SELECT DEDUP * FROM synthetic.people100k WHERE age > 27
+-- SELECT DEDUP * FROM synthetic.people100k WHERE age > 19
 
 -- projects -- 
 -- 5%, 10%, 15%, 40%, 70%, 80%

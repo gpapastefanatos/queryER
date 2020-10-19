@@ -448,12 +448,12 @@ public class DeduplicationJoinExecution {
 				 totalComps += block.getNoOfComparisons();
 			 }
 			 epTotalComps = Double.toString(totalComps);
-			 ePEntities = Integer.toString(queryBlockIndex.blocksToEntities(blocks).size());
+			 ePEntities = Integer.toString(queryBlockIndex.blocksToEntitiesD(blocks).size());
 
 		 }
 
 		 //Get ids of final entities, and add back qIds that were cut from m-blocking
-		 Set<Integer> totalIds = queryBlockIndex.blocksToEntities(blocks);
+		 Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(blocks);
 		 totalIds.addAll(qIds);
 		 double tableScanStartTime = System.currentTimeMillis();
 		 AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((Enumerator<Object[]>) originalEnumerator, totalIds, key);

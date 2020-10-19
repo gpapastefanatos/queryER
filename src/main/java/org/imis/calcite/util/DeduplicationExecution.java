@@ -281,6 +281,7 @@ public class DeduplicationExecution<T> {
 //			entityResolvedTuple.sortEntities();
 //		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 //			DEDUPLICATION_EXEC_LOGGER.debug("Final Size: " + entityResolvedTuple.finalData.size());
+    	entityResolvedTuple.groupEntities();
         return entityResolvedTuple;
 
     }

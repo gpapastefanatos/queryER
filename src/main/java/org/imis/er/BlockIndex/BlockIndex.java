@@ -317,7 +317,7 @@ implements  TranslatableTable {
 		final BlockIndexStatistic blockIndexStatistic = this.blockIndexStatistic;
 		final Map<String, Set<Integer>> invertedIndex = deepCopy(this.invertedIndex);
 		final Map<Integer, Set<String>> entitiesToBlocks = this.entitiesToBlocks;
-		
+
 		return new Statistic() {
 			public Double getRowCount() {
 				return Double.valueOf(0.0D);

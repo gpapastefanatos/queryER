@@ -126,7 +126,6 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 		}
 		AtomicBoolean ab = new AtomicBoolean();
 		ab.set(false);
-		System.out.println(blockIndex);
 		builder.add(Expressions.return_(null, Expressions.call(
 				NewBuiltInMethod.DEDUPLICATE_ENUM.method,
 				inputEnumerable,

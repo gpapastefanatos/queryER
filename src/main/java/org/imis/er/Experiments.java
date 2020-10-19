@@ -193,7 +193,7 @@ public class Experiments {
 				double queryStartTime = System.currentTimeMillis();
 				queryResults = runQuery(calciteConnection, query);
 				//printQueryContents(queryResults);
-				//exportQueryContent(queryResults, "./data/queryResults.csv");
+				exportQueryContent(queryResults, "./data/queryResults.csv");
 				double queryEndTime = System.currentTimeMillis();
 				runTime = (queryEndTime - queryStartTime)/1000;
 				totalRunTime += runTime;

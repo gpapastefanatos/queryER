@@ -19,10 +19,13 @@ public class EntityGrouping {
 			HashMap<Integer, Object[]> newData, Integer keyIndex, Integer noOfFields) {
 		// TODO Auto-generated method stub
 		List<Object[]> finalData = new ArrayList<>();
-
+		Set<Integer> checked = new HashSet<>();
 		for (int id : revUF.keySet()) {
 			Object[] groupedObj = new Object[noOfFields]; //length
-			for (int idInner : revUF.get(id)) {
+			Set<Integer> similar = revUF.get(id);
+			if(checked.contains(id)) continue;
+			checked.addAll(similar);
+			for (int idInner : similar) {
 				Object[] datum = newData.get(idInner);
 				int i = 0;
 				if(datum != null) {
@@ -31,12 +34,13 @@ public class EntityGrouping {
 							groupedObj[i] = datum[i];
 						}
 						else if (groupedObj[i] != null && !(datum[i].equals("") || datum[i].equals("[\\W_]"))) {
-							if(!groupedObj[i].equals(datum[i]) && i != keyIndex)
+							if(!groupedObj[i].equals(datum[i]))
 								groupedObj[i] = groupedObj[i].toString() + " | "+ datum[i].toString();
 						}
 						else {
 							groupedObj[i] = null;
 						}
+						
 						i++;
 					}
 				}
