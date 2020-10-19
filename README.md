@@ -22,3 +22,4 @@ The queries that were used for the experimental evaluation can be found in the q
 
 
 ### Datasets
+The used datasets can be found <a href="https://imisathena-my.sharepoint.com/personal/gpapas_imis_athena-innovation_gr/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fgpapas%5Fimis%5Fathena%2Dinnovation%5Fgr%2FDocuments%2FVisualFacts%2FImplementation%2FWP2%2FQuery%20ER%2Fdata&originalPath=aHR0cHM6Ly9pbWlzYXRoZW5hLW15LnNoYXJlcG9pbnQuY29tLzpmOi9nL3BlcnNvbmFsL2dwYXBhc19pbWlzX2F0aGVuYS1pbm5vdmF0aW9uX2dyL0VtSUJUNTJkcE5CRnF5bElEeEtZdXZVQnNPZ093RUp5dW9TS2lQUkdHQWppRGc_cnRpbWU9Vks0SzJpVjAyRWc">here</a> and need to be downloaded and placed on the resources folder so that model.json can access them.
