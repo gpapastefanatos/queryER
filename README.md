@@ -24,4 +24,4 @@ For debugging and experimental purposes, the following can also be provided.<br>
 To create the jar file, run: **`mvn clean compile assembly:single`**
 To run the jar file, copy and paste the following command to the console:
 
-**`java -DApp.config.location=config.properties Dlog4j.configuration=file:resources/log4j.properties -jar target/queryER-1.0-jar-with-dependencies.jar`**
+**`java -DApp.config.location=config.properties -jar target/queryER-1.0-jar-with-dependencies.jar`**
