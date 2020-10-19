@@ -7,7 +7,7 @@
       "type": "custom",
       "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {
-        "directory": "projects",
+        "directory": "all",
         "flavor": "translatable"
       }
     },
