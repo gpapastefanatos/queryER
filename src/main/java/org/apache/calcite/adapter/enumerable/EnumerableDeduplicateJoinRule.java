@@ -28,8 +28,11 @@ public class EnumerableDeduplicateJoinRule extends ConverterRule {
 						.replace(EnumerableConvention.INSTANCE)), convert(deduplicateJoin.getRight(),
 								deduplicateJoin.getTraitSet()
 								.replace(EnumerableConvention.INSTANCE)),
-				deduplicateJoin.getCondition(), deduplicateJoin.getVariablesSet(),
-				deduplicateJoin.getJoinType(), deduplicateJoin.getKeyLeft(), deduplicateJoin.getKeyRight(),
+				deduplicateJoin.getCondition(), 
+				deduplicateJoin.getVariablesSet(),
+				deduplicateJoin.getJoinType(), deduplicateJoin.getSourceLeft(), deduplicateJoin.getSourceRight(),
+				deduplicateJoin.getFieldTypesLeft(), deduplicateJoin.getFieldTypesRight(),
+				deduplicateJoin.getKeyLeft(), deduplicateJoin.getKeyRight(),
 				deduplicateJoin.getTableNameLeft(), deduplicateJoin.getTableNameRight(), deduplicateJoin.getFieldLeft(),
 				deduplicateJoin.getFieldRight(),
 				deduplicateJoin.isDirtyJoin());

@@ -41,7 +41,9 @@ import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.util.Litmus;
+import org.apache.calcite.util.Source;
 import org.apache.calcite.util.Util;
+import org.imis.calcite.adapter.csv.CsvFieldType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -105,7 +107,10 @@ public abstract class Join extends BiRel implements Hintable {
 	private Integer fieldLeft;
 	private Integer fieldRight;
 	private boolean isDirtyJoin; // set to true if it is checked
-
+	private Source sourceLeft;
+	private Source sourceRight;
+	private List<CsvFieldType> fieldTypesLeft;
+	private List<CsvFieldType> fieldTypesRight;
 
 	protected Join(
 			RelOptCluster cluster,
@@ -331,13 +336,16 @@ public abstract class Join extends BiRel implements Hintable {
 
 	
 	public abstract Join copy(RelTraitSet traitSet, RexNode conditionExpr,
-			RelNode left, RelNode right, JoinRelType joinType, boolean semiJoinDone,
+			RelNode left, RelNode right, JoinRelType joinType, Source sourceLeft,
+			Source sourceRight,  List<CsvFieldType> fieldTypesLeft,
+			 List<CsvFieldType> fieldTypesRight, boolean semiJoinDone,
 			Integer keyLeft, Integer keyRight, String tableNameLeft,
 			String tableNameRight,
 			Integer fieldLeft,
 			Integer fieldRight,
 			Boolean isDirtyJoin);
 	
+
 	/**
 	 * Analyzes the join condition.
 	 *
@@ -395,6 +403,23 @@ public abstract class Join extends BiRel implements Hintable {
 	public Integer getFieldRight() {
 		return fieldRight;
 	}
+	
+
+	public Source getSourceLeft() {
+		return sourceLeft;
+	}
+
+	public void setSourceLeft(Source sourceLeft) {
+		this.sourceLeft = sourceLeft;
+	}
+
+	public Source getSourceRight() {
+		return sourceRight;
+	}
+
+	public void setSourceRight(Source sourceRight) {
+		this.sourceRight = sourceRight;
+	}
 
 	public void setFieldRight(Integer fieldRight) {
 		this.fieldRight = fieldRight;
@@ -411,5 +436,22 @@ public abstract class Join extends BiRel implements Hintable {
 	public void setDirtyJoin(boolean isDirtyJoin) {
 		this.isDirtyJoin = isDirtyJoin;
 	}
-	
+
+	public List<CsvFieldType> getFieldTypesLeft() {
+		return fieldTypesLeft;
+	}
+
+	public void setFieldTypesLeft(List<CsvFieldType> fieldTypesLeft) {
+		this.fieldTypesLeft = fieldTypesLeft;
+	}
+
+	public List<CsvFieldType> getFieldTypesRight() {
+		return fieldTypesRight;
+	}
+
+	public void setFieldTypesRight(List<CsvFieldType> fieldTypesRight) {
+		this.fieldTypesRight = fieldTypesRight;
+	}
+
+
 }

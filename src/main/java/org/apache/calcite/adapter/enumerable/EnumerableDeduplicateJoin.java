@@ -16,6 +16,7 @@
  */
 package org.apache.calcite.adapter.enumerable;
 
+import java.util.List;
 import java.util.Set;
 import org.apache.calcite.adapter.enumerable.EnumUtils;
 import org.apache.calcite.adapter.enumerable.EnumerableConvention;
@@ -38,7 +39,9 @@ import org.apache.calcite.rel.metadata.RelMdCollation;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
+import org.apache.calcite.util.Source;
 import org.apache.calcite.util.Util;
+import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.calcite.util.NewBuiltInMethod;
 import com.google.common.collect.ImmutableList;
 
@@ -71,6 +74,10 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			RexNode condition,
 			Set<CorrelationId> variablesSet,
 			JoinRelType joinType,
+			Source sourceLeft,
+			Source sourceRight,
+			List<CsvFieldType> fieldTypesLeft,
+			List<CsvFieldType> fieldTypesRight,
 			Integer keyLeft,
 			Integer keyRight,
 			String tableNameLeft,
@@ -90,13 +97,17 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 				joinType);
 		this.traitSet =
 				cluster.traitSet().replace(EnumerableConvention.INSTANCE);
+		this.setSourceLeft(sourceLeft);
+		this.setSourceRight(sourceRight);
 		this.setKeyLeft(keyLeft);
 		this.setKeyRight(keyRight);
 		this.setTableNameLeft(tableNameLeft);
 		this.setTableNameRight(tableNameRight);
 		this.setFieldLeft(fieldLeft);
-		this.setFieldRight(fieldLeft);
+		this.setFieldRight(fieldRight);
 		this.setDirtyJoin(isDirtyJoin);
+		this.setFieldTypesLeft(fieldTypesLeft);
+		this.setFieldTypesRight(fieldTypesRight);
 
 	}
 
@@ -107,6 +118,10 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			RexNode condition,
 			Set<CorrelationId> variablesSet,
 			JoinRelType joinType,
+			Source sourceLeft,
+			Source sourceRight,
+			List<CsvFieldType> fieldTypesLeft,
+			List<CsvFieldType> fieldTypesRight,
 			Integer keyLeft,
 			Integer keyRight,
 			String tableNameLeft,
@@ -121,14 +136,16 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 				.replaceIfs(RelCollationTraitDef.INSTANCE,
 						() -> RelMdCollation.enumerableHashJoin(mq, left, right, joinType));
 		return new EnumerableDeduplicateJoin(cluster, traitSet, left, right, condition,
-				variablesSet, joinType, keyLeft, keyRight, tableNameLeft,
+				variablesSet, joinType, sourceLeft, sourceRight, fieldTypesLeft, fieldTypesRight, 
+				keyLeft, keyRight, tableNameLeft,
 				 tableNameRight, fieldLeft, fieldRight, isDirtyJoin);
 	}
 	
 
 
 	@Override public  EnumerableDeduplicateJoin copy(RelTraitSet traitSet, RexNode condition,
-			RelNode left, RelNode right, JoinRelType joinType,
+			RelNode left, RelNode right, JoinRelType joinType, Source sourceLeft, Source sourceRight,
+			List<CsvFieldType> fieldTypesLeft, List<CsvFieldType> fieldTypesRight,
 			boolean semiJoinDone, Integer keyRight, Integer keyLeft,
 			String tableNameLeft,
 			String tableNameRight,
@@ -136,8 +153,8 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			Integer fieldRight,
 			Boolean isDirtyJoin) {
 		return new EnumerableDeduplicateJoin(getCluster(), traitSet, left, right,
-				condition, variablesSet, joinType, keyRight, keyLeft, tableNameLeft,
-				 tableNameRight, fieldLeft, fieldRight, isDirtyJoin);
+				condition, variablesSet, joinType, sourceLeft, sourceRight, fieldTypesLeft, fieldTypesRight, 
+				keyRight, keyLeft, tableNameLeft, tableNameRight, fieldLeft, fieldRight, isDirtyJoin);
 	
 	}
 
@@ -162,7 +179,9 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 			boolean semiJoinDone) {
 		// TODO Auto-generated method stub
 		return new EnumerableDeduplicateJoin(getCluster(), traitSet, left, right,
-				condition, variablesSet, joinType, this.getKeyLeft(), this.getKeyRight(), this.getTableNameLeft(), this.getTableNameRight(),
+				condition, variablesSet, joinType, this.getSourceLeft(), this.getSourceRight(),
+				this.getFieldTypesLeft(), this.getFieldTypesRight(),
+				this.getKeyLeft(), this.getKeyRight(), this.getTableNameLeft(), this.getTableNameRight(),
 				this.getFieldLeft(), this.getFieldRight(), this.isDirtyJoin());
 	}
 
@@ -219,6 +238,8 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 										physType,
 										ImmutableList.of(
 												leftResult.physType, rightResult.physType)),
+								Expressions.constant(this.getSourceRight().toString()),
+								Expressions.constant(this.getFieldTypesRight()),
 								Expressions.constant(this.getKeyRight()),
 								Expressions.constant(this.getTableNameRight()),
 								Expressions.constant(this.getFieldRight()))
@@ -291,6 +312,8 @@ public class EnumerableDeduplicateJoin extends Join implements EnumerableRel {
 										physType,
 										ImmutableList.of(
 												leftResult.physType, rightResult.physType)),
+								Expressions.constant(this.getSourceLeft().toString()),
+								Expressions.constant(this.getFieldTypesLeft()),
 								Expressions.constant(this.getKeyLeft()),
 								Expressions.constant(this.getTableNameLeft()),
 								Expressions.constant(this.getFieldLeft()))

@@ -69,33 +69,42 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 			rightTableName = tableRight.get(1); 
 		List<RexNode> leftConjuctions = deduplicateLeft.getConjuctions();
 		List<RexNode> rightConjuctions = deduplicateRight.getConjuctions();
-		if (leftConjuctions == null && rightConjuctions != null) {
-			newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join
-					.getVariablesSet(), JoinRelType.DIRTY_LEFT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
-					Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
-		} 
-		else if (leftConjuctions != null && rightConjuctions == null) {
-			newJoin = LogicalDeduplicateJoin.create((RelNode)deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
-					.getVariablesSet(), JoinRelType.DIRTY_RIGHT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
-					Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
-		} 
-		else {
-			deduplicateLeft.computeSelfCost(deduplicateLeft.getCluster().getPlanner(), deduplicateLeft.getCluster().getMetadataQuery());
-			deduplicateRight.computeSelfCost(deduplicateRight.getCluster().getPlanner(), deduplicateRight.getCluster().getMetadataQuery());
-			Double leftComps = deduplicateLeft.getComparisons();
-			Double rightComps = deduplicateRight.getComparisons();
-			if (leftComps != null && rightComps != null)
-				if (leftComps.doubleValue() > rightComps.doubleValue()) {
-					newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join
-							.getVariablesSet(), JoinRelType.DIRTY_LEFT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
-							Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
-				}
-				else {
-					newJoin = LogicalDeduplicateJoin.create((RelNode)deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
-							.getVariablesSet(), JoinRelType.DIRTY_RIGHT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
-							Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
-				}  
-		} 
+		
+// TEST 		
+
+		newJoin = LogicalDeduplicateJoin.create((RelNode)deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
+				.getVariablesSet(), JoinRelType.DIRTY_RIGHT, deduplicateLeft.getSource(), deduplicateRight.getSource(),
+				deduplicateLeft.getFieldTypes(), deduplicateRight.getFieldTypes(), deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
+				Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
+	
+		
+//		if (leftConjuctions == null && rightConjuctions != null) {
+//			newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join
+//					.getVariablesSet(), JoinRelType.DIRTY_LEFT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
+//					Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
+//		} 
+//		else if (leftConjuctions != null && rightConjuctions == null) {
+//			newJoin = LogicalDeduplicateJoin.create((RelNode)deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
+//					.getVariablesSet(), JoinRelType.DIRTY_RIGHT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
+//					Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
+//		} 
+//		else {
+//			deduplicateLeft.computeSelfCost(deduplicateLeft.getCluster().getPlanner(), deduplicateLeft.getCluster().getMetadataQuery());
+//			deduplicateRight.computeSelfCost(deduplicateRight.getCluster().getPlanner(), deduplicateRight.getCluster().getMetadataQuery());
+//			Double leftComps = deduplicateLeft.getComparisons();
+//			Double rightComps = deduplicateRight.getComparisons();
+//			if (leftComps != null && rightComps != null)
+//				if (leftComps.doubleValue() > rightComps.doubleValue()) {
+//					newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join
+//							.getVariablesSet(), JoinRelType.DIRTY_LEFT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
+//							Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
+//				}
+//				else {
+//					newJoin = LogicalDeduplicateJoin.create((RelNode)deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
+//							.getVariablesSet(), JoinRelType.DIRTY_RIGHT, deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
+//							Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
+//				}  
+//		} 
 		if (newJoin != null)
 			call.transformTo(newJoin); 
 	}

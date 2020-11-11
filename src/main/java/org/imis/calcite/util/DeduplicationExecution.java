@@ -83,8 +83,7 @@ public class DeduplicationExecution<T> {
     	double setPropertiesTime = (System.currentTimeMillis() - setPropertiesStartTime);
     	
         double deduplicateStartTime = System.currentTimeMillis() - setPropertiesTime;
-        CsvEnumerator<T> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
-        
+        CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
         List<T> queryData = enumerable.toList();
         String queryDataSize = Integer.toString(queryData.size());
         
@@ -134,7 +133,9 @@ public class DeduplicationExecution<T> {
         String epTotalComps = "";
         String filterBlockEntities = "";
         String ePEntities = "";
+        boolean flag = false;
         if (blocks.size() > 10) {
+        	
         	// FILTERING
             double blockFilteringStartTime = System.currentTimeMillis();
             if(useFilter) {
@@ -151,6 +152,7 @@ public class DeduplicationExecution<T> {
             filterBlockEntities = Integer.toString(queryBlockIndex.blocksToEntities(blocks).size());
             // EDGE PRUNING
             if(usePruning) {
+            	flag = true;
 	            double edgePruningStartTime = System.currentTimeMillis();
 	            EfficientEdgePruning eEP = new EfficientEdgePruning();
 	            eEP.applyProcessing(blocks);
@@ -168,15 +170,15 @@ public class DeduplicationExecution<T> {
 
         //Get ids of final entities, and add back qIds that were cut from m-blocking
         Set<Integer> totalIds = new HashSet<>();
-        if(usePruning)
+        if(flag)
         	totalIds = queryBlockIndex.blocksToEntitiesD(blocks);
         else
         	totalIds = queryBlockIndex.blocksToEntities(blocks);
+		
         totalIds.addAll(qIds);
-
         double storeTime = storeIds(qIds);
         double tableScanStartTime = System.currentTimeMillis() - storeTime;
-        AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((CsvEnumerator<Object[]>) originalEnumerator, totalIds, key);
+        AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((Enumerator<Object[]>) originalEnumerator, totalIds, key);
         double tableScanEndTime = System.currentTimeMillis();
         String tableScanTime = Double.toString((tableScanEndTime - tableScanStartTime) / 1000);
 
@@ -246,16 +248,6 @@ public class DeduplicationExecution<T> {
         csvWriter.flush();
         csvWriter.close();
     }
-	
-
-    private static TIntObjectHashMap<Object[]> createMapTrove(AbstractEnumerable<Object[]> enumerable, Integer key) {
-        List<Object[]> entityList = enumerable.toList();
-        TIntObjectHashMap<Object[]> entityMap = new TIntObjectHashMap<Object[]>(entityList.size());
-        for (Object[] entity : entityList) {
-            entityMap.put(Integer.parseInt(entity[key].toString()), entity);
-        }
-        return entityMap;
-    }
 
     private static double storeIds(Set<Integer> qIds) {
     	double startTime = System.currentTimeMillis();
@@ -281,7 +273,7 @@ public class DeduplicationExecution<T> {
 //			entityResolvedTuple.sortEntities();
 //		if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 //			DEDUPLICATION_EXEC_LOGGER.debug("Final Size: " + entityResolvedTuple.finalData.size());
-    	entityResolvedTuple.groupEntities();
+    	entityResolvedTuple.sortEntities();
         return entityResolvedTuple;
 
     }
@@ -306,7 +298,7 @@ public class DeduplicationExecution<T> {
      * @param key        Key column
      * @return AbstractEnumerable filtered by ids
      */
-    private static AbstractEnumerable<Object[]> createEnumerable(CsvEnumerator<Object[]> enumerator, Set<Integer> qIds, Integer key) {
+    private static AbstractEnumerable<Object[]> createEnumerable(Enumerator<Object[]> enumerator, Set<Integer> qIds, Integer key) {
         return new AbstractEnumerable<Object[]>() {
             @Override
             public Enumerator<Object[]> enumerator() {
@@ -321,7 +313,7 @@ public class DeduplicationExecution<T> {
                         while (enumerator.moveNext()) {
                             final Object[] current = enumerator.current();
                             String entityKey = current[key].toString();
-                            if (entityKey.contentEquals("")) continue;
+                            if (entityKey.equals("")) continue;
                             if (qIds.contains(Integer.parseInt(entityKey))) {
                                 return true;
                             }

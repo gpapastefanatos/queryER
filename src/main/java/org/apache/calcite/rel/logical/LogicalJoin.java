@@ -34,6 +34,8 @@ import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.util.Source;
+import org.imis.calcite.adapter.csv.CsvFieldType;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -238,12 +240,11 @@ public final class LogicalJoin extends Join {
 
 	@Override
 	public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, JoinRelType joinType,
-			boolean semiJoinDone, Integer keyLeft, Integer keyRight, String tableNameLeft,
-			String tableNameRight,
-			Integer fieldLeft,
-			Integer fieldRight,
-			Boolean isD) {
+			Source sourceLeft, Source sourceRight, List<CsvFieldType> fieldTypesLeft,
+			List<CsvFieldType> fieldTypesRight, boolean semiJoinDone, Integer keyLeft, Integer keyRight,
+			String tableNameLeft, String tableNameRight, Integer fieldLeft, Integer fieldRight, Boolean isDirtyJoin) {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
 }

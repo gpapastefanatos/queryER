@@ -1,5 +1,6 @@
 package org.imis.calcite.rel.logical;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.calcite.plan.Convention;
@@ -17,7 +18,9 @@ import org.apache.calcite.rel.metadata.RelMdCollation;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.util.Source;
 import org.apache.calcite.util.Util;
+import org.imis.calcite.adapter.csv.CsvFieldType;
 
 import com.google.common.collect.ImmutableList;
 
@@ -38,6 +41,10 @@ public class LogicalDeduplicateJoin extends Join {
 			RexNode condition,
 			Set<CorrelationId> variablesSet,
 			JoinRelType joinType,
+			Source sourceLeft,
+			Source sourceRight,
+			List<CsvFieldType> fieldTypesLeft, 
+			List<CsvFieldType> fieldTypesRight, 
 			Integer keyLeft,
 			Integer keyRight,
 			String tableNameLeft,
@@ -62,6 +69,8 @@ public class LogicalDeduplicateJoin extends Join {
 		this.setFieldLeft(fieldLeft);
 		this.setFieldRight(fieldRight);
 		this.setDirtyJoin(isDirtyJoin);
+		this.setSourceLeft(sourceLeft);
+		this.setSourceRight(sourceRight);
 
 	}
 
@@ -75,6 +84,10 @@ public class LogicalDeduplicateJoin extends Join {
 			RexNode condition,
 			Set<CorrelationId> variablesSet,
 			JoinRelType joinType,
+			Source sourceLeft,
+			Source sourceRight,
+			List<CsvFieldType> fieldTypesLeft, 
+			List<CsvFieldType> fieldTypesRight, 
 			Integer keyLeft,
 			Integer keyRight,
 			String tableNameLeft,
@@ -89,8 +102,8 @@ public class LogicalDeduplicateJoin extends Join {
 				.replaceIfs(RelCollationTraitDef.INSTANCE,
 						() -> RelMdCollation.enumerableHashJoin(mq, left, right, joinType));
 		return new LogicalDeduplicateJoin(cluster, traitSet, left, right, condition,
-				variablesSet, joinType, keyLeft, keyRight,  tableNameLeft, tableNameRight,
-				fieldLeft, fieldRight, isDirtyJoin);
+				variablesSet, joinType, sourceLeft, sourceRight, fieldTypesLeft, fieldTypesRight, keyLeft, keyRight,
+				tableNameLeft, tableNameRight, fieldLeft, fieldRight, isDirtyJoin);
 	}
 
 
@@ -99,7 +112,9 @@ public class LogicalDeduplicateJoin extends Join {
 			boolean semiJoinDone) {
 		// TODO Auto-generated method stub
 		return new LogicalDeduplicateJoin(getCluster(), traitSet, left, right,
-				condition, variablesSet, joinType, getKeyLeft(), getKeyRight(), getTableNameLeft(), getTableNameRight(),
+				condition, variablesSet, joinType, getSourceLeft(), getSourceRight(),
+				getFieldTypesLeft(), getFieldTypesRight(),
+				getKeyLeft(), getKeyRight(), getTableNameLeft(), getTableNameRight(),
 				getFieldLeft(), getFieldRight(), isDirtyJoin());
 	}
 	
@@ -153,12 +168,14 @@ public class LogicalDeduplicateJoin extends Join {
 
 
 	@Override
-	public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, JoinRelType joinType,
-			boolean semiJoinDone, Integer keyLeft, Integer keyRight, String tableNameLeft, String tableNameRight,
+	public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, 
+			JoinRelType joinType, Source sourceLeft, Source sourceRight, List<CsvFieldType> fieldTypesLeft,
+			 List<CsvFieldType> fieldTypesRight, boolean semiJoinDone, Integer keyLeft, Integer keyRight, 
+			 String tableNameLeft, String tableNameRight,
 			Integer fieldLeft, Integer fieldRight, Boolean isDirtyJoin) {
 		// TODO Auto-generated method stub
 		return new LogicalDeduplicateJoin(getCluster(), traitSet, left, right,
-				condition, variablesSet, joinType, keyLeft, keyRight, tableNameLeft, tableNameRight,
+				condition, variablesSet, joinType, sourceLeft, sourceRight, fieldTypesLeft, fieldTypesRight, keyLeft, keyRight, tableNameLeft, tableNameRight,
 				fieldLeft, fieldRight, isDirtyJoin);
 	}
 

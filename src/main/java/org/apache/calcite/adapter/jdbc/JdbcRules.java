@@ -76,8 +76,10 @@ import org.apache.calcite.sql.validate.SqlValidatorUtil;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.tools.RelBuilderFactory;
 import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.Source;
 import org.apache.calcite.util.Util;
 import org.apache.calcite.util.trace.CalciteTrace;
+import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
@@ -427,23 +429,14 @@ public class JdbcRules {
 																														
 
 																														@Override
-																														public Join copy(
-																																RelTraitSet traitSet,
-																																RexNode conditionExpr,
-																																RelNode left,
-																																RelNode right,
-																																JoinRelType joinType,
-																																boolean semiJoinDone,
-																																Integer keyLeft,
-																																Integer keyRight,
-																																String tableNameLeft,
-																																String tableNameRight,
-																																Integer fieldLeft,
-																																Integer fieldRight,
-																																Boolean isD) {
+																														public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, JoinRelType joinType,
+																																Source sourceLeft, Source sourceRight, List<CsvFieldType> fieldTypesLeft,
+																																List<CsvFieldType> fieldTypesRight, boolean semiJoinDone, Integer keyLeft, Integer keyRight,
+																																String tableNameLeft, String tableNameRight, Integer fieldLeft, Integer fieldRight, Boolean isDirtyJoin) {
 																															// TODO Auto-generated method stub
 																															return null;
 																														}
+
 																													}
 
 																													/**

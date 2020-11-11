@@ -59,7 +59,7 @@ public class ExecuteBlockComparisons<T> {
 
 				Object[] entity1 = newData.get(comparison.getEntityId1());
 				Object[] entity2 = newData.get(comparison.getEntityId2());
-				if(entity1 == null || entity2 == null) continue;
+
 				double compStartTime = System.currentTimeMillis();
 				double similarity = ProfileComparison.getJaroSimilarity(entity1, entity2, keyIndex);
 				double compEndTime = System.currentTimeMillis();

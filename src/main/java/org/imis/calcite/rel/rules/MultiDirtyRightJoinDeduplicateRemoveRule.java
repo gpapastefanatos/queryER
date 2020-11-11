@@ -74,14 +74,14 @@ public class MultiDirtyRightJoinDeduplicateRemoveRule extends RelOptRule{
 	
 		if(join.getJoinType() == JoinRelType.DIRTY_RIGHT) {
 			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(0), join.getCondition(),
-					join.getVariablesSet(), join.getJoinType(), join.getKeyLeft(), join.getKeyRight(),
-					join.getTableNameLeft(), join.getTableNameRight(), join.getFieldLeft(), join.getFieldRight(), true);
+					join.getVariablesSet(), join.getJoinType(), join.getSourceLeft(), join.getSourceRight(),  join.getFieldTypesLeft(), join.getFieldTypesRight(),
+					join.getKeyLeft(), join.getKeyRight(), join.getTableNameLeft(), join.getTableNameRight(), join.getFieldLeft(), join.getFieldRight(), true);
 			
 		}
 		else if(join.getJoinType() == JoinRelType.DIRTY) {
 			newJoin = LogicalDeduplicateJoin.create(join.getLeft(), deduplicateRight.getInput(0), join.getCondition(),
-					join.getVariablesSet(), JoinRelType.DIRTY_RIGHT, join.getKeyLeft(), join.getKeyRight(),
-					join.getTableNameLeft(), join.getTableNameRight(), join.getFieldLeft(), join.getFieldRight(), false);
+					join.getVariablesSet(), JoinRelType.DIRTY_RIGHT, join.getSourceLeft(), join.getSourceRight(),  join.getFieldTypesLeft(), join.getFieldTypesRight(),
+					join.getKeyLeft(), join.getKeyRight(), join.getTableNameLeft(), join.getTableNameRight(), join.getFieldLeft(), join.getFieldRight(), false);
 		}			
 		if(newJoin != null) {
 			call.transformTo(newJoin);

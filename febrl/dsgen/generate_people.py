@@ -318,11 +318,12 @@ email_dict = {'name':'email',
             'miss_prob':0.04,
          'new_val_prob':0.01}
 
-address1_dict = {'name':'address_1',
-                 'type':'freq',
-           'char_range':'alpha',
-            'freq_file':'data'+os.sep+'address1-freq.csv',
-          'select_prob':0.10,
+
+age_dict = {'name':'age',
+            'type':'freq',
+      'char_range':'digit',
+       'freq_file':'data'+os.sep+'age-freq.csv',
+     	'select_prob':0.10,
              'ins_prob':0.10,
              'del_prob':0.15,
              'sub_prob':0.55,
@@ -333,8 +334,6 @@ address1_dict = {'name':'address_1',
          'spc_del_prob':0.03,
             'miss_prob':0.04,
          'new_val_prob':0.01}
-
-
 suburb_dict = {'name':'suburb',
                'type':'freq',
          'char_range':'alpha',
@@ -438,20 +437,21 @@ dob_dict = {'name':'date_of_birth',
        'miss_prob':0.10,
     'new_val_prob':0.05}
 
-age_dict = {'name':'age',
-            'type':'freq',
-      'char_range':'digit',
-       'freq_file':'data'+os.sep+'age-freq.csv',
-     'select_prob':0.20,
+
+address1_dict = {'name':'address_1',
+                 'type':'freq',
+           'char_range':'alpha',
+            'freq_file':'data'+os.sep+'address1-freq.csv',
+          'select_prob':0.20,
         'ins_prob':0.00,
         'del_prob':0.00,
         'sub_prob':0.30,
       'trans_prob':0.20,
    'val_swap_prob':0.20,
-   'wrd_swap_prob':0.00,
+   'wrd_swap_prob':0.1,
     'spc_ins_prob':0.00,
     'spc_del_prob':0.00,
-       'miss_prob':0.20,
+       'miss_prob':0.1,
     'new_val_prob':0.10}
 
 phonenum_dict = {'name':'phone_number',
@@ -477,15 +477,15 @@ organisation_dict = {'name':'organisation',
            'char_range':'alpha',
             'freq_file':'data'+os.sep+'orgs-freq.csv',
           'select_prob':0.15,
-             'ins_prob':0.04,
-             'del_prob':0.04,
+             'ins_prob':0.4,
+             'del_prob':0.18,
              'sub_prob':0.10,
            'trans_prob':0.02,
         'val_swap_prob':0.03,
         'wrd_swap_prob':0.04,
          'spc_ins_prob':0.02,
          'spc_del_prob':0.01,
-            'miss_prob':0.60,
+            'miss_prob':0.1,
          'new_val_prob':0.10}
 
 
@@ -516,10 +516,10 @@ single_typo_prob = {'same_row':0.40,
 
 is_join = True
 
-left_field_list = [givenname_dict, surname_dict, email_dict, streetnumber_dict, address1_dict,
+left_field_list = [givenname_dict, surname_dict, email_dict, streetnumber_dict,  age_dict,
                  suburb_dict, postcode_dict, ssid_dict]
 
-right_field_list = [state_dict,  dob_dict, age_dict, phonenum_dict, ssid_key, organisation_dict]
+right_field_list = [state_dict,  dob_dict, address1_dict,phonenum_dict, ssid_key, organisation_dict]
 
 if(not is_join):
 	field_list = left_field_list

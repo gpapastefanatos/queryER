@@ -17,6 +17,7 @@
 package org.apache.calcite.adapter.enumerable;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.calcite.linq4j.tree.BlockBuilder;
@@ -39,7 +40,10 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexUtil;
 import org.apache.calcite.util.BuiltInMethod;
 import org.apache.calcite.util.ImmutableIntList;
+import org.apache.calcite.util.Source;
 import org.apache.calcite.util.Util;
+import org.imis.calcite.adapter.csv.CsvFieldType;
+
 import com.google.common.collect.ImmutableList;
 
 /** Implementation of {@link org.apache.calcite.rel.core.Join} in
@@ -256,12 +260,13 @@ public class EnumerableHashJoin extends Join implements EnumerableRel {
 
 	@Override
 	public Join copy(RelTraitSet traitSet, RexNode conditionExpr, RelNode left, RelNode right, JoinRelType joinType,
-			boolean semiJoinDone, Integer keyLeft, Integer keyRight, String tableNameLeft, String tableNameRight,
-			Integer fieldLeft, Integer fieldRight, Boolean isD) {
+			Source sourceLeft, Source sourceRight, List<CsvFieldType> fieldTypesLeft,
+			List<CsvFieldType> fieldTypesRight, boolean semiJoinDone, Integer keyLeft, Integer keyRight,
+			String tableNameLeft, String tableNameRight, Integer fieldLeft, Integer fieldRight, Boolean isDirtyJoin) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 
 
 	

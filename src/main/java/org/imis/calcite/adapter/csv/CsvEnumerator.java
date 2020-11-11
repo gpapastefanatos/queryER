@@ -83,7 +83,7 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 		this(source, cancelFlag, fieldTypes, identityList(fieldTypes.size()));
 	}
 
-	CsvEnumerator(Source source, AtomicBoolean cancelFlag,
+	public CsvEnumerator(Source source, AtomicBoolean cancelFlag,
 			List<CsvFieldType> fieldTypes, Integer[] fields) {
 		//noinspection unchecked
 		this(source, fieldTypes, cancelFlag,
@@ -194,8 +194,8 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	public static CSVReader openCsv(Source source) throws IOException {
 		final Reader fileReader = source.reader();
 		char seperator = ',';
-		if(source.toString().contains("publications") || source.toString().contains("venues"))
-			seperator = '>';
+//		if(source.toString().contains("publications") || source.toString().contains("venues"))
+//			seperator = '>';
 		
 		return new CSVReader(fileReader, seperator);
 //		return new CSVReader(fileReader, ',');

@@ -221,7 +221,8 @@ public class Experiments {
 				double queryStartTime = System.currentTimeMillis();
 				queryResults = runQuery(calciteConnection, query);
 				//printQueryContents(queryResults);
-				exportQueryContent(queryResults, "./data/queryResults.csv");
+				exportQueryContent(queryResults, "./data/queryResults" + index + ".csv");
+				//sizeQueryContents(queryResults);
 				double queryEndTime = System.currentTimeMillis();
 				runTime = (queryEndTime - queryStartTime)/1000;
 				totalRunTime += runTime;
@@ -237,6 +238,16 @@ public class Experiments {
 		}
 		csvWriter.close();
 	}
+
+	private static void sizeQueryContents(ResultSet resultSet) throws SQLException {
+		int count = 0;
+		while (resultSet.next()) {
+			//Print one row
+			count++;
+		}
+		System.out.println(count);
+	}
+
 
 	private static ResultSet runQuery(CalciteConnection calciteConnection, String query) throws SQLException {
 		System.out.println("Running query...");

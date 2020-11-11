@@ -5,8 +5,10 @@ import org.apache.calcite.linq4j.function.EqualityComparer;
 import org.apache.calcite.linq4j.function.Function1;
 import org.apache.calcite.linq4j.function.Function2;
 import org.apache.calcite.linq4j.function.Predicate2;
+import org.apache.calcite.util.Source;
 import org.apache.calcite.util.Sources;
 import org.imis.calcite.adapter.csv.CsvEnumerator;
+import org.imis.calcite.adapter.csv.CsvFieldType;
 import org.imis.er.BlockIndex.QueryBlockIndex;
 import org.imis.er.DataStructures.AbstractBlock;
 import org.imis.er.DataStructures.EntityResolvedTuple;
@@ -22,6 +24,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +74,8 @@ public class DeduplicationJoinExecution {
 			Function1<Object[], TKey> leftKeySelector,
 			Function1<Object[], TKey> rightKeySelector,
 			Function2<Object[], Object[], Object[]> resultSelector,
+			String sourceRight,
+			List<CsvFieldType> fieldTypes,
 			Integer keyRight,
 			String rightTableName,
 			Integer rightTableSize,
@@ -84,10 +89,15 @@ public class DeduplicationJoinExecution {
 		filteredData = getDirtyMatches((Enumerable<Object[]>) Linq4j.asEnumerable(left.finalData),
 				right, leftKeySelector, rightKeySelector, resultSelector, comparer,
 				generateNullsOnLeft, generateNullsOnRight, predicate, keyRight);
-	
+		AtomicBoolean ab = new AtomicBoolean();
+		ab.set(false);
+        CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(sourceRight)),
+        		ab, identityList(rightTableSize));
+
+
 		//Deduplicate the dirty table
 		EntityResolvedTuple entityResolvedTuple = deduplicate(filteredData, keyRight, rightTableSize,
-				rightTableName, right.enumerator());
+				rightTableName, originalEnumerator);
 
 
 		EntityResolvedTuple joinedEntityResolvedTuple  =
@@ -128,6 +138,8 @@ public class DeduplicationJoinExecution {
 			Function1<Object[], TKey> leftKeySelector,
 			Function1<Object[], TKey> rightKeySelector,
 			Function2<Object[], Object[], Object[]> resultSelector,
+			String sourceLeft,
+			List<CsvFieldType> fieldTypes,
 			Integer keyLeft,
 			String leftTableName,
 			Integer leftTableSize,
@@ -141,11 +153,14 @@ public class DeduplicationJoinExecution {
 		filteredData = getDirtyMatches(Linq4j.asEnumerable(right.finalData), left,
 				rightKeySelector, leftKeySelector, resultSelector, comparer,
 				generateNullsOnRight, generateNullsOnLeft, predicate, keyLeft);
-
+		AtomicBoolean ab = new AtomicBoolean();
+		ab.set(false);
+        CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(sourceLeft)),
+        		ab, identityList(leftTableSize));
 
 		// Deduplicate the dirty table
 		EntityResolvedTuple entityResolvedTuple = deduplicate(filteredData, keyLeft, leftTableSize,
-				leftTableName, left.enumerator());
+				leftTableName, originalEnumerator);
 		// Reverse the right, left structure
 		EntityResolvedTuple  joinedEntityResolvedTuple =
 				deduplicateJoin(entityResolvedTuple, right, leftKeySelector, rightKeySelector,
@@ -171,6 +186,7 @@ public class DeduplicationJoinExecution {
 		EntityResolvedTuple joinedEntityResolvedTuple =
 				deduplicateJoin(left, right, leftKeySelector, rightKeySelector,
 						resultSelector, comparer, generateNullsOnLeft, generateNullsOnRight, predicate);
+		joinedEntityResolvedTuple.getAll();
 
 		return joinedEntityResolvedTuple;
 	}
@@ -185,6 +201,7 @@ public class DeduplicationJoinExecution {
 		return entityMap;
 	}
 
+	
 	/**
 	 * Implements a faux-join only to get the entities that match for the hashing table.
 	 * This way we can perform deduplication on a subset of the data.
@@ -311,12 +328,12 @@ public class DeduplicationJoinExecution {
 		//List<Object[]> joinedEntities = new ArrayList<>();
 		HashMap<Integer, Object[]> joinedEntities = new HashMap<>();
 		Set<Integer> leftCheckedIds = new HashSet<>(leftsMap.size());
-
+	
 		for (Integer leftId : leftsMap.keySet()) {		
 			Set<Integer> leftMatchedIds = leftMatches.get(leftId);
 			if(leftCheckedIds.contains(leftId)) continue;
 			leftCheckedIds.addAll(leftMatchedIds);
-			Set<Integer> rightMatchedIds  = new HashSet<>();
+			Set<Integer> rightJoinIds  = new HashSet<>();
 			for (Integer leftMatchedId : leftMatchedIds) {
 				Object[] leftCurrent = leftsMap.get(leftMatchedId);	
 				TKey leftKey = leftKeySelector.apply(leftCurrent);
@@ -327,33 +344,40 @@ public class DeduplicationJoinExecution {
 						while (rightEnumerator.moveNext()) {
 							final Object[] rightMatched = rightEnumerator.current();
 							Integer rightId = Integer.parseInt(rightMatched[0].toString());
-							rightMatchedIds.addAll(rightMatches.get(rightId));	
+							//rightMatchedIds.addAll(rightMatches.get(rightId));	
+							rightJoinIds.add(rightId);
 						}
 					}
 				}
 			}
-			if(rightMatchedIds.isEmpty()) continue;
-			for (Integer leftMatchedId : leftMatchedIds) {
+			
+			if(rightJoinIds.isEmpty()) continue;
+			Set<Integer> rightCheckedIds = new HashSet<>(rightsMap.size());
+			for(Integer rightJoinId : rightJoinIds) {
 				Integer rightJoinedId = joinedId; 
-				Object[] leftCurrent = leftsMap.get(leftMatchedId);
-				for(Integer rightMatchedId : rightMatchedIds) {
-					Object[] rightCurrent = rightsMap.get(rightMatchedId);
-					Object[] joinedEntity = resultSelector.apply(leftCurrent, rightCurrent);
-					joinedEntity = appendValue(joinedEntity, rightJoinedId);
-					//joinedEntities.add(joinedEntity);
-					joinedEntities.put(rightJoinedId, joinedEntity);
-					joinedUFind.union(joinedId, rightJoinedId);
-					rightJoinedId += 1;
-
+				Set<Integer> rightMatchedIds = rightMatches.get(rightJoinId);
+				if(rightCheckedIds.contains(rightJoinId)) continue;
+				rightCheckedIds.addAll(rightMatchedIds);
+				for (Integer leftMatchedId : leftMatchedIds) {
+					Object[] leftCurrent = leftsMap.get(leftMatchedId);
+					for(Integer rightMatchedId : rightMatchedIds) {
+						Object[] rightCurrent = rightsMap.get(rightMatchedId);
+						Object[] joinedEntity = resultSelector.apply(leftCurrent, rightCurrent);
+						joinedEntity = appendValue(joinedEntity, rightJoinedId);
+						//joinedEntities.add(joinedEntity);
+						joinedEntities.put(rightJoinedId, joinedEntity);
+						joinedUFind.union(joinedId, rightJoinedId);
+						rightJoinedId += 1;
+					}
 				}
 				joinedId = rightJoinedId;
 			}
 		}
 		
 		double deduplicateJoinEndTime = System.currentTimeMillis();
-//		if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
-//			DEDUPLICATION_EXEC_LOGGER.debug(left.finalData.size() + "," + right.finalData.size() + "," + joinedEntities.size() + "," +
-//					(deduplicateJoinEndTime - deduplicateJoinStartTime) / 1000);
+		if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
+			DEDUPLICATION_EXEC_LOGGER.debug(left.finalData.size() + "," + right.finalData.size() + "," + joinedEntities.size() + "," +
+					(deduplicateJoinEndTime - deduplicateJoinStartTime) / 1000);
 			int len = joinedEntities.get(0).length;
 			return new EntityResolvedTuple(joinedEntities, joinedUFind, len - 1, len);
 }
@@ -369,10 +393,20 @@ public class DeduplicationJoinExecution {
 		return temp.toArray();
 
 	}
+	
+	
+	public static List<CsvFieldType> identityList(int n) {
+		List<CsvFieldType> csvFieldTypes = new ArrayList<>();
+		for(int i = 0; i < n; i++) {
+			csvFieldTypes.add(null);
+		}
+		return csvFieldTypes;
+	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static EntityResolvedTuple deduplicate(List<Object[]> queryData, Integer key, Integer noOfAttributes,
 			String tableName, Enumerator<Object[]> originalEnumerator) {
+		
 		 double deduplicateStartTime = System.currentTimeMillis();
 
 		 String queryDataSize = Integer.toString(queryData.size());
@@ -400,7 +434,7 @@ public class DeduplicationJoinExecution {
 		 // PURGING
 		 double blockPurgingStartTime = System.currentTimeMillis();
 		 ComparisonsBasedBlockPurging blockPurging = new ComparisonsBasedBlockPurging();
-		 blockPurging.applyProcessing(blocks);
+		 //blockPurging.applyProcessing(blocks);
 		 double blockPurgingEndTime = System.currentTimeMillis();
 
 		 String purgingBlocksSize = Integer.toString(blocks.size());
@@ -423,13 +457,15 @@ public class DeduplicationJoinExecution {
 	     String epTotalComps = "";
 	     String filterBlockEntities = "";
 	     String ePEntities = "";
+	     boolean flag = false;
 	     if (blocks.size() > 10) {
 	    	 // FILTERING
+	    	 flag = true;
 	    	 double blockFilteringStartTime = System.currentTimeMillis();
 	    	 //double filterParam = DeduplicationExecution.calculateFilterParam(entities, comps);
 			 BlockFiltering bFiltering = new BlockFiltering(0.35);
 
-			 bFiltering.applyProcessing(blocks);
+			 //bFiltering.applyProcessing(blocks);
 			 double blockFilteringEndTime = System.currentTimeMillis();
 			 filterBlocksSize = Integer.toString(blocks.size());
 
@@ -439,7 +475,7 @@ public class DeduplicationJoinExecution {
 			 // EDGE PRUNING
 			 double edgePruningStartTime = System.currentTimeMillis();
 			 EfficientEdgePruning eEP = new EfficientEdgePruning();
-			 eEP.applyProcessing(blocks);
+			 //eEP.applyProcessing(blocks);
 			 double edgePruningEndTime = System.currentTimeMillis();
 
 			 epTime = Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000);
@@ -448,13 +484,19 @@ public class DeduplicationJoinExecution {
 				 totalComps += block.getNoOfComparisons();
 			 }
 			 epTotalComps = Double.toString(totalComps);
-			 ePEntities = Integer.toString(queryBlockIndex.blocksToEntitiesD(blocks).size());
+			 ePEntities = Integer.toString(queryBlockIndex.blocksToEntities(blocks).size());
 
 		 }
 
 		 //Get ids of final entities, and add back qIds that were cut from m-blocking
-		 Set<Integer> totalIds = queryBlockIndex.blocksToEntitiesD(blocks);
+	     Set<Integer> totalIds = new HashSet<>();
+	     if(flag)
+	    	 totalIds = queryBlockIndex.blocksToEntities(blocks);
+	     else
+	    	 totalIds = queryBlockIndex.blocksToEntities(blocks);
+	     
 		 totalIds.addAll(qIds);
+	     
 		 double tableScanStartTime = System.currentTimeMillis();
 		 AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((Enumerator<Object[]>) originalEnumerator, totalIds, key);
 		 double tableScanEndTime = System.currentTimeMillis();

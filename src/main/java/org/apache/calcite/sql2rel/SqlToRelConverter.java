@@ -2714,8 +2714,8 @@ public class SqlToRelConverter {
 		
 		final LogicalDeduplicateJoin deduplicateJoin = LogicalDeduplicateJoin.create(
 				originalJoin.getLeft(), originalJoin.getRight(), originalJoin.getCondition(),
-				originalJoin.getVariablesSet(), originalJoin.getJoinType(), null,
-				null, null, null, null, null, false);
+				originalJoin.getVariablesSet(), originalJoin.getJoinType(), null, null, null,
+				null, null, null, null, null, null, null, false);
 		RelNode node = RelOptUtil.pushDownJoinConditions(deduplicateJoin, relBuilder);
 		// If join conditions are pushed down, update the leaves.
 		if (node instanceof Project) {

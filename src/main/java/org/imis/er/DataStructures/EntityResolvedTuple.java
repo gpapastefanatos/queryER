@@ -109,14 +109,14 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 			this.revUF.computeIfAbsent(parent, x -> new HashSet<>()).add(child);
 			this.revUF.computeIfAbsent(child, x -> new HashSet<>()).add(parent);
 			// For both of these go to their similarities and recompute them
-//			for(int simPar : this.revUF.get(parent)) {
-//				if(simPar != parent)
-//					this.revUF.computeIfAbsent(simPar, x -> new HashSet<>()).addAll(this.revUF.get(parent));
-//			}
-//			for(int simPar : this.revUF.get(child)) {
-//				if(simPar != child)
-//					this.revUF.computeIfAbsent(simPar, x -> new HashSet<>()).addAll(this.revUF.get(child));
-//			}
+			for(int simPar : this.revUF.get(parent)) {
+				if(simPar != parent)
+					this.revUF.computeIfAbsent(simPar, x -> new HashSet<>()).addAll(this.revUF.get(parent));
+			}
+			for(int simPar : this.revUF.get(child)) {
+				if(simPar != child)
+					this.revUF.computeIfAbsent(simPar, x -> new HashSet<>()).addAll(this.revUF.get(child));
+			}
 		}
 
 		

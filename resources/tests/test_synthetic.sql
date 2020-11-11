@@ -2,7 +2,7 @@
 -- SINGLE TABLE --
 SELECT 1 FROM synthetic.organisations
 
-SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.people100k ON people100k.organisation = name WHERE state = 'vic'
+-- SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.people100k ON people100k.organisation = name WHERE state = 'vic'
 
 -- SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.full200k ON full200k.organisation = name  INNER JOIN synthetic.projects ON projects.organisation = name WHERE MOD(organisations.rec_id, 2) < 1 AND MOD(projects.rec_id, 10) < 1
 
@@ -57,3 +57,11 @@ SELECT DEDUP * FROM  synthetic.organisations INNER JOIN synthetic.people100k ON 
 -- SELECT DEDUP * FROM synthetic.full1m WHERE MOD(rec_id, 10) < 1 
 -- SELECT DEDUP * FROM synthetic.full1m5km WHERE MOD(rec_id, 15) < 1 
 -- SELECT DEDUP * FROM synthetic.full2m WHERE MOD(rec_id, 20) < 1
+
+-- SELECT DEDUP * FROM synthetic.people50k INNER JOIN synthetic.organisations ON organisations.name = people50k.organisation WHERE age = 80
+-- SELECT DEDUP * FROM synthetic.people50k INNER JOIN synthetic.organisations ON organisations.name = people50k.organisation WHERE MOD(organisations.rec_id, 20) < 1 
+SELECT DEDUP * FROM synthetic.people50k INNER JOIN synthetic.organisations ON organisations.name = people50k.organisation  WHERE age > 80 AND country LIKE '%Germany%'
+
+-- SELECT DEDUP * FROM synthetic.organisations INNER JOIN synthetic.people50k ON organisations.name = people50k.organisation WHERE age > 80
+-- SELECT DEDUP * FROM synthetic.organisations INNER JOIN synthetic.people50k ON organisations.name = people50k.organisation WHERE MOD(organisations.rec_id, 20) < 1
+SELECT DEDUP * FROM synthetic.organisations INNER JOIN synthetic.people50k ON organisations.name = people50k.organisation WHERE age > 80 AND country LIKE '%Germany%'

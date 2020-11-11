@@ -64,8 +64,8 @@ public class JoinConvertToDuplicateRule extends RelOptRule{
 		}
 		
 		newJoin = LogicalDeduplicateJoin.create(join.getLeft(), join.getRight(), join.getCondition(),
-				join.getVariablesSet(), join.getJoinType(), null, null,
-				 null, null,  null, null, false);
+				join.getVariablesSet(), join.getJoinType(), null, null, null, null,
+				 null, null,  null, null, null, null, false);
 		if(newJoin != null) {
 			call.transformTo(newJoin);
 		}
