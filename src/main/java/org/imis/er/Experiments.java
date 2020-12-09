@@ -16,6 +16,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -115,11 +116,17 @@ public class Experiments {
 				String query = readQuery();
 				Double runTime = 0.0;
 				double queryStartTime = System.currentTimeMillis();
-				ResultSet queryResults = runQuery(calciteConnection, query);
-				double queryEndTime = System.currentTimeMillis();
-				runTime = (queryEndTime - queryStartTime)/1000;
-				exportQueryContent(queryResults, "./data/queryResults.csv");
-				System.out.println("Finished query, time: " + runTime);
+				try {
+					ResultSet queryResults = runQuery(calciteConnection, query);
+					double queryEndTime = System.currentTimeMillis();
+					runTime = (queryEndTime - queryStartTime)/1000;
+					exportQueryContent(queryResults, "./data/queryResults.csv");
+					System.out.println("Finished query, time: " + runTime);					
+				}
+				catch(Exception e) {
+					e.printStackTrace();
+				}
+				
 
 			}
 		}
@@ -131,17 +138,30 @@ public class Experiments {
 	}
 
 
-	private static void initializeDB(CalciteConnection calciteConnection, String schemaName) throws SQLException {
+	private static void initializeDB(CalciteConnection calciteConnection, String schemaName2) throws SQLException {
 		System.out.println("Initializing Database...");
-		Set<String> tables = calciteConnection.getRootSchema().getSubSchema(schemaName).getTableNames();
-		String fTable = "";
-		for(String table : tables) {
-			if(!table.contains("/")) {
-				fTable = table;
-				break;
-			}
+		Set<String> schemas = calciteConnection.getRootSchema().getSubSchemaNames();
+		HashMap<String, Set<String>> tables = new HashMap<>();
+		for(String schemaName : schemas) {
+			if(schemaName.contentEquals("metadata") || schemaName.contentEquals("test")) continue;
+			Set<String> tablesInSchema = calciteConnection.getRootSchema().getSubSchema(schemaName).getTableNames();
+			tables.put(schemaName, tablesInSchema);
 		}
-		String query = "SELECT 1 FROM " + schemaName + "." + fTable;
+		String fSchema = "";
+		String fTable = "";
+		for(String schema : tables.keySet()) {
+			Set<String> tablesInSchema = tables.get(schema);
+			boolean flag = false;
+			for(String table: tablesInSchema)
+				if(!table.contains("/")) {
+					fSchema = schema;
+					fTable = table;
+					flag = true;
+					break;
+				}
+			if(flag) break;
+		}
+		String query = "SELECT 1 FROM " + fSchema + "." + fTable;
 		runQuery(calciteConnection, query);	
 		System.out.println("Initializing Finished!");
 

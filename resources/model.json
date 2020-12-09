@@ -1,13 +1,22 @@
 {
   "version": "1.0",
-  "defaultSchema": "all",
+  "defaultSchema": "example",
   "schemas": [
     {
-      "name": "all",
+      "name": "example",
       "type": "custom",
       "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {
-        "directory": "all",
+        "directory": "example",
+        "flavor": "translatable"
+      }
+    },
+    {
+      "name": "synthetic",
+      "type": "custom",
+      "factory": "org.imis.calcite.adapter.csv.CsvSchemaFactory",
+      "operand": {
+        "directory": "synthetic",
         "flavor": "translatable"
       }
     },
