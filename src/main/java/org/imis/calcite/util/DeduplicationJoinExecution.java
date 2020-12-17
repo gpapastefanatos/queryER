@@ -434,7 +434,7 @@ public class DeduplicationJoinExecution {
 		 // PURGING
 		 double blockPurgingStartTime = System.currentTimeMillis();
 		 ComparisonsBasedBlockPurging blockPurging = new ComparisonsBasedBlockPurging();
-		 //blockPurging.applyProcessing(blocks);
+		 blockPurging.applyProcessing(blocks);
 		 double blockPurgingEndTime = System.currentTimeMillis();
 
 		 String purgingBlocksSize = Integer.toString(blocks.size());
@@ -465,7 +465,7 @@ public class DeduplicationJoinExecution {
 	    	 //double filterParam = DeduplicationExecution.calculateFilterParam(entities, comps);
 			 BlockFiltering bFiltering = new BlockFiltering(0.35);
 
-			 //bFiltering.applyProcessing(blocks);
+			 bFiltering.applyProcessing(blocks);
 			 double blockFilteringEndTime = System.currentTimeMillis();
 			 filterBlocksSize = Integer.toString(blocks.size());
 
@@ -475,7 +475,7 @@ public class DeduplicationJoinExecution {
 			 // EDGE PRUNING
 			 double edgePruningStartTime = System.currentTimeMillis();
 			 EfficientEdgePruning eEP = new EfficientEdgePruning();
-			 //eEP.applyProcessing(blocks);
+			 eEP.applyProcessing(blocks);
 			 double edgePruningEndTime = System.currentTimeMillis();
 
 			 epTime = Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000);
