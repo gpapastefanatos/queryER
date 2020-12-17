@@ -484,14 +484,14 @@ public class DeduplicationJoinExecution {
 				 totalComps += block.getNoOfComparisons();
 			 }
 			 epTotalComps = Double.toString(totalComps);
-			 ePEntities = Integer.toString(queryBlockIndex.blocksToEntities(blocks).size());
+			 ePEntities = Integer.toString(queryBlockIndex.blocksToEntitiesD(blocks).size());
 
 		 }
 
 		 //Get ids of final entities, and add back qIds that were cut from m-blocking
 	     Set<Integer> totalIds = new HashSet<>();
 	     if(flag)
-	    	 totalIds = queryBlockIndex.blocksToEntities(blocks);
+	    	 totalIds = queryBlockIndex.blocksToEntitiesD(blocks);
 	     else
 	    	 totalIds = queryBlockIndex.blocksToEntities(blocks);
 	     
