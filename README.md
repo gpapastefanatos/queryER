@@ -7,9 +7,9 @@ In the default configuration the framework asks the user for queries, and does n
 **calcite.connection**:{String} The default calcite connection, connects to model.json.
 
 For debugging and experimental purposes, the following can also be provided.<br>
-**query.runs**{Integer}
-**query.filepath=resources/tests/test_synth.sql** {Path to an sql file, if not provided the framework will ask the user for a query input}
-**ground_truth.calculate**:{Boolean} Whether to calculate Ground Truth and find the Pair Completeness. Used only for SP queries.
+**query.runs**{Integer}<br/>
+**query.filepath=resources/tests/test_synth.sql** {Path to an sql file, if not provided the framework will ask the user for a query input}<br/>
+**ground_truth.calculate**:{Boolean} Whether to calculate Ground Truth and find the Pair Completeness. Used only for SP queries.<br/>
 
 ### Queries
 The queries that were used for the experimental evaluation can be found in the queries.sql file.
