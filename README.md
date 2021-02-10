@@ -3,9 +3,9 @@
 
 ### Configuration
 In the default configuration the framework asks the user for queries, and does not need any further configuration.  The framework is configured through the **config.properties** file which has to be provided with the following properties:<br>
-**schema.name**:{String} The schema for the queries. (Default = real, Choises = real/synthetic)
-**calcite.connection**:{String} The default calcite connection, points to model.json.
-**model.json**: Contains the schema, one database that points to the real data and one that points to the synthetic. **The datapath needs to be changed**
+**schema.name**:{String} The schema for the queries. (Default = real, Choises = real/synthetic)<br>
+**calcite.connection**:{String} The default calcite connection, points to model.json.<br>
+**model.json**: Contains the schema, one database that points to the real data and one that points to the synthetic. **The datapath needs to be changed**<br>
 
 For debugging and experimental purposes, the following can also be provided.<br>
 **query.runs**{Integer}<br/>
