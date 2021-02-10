@@ -1,4 +1,3 @@
-+# QueryER
 ## Usage
 
 QueryER was written in Java 8 utilizing Apache Calcite.
