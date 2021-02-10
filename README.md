@@ -23,3 +23,6 @@ The used datasets can be found <a href="https://imisathena-my.sharepoint.com/per
 To create the jar file, run: **`mvn package`**
 To run the jar file, copy and paste the following command to the console:
 java -jar target/queryER-API-0.0.1-SNAPSHOT-runnable.war
+
+### Results
+The query results are dumped to a csv file located at "./data/queryResults.csv"
