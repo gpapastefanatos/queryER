@@ -33,6 +33,7 @@ import org.imsi.queryEREngine.apache.calcite.sql.parser.SqlParseException;
 import org.imsi.queryEREngine.apache.calcite.tools.RelConversionException;
 import org.imsi.queryEREngine.apache.calcite.tools.ValidationException;
 import org.imsi.queryEREngine.imsi.calcite.util.DeduplicationExecution;
+import org.imsi.queryEREngine.imsi.er.QueryEngine;
 import org.imsi.queryEREngine.imsi.er.ConnectionPool.CalciteConnectionPool;
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.IdDuplicates;
@@ -85,7 +86,7 @@ public class Experiments {
 	{
 		setProperties();
 		// Create output folders
-		generateDumpDirectories();
+		QueryEngine.generateDumpDirectories();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -95,7 +96,6 @@ public class Experiments {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
 		
 		// Enter a query or read query from file
 		List<String> queries = new ArrayList<>();
@@ -283,7 +283,7 @@ public class Experiments {
 		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
 		File blocksDir = new File("./data/groundTruth/" + name);
 		if(blocksDir.exists()) {
-			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/groundTruth/" + name);
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./usr/share/data/groundTruth/" + name);
 		}
 		else {
 			System.out.println("Calculating ground truth..");
@@ -325,7 +325,7 @@ public class Experiments {
 					groundDups.add(idd);
 				}		
 			}
-			SerializationUtilities.storeSerializedObject(groundDups, "./data/groundTruth/" + name);
+			SerializationUtilities.storeSerializedObject(groundDups, "./usr/share/data/groundTruth/" + name);
 		}
 		
 
@@ -335,7 +335,7 @@ public class Experiments {
 		duplicatePropagation.resetDuplicates();
 		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject("./data/blocks/" + tableName);
 		//remove file now
-        FileUtils.forceDelete(new File("./data/blocks/" + tableName)); //delete directory
+        FileUtils.forceDelete(new File("./usr/share/data/blocks/" + tableName)); //delete directory
 		BlockStatistics bStats = new BlockStatistics(blocks, duplicatePropagation, csvWriter);
 		bStats.applyProcessing();		
 	}
@@ -385,32 +385,7 @@ public class Experiments {
         }
 		return prop;
 	}
-	private static void generateDumpDirectories() throws IOException {
-		File logsDir = new File("/usr/share/data/logs");
-		File blockIndexDir = new File("/usr/share/data/blockIndex");
-		File groundTruthDir = new File("/usr/share/data/groundTruth");
-		File tableStatsDir = new File("/usr/share/data/tableStats/tableStats");
-		File blockIndexStats = new File("/usr/share/data/tableStats/blockIndexStats");
-		File linksDir = new File("/usr/share/data/links");
-		if(!logsDir.exists()) {
-            FileUtils.forceMkdir(logsDir); //create directory
-		}
-		if(!blockIndexDir.exists()) {
-            FileUtils.forceMkdir(blockIndexDir); //create directory
-		}
-		if(!groundTruthDir.exists()) {
-            FileUtils.forceMkdir(groundTruthDir); //create directory
-		}
-		if(!tableStatsDir.exists()) {
-            FileUtils.forceMkdir(tableStatsDir); //create directory
-		}
-		if(!blockIndexStats.exists()) {
-            FileUtils.forceMkdir(blockIndexStats); //create directory
-		}
-		if(!linksDir.exists()) {
-            FileUtils.forceMkdir(linksDir); //create directory
-		}
-	}
+	
 	
 	
 }

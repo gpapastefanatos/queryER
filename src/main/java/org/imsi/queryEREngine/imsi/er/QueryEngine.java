@@ -159,13 +159,18 @@ public class QueryEngine {
         }
 		return prop;
 	}
-	private static void generateDumpDirectories() throws IOException {
+	
+	public static void generateDumpDirectories() throws IOException {
+		File dataDir = new File("./data/");
 		File logsDir = new File("/usr/share/data/logs");
 		File blockIndexDir = new File("/usr/share/data/blockIndex");
 		File groundTruthDir = new File("/usr/share/data/groundTruth");
 		File tableStatsDir = new File("/usr/share/data/tableStats/tableStats");
 		File blockIndexStats = new File("/usr/share/data/tableStats/blockIndexStats");
 		File linksDir = new File("/usr/share/data/links");
+		if(!dataDir.exists()) {
+            FileUtils.forceMkdir(dataDir); //create directory
+		}
 		if(!logsDir.exists()) {
             FileUtils.forceMkdir(logsDir); //create directory
 		}

@@ -229,8 +229,26 @@
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
+				<artifactId>spring-boot-maven-plugin</artifactId>				
 			</plugin>
+			 <plugin>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-maven-plugin</artifactId>
+		    <executions>
+		        <execution>
+		            <goals>
+		                <goal>repackage</goal>
+		            </goals>
+		            <configuration>
+		                <classifier>runnable</classifier>
+		                <mainClass>
+		                  org.imsi.queryERAPI.Experiments
+		                </mainClass>
+		            </configuration>
+		        </execution>
+			    </executions>
+			</plugin>
+						
 		</plugins>
 	</build>
 
