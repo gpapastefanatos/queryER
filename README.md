@@ -1,10 +1,5 @@
 ## Usage
 
-QueryER was written in Java 8 utilizing Apache Calcite.
-To create the jar file, run: **`mvn clean compile assembly:single`**
-To run the jar file, copy and paste the following command to the console:
-
-**`java -DApp.config.location=config.properties Dlog4j.configuration=file:resources/log4j.properties -jar queryER-1.0-jar-with-dependencies.jar`**
 
 ### Configuration
 In the default configuration the framework asks the user for queries, and does not need any further configuration.  The framework is configured through the **config.properties** file which has to be provided with the following properties:<br>
