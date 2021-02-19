@@ -40,7 +40,7 @@ public interface Statistic {
 	 */
 	boolean isKey(ImmutableBitSet columns);
 
-	Double getComparisons(List<RexNode> paramList);
+	Double getComparisons(List<RexNode> paramList, String tableName);
 	/** Returns a list of unique keys, or null if no key exist. */
 	List<ImmutableBitSet> getKeys();
 

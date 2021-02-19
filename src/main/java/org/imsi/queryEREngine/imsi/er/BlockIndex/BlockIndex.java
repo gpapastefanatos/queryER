@@ -310,7 +310,7 @@ implements  TranslatableTable {
 		
 		final BlockIndexStatistic blockIndexStatistic = this.blockIndexStatistic;
 		final Map<String, Set<Integer>> invertedIndex = MapUtilities.deepCopy(this.invertedIndex);
-		final Map<Integer, Set<String>> entitiesToBlocks = this.entitiesToBlocks;
+		final Map<Integer, Set<String>> entitiesToBlocks = MapUtilities.deepCopy(this.entitiesToBlocks);
 
 		return new Statistic() {
 			public Double getRowCount() {
@@ -337,9 +337,13 @@ implements  TranslatableTable {
 				return null;
 			}
 
-			public Double getComparisons(List<RexNode> conjuctions) {
+			public Double getComparisons(List<RexNode> conjuctions, String tableName) {
 				double begin = System.currentTimeMillis();
-				TokenStatistics tokenStatistics = new TokenStatistics(invertedIndex, entitiesToBlocks, blockIndexStatistic, conjuctions);
+				Set<Integer> entitiesWithLinks = new HashSet<>();
+				String links = "/usr/share/data/links/" + tableName;
+				if(new File(links).exists())
+					entitiesWithLinks = ((HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject(links)).keySet();
+				TokenStatistics tokenStatistics = new TokenStatistics(invertedIndex, entitiesToBlocks, blockIndexStatistic, entitiesWithLinks, conjuctions);
 				double comparisons = tokenStatistics.getComparisons().doubleValue();
 				double end = System.currentTimeMillis();
 				System.out.println("Comparisons time: " + (end-begin)/1000);

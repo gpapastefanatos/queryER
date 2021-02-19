@@ -91,10 +91,8 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 					Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
 		} 
 		else {
-			deduplicateLeft.computeSelfCost(deduplicateLeft.getCluster().getPlanner(), deduplicateLeft.getCluster().getMetadataQuery());
-			deduplicateRight.computeSelfCost(deduplicateRight.getCluster().getPlanner(), deduplicateRight.getCluster().getMetadataQuery());
-			Double leftComps = deduplicateLeft.getComparisons();
-			Double rightComps = deduplicateRight.getComparisons();
+			Double leftComps = deduplicateLeft.calculateComparisons();
+			Double rightComps = deduplicateRight.calculateComparisons();
 			if (leftComps != null && rightComps != null)
 				if (leftComps.doubleValue() > rightComps.doubleValue()) {
 					newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join

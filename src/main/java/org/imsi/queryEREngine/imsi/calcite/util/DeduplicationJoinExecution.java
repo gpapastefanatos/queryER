@@ -540,12 +540,8 @@ public class DeduplicationJoinExecution {
 		double comparisonStartTime = System.currentTimeMillis();
 		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
 		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(blocks, qIdsNoLinks, key, noOfAttributes);
-        entityResolvedTuple.getAll();
-		entityResolvedTuple.setLinks(links);
-		if(!firstDedup) entityResolvedTuple.combineLinks(links);
-		entityResolvedTuple.storeLinks(tableName);
-		entityResolvedTuple.filterData(totalIds);
-
+		entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds);
+		
 		Integer executedComparisons = entityResolvedTuple.getComparisons();
 		int matches = entityResolvedTuple.getMatches();
 		int totalEntities = entityResolvedTuple.data.size();

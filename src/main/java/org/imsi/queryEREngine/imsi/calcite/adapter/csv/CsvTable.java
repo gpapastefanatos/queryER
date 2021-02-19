@@ -127,7 +127,7 @@ public abstract class CsvTable extends AbstractTable {
 			}
 
 			@Override
-			public Double getComparisons(List<RexNode> paramList) {
+			public Double getComparisons(List<RexNode> paramList,  String tableName) {
 				// TODO Auto-generated method stub
 				return null;
 			}	

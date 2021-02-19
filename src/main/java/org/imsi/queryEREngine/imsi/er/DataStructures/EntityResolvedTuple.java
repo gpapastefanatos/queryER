@@ -125,6 +125,14 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 		this.setRevUFCreationTime((revUFCreationEndTime - revUFCreationStartTime)/1000);
 	}
 	
+	public void mergeLinks(HashMap<Integer, Set<Integer>> links, String tableName, boolean firstDedup,
+			Set<Integer> totalIds) {
+		this.links = links;
+		if(!firstDedup) this.combineLinks(links);
+		storeLinks(tableName);
+		filterData(totalIds);	
+	}
+	
 	public void storeLinks(String table) {
 		if(this.links == null)
 			SerializationUtilities.storeSerializedObject(this.revUF, "/usr/share/data/links/" + table);
@@ -221,10 +229,6 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 		return links;
 	}
 
-	public void setLinks(HashMap<Integer, Set<Integer>> links) {
-		this.links = links;
-	}
-	
 	
 
 }

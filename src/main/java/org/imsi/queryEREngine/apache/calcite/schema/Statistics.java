@@ -68,7 +68,7 @@ public class Statistics {
 		}
 
 		@Override
-		public Double getComparisons(List<RexNode> paramList) {
+		public Double getComparisons(List<RexNode> paramList, String tableName) {
 			return null;
 		}
 	};
@@ -137,7 +137,7 @@ public class Statistics {
 			}
 
 			@Override
-			public Double getComparisons(List<RexNode> paramList) {
+			public Double getComparisons(List<RexNode> paramList, String tableName) {
 				// TODO Auto-generated method stub
 				return null;
 			}

@@ -42,6 +42,7 @@ public class TokenStatistics {
 	private String tableName;
 	private Map<String, Double> averageBlockWeight;
 	private Map<Integer, String> tokenToIndexMap;
+	private Set<Integer> entitiesWithLinks;
 	private double blockRatio;
 	private double meanDiff;
 	private double meanEntitiesPerBlockRatio;
@@ -51,10 +52,11 @@ public class TokenStatistics {
 	
 
 	public TokenStatistics(Map<String, Set<Integer>> invertedIndex, Map<Integer, Set<String>> entitiesToBlocks,
-			BlockIndexStatistic blockIndexStatistic, List<RexNode> conjuctions) {
+			BlockIndexStatistic blockIndexStatistic, Set<Integer> entitiesWithLinks, List<RexNode> conjuctions) {
 		this.bBlocks = invertedIndex;
 		this.entitiesToBlocks = entitiesToBlocks;
 		this.blockIndexStatistic = blockIndexStatistic;
+		this.entitiesWithLinks = entitiesWithLinks;
 		this.comparisons = blockIndexStatistic.getTotalComparisons();
 		getTokens(conjuctions);
 	}
@@ -106,7 +108,7 @@ public class TokenStatistics {
 		}
 		bBlocks.keySet().removeAll(removedTokens);
 		double purgeEnd = System.currentTimeMillis();
-		//System.out.println("Time of purge: " + (purgeEnd - purgeStart)/1000);
+		System.out.println("Time of purge: " + (purgeEnd - purgeStart)/1000);
 	}
 	
 	public HashMap<Integer, Integer> createEntityAssignments(Map<Integer,Set<String>> source) {
@@ -135,10 +137,10 @@ public class TokenStatistics {
 			}
 		}
 		double filterEnd = System.currentTimeMillis();
-		//System.out.println("Time of filter: " + (filterEnd - filterStart)/1000);
+		System.out.println("Time of filter: " + (filterEnd - filterStart)/1000);
 	}
 	
-	private void calculateMxN(Set<Integer> entities) {
+	private double calculateMxN(Set<Integer> entities) {
 		double all_comps = 0;
 		for(String token : bBlocks.keySet()) {
 			Set<Integer> blockEntities = bBlocks.get(token);
@@ -149,7 +151,8 @@ public class TokenStatistics {
 			double total = (m * Math.abs(n-m));
 			all_comps += total;
 		}
-		this.comparisons = all_comps;
+		//this.comparisons = all_comps;
+		return all_comps;
 	}
 	
 	private void prune() {
@@ -306,9 +309,11 @@ public class TokenStatistics {
 		Set<Integer> unionEntities = new HashSet<>();
 		for(String token : tokens) {
 			Set<Integer> entities = bBlocks.get(token);
+			
 			if(entities == null) continue;
 			unionEntities.addAll(entities);
 		}
+		unionEntities.removeAll(entitiesWithLinks);
 		return unionEntities;
 	}
 	
@@ -330,61 +335,80 @@ public class TokenStatistics {
 			else uniqueEntities.retainAll(uniqueEntitiesSet);
 			index ++;
 		}
+		uniqueEntities.removeAll(entitiesWithLinks);
 		return uniqueEntities;
 
 	}
 
-	public void computeStats(Set<Integer> entities) {
-		int uniqueEntitiesSize = entities.size();
+	public void getCoarseStats(Set<Integer> entities) {
+		double uniqueEntitiesSize = entities.size();
 		//System.out.println("Unique entities size: " + uniqueEntitiesSize);
-		Long totalComps = 0L;
-		Set<String> uniqueTokens = new HashSet<>();
-		Set<Long> uniqueComparisons = new TreeSet<>();
-		List<Long> blocksSize = new ArrayList<>();
-		Set<Integer> allEntities = new HashSet<>();
-		
-		double firstComputation = System.currentTimeMillis();
-		for(Integer entity : entities) {
-			for(String token : entitiesToBlocks.get(entity)) {
-				if(uniqueTokens.contains(token)) continue;
-				uniqueTokens.add(token);
-				long size = bBlocks.get(token).size();
-				long comps = (size*(size-1))/2;
-				totalComps += comps;
-				blocksSize.add(size);
-				uniqueComparisons.add(comps);
-//				Set<Integer> entityIds = bBlocks.get(token);
-//				allEntities.addAll(entityIds);	
 
-			}
+		if(uniqueEntitiesSize == 0)
+			this.comparisons = 0.0;
+		else {
+			entitiesToBlocks.keySet().retainAll(entities);
+			this.comparisons = uniqueEntitiesSize * this.entitiesToBlocks.size();
 		}
-		compsRatio =  totalComps / this.blockIndexStatistic.getTotalComparisons();
-		bBlocks.keySet().retainAll(uniqueTokens);
-		double lastComputation = System.currentTimeMillis();
-//		System.out.println("Time of first calculation: " + (lastComputation - firstComputation)/1000);
-//		System.out.println("Total comparisons: " + totalComps);
-//		System.out.println("Total entities: " + allEntities.size());
-//		System.out.println("Block size: " + uniqueTokens.size());
-//		System.out.println();
-		purgeBlocks(getMaxComparisonsPerBlock(blocksSize, uniqueComparisons));
-		clearEntitiesToBlocks();
-		filterBlocks(0.35);	
-		calculateStats();
+	}
+	
+	public void computeStats(Set<Integer> entities) {
+		double uniqueEntitiesSize = entities.size();
+		//System.out.println("Unique entities size: " + uniqueEntitiesSize);
+
+		if(uniqueEntitiesSize == 0)
+			this.comparisons = 0.0;
+		else {
+			
+			
+			Long totalComps = 0L;
+			Set<String> uniqueTokens = new HashSet<>();
+			Set<Long> uniqueComparisons = new TreeSet<>();
+			List<Long> blocksSize = new ArrayList<>();
+			Set<Integer> allEntities = new HashSet<>();
+			double firstComputation = System.currentTimeMillis();
+//			for(Integer entity : entities) {
+//				for(String token : entitiesToBlocks.get(entity)) {
+//					if(uniqueTokens.contains(token)) continue;
+//					uniqueTokens.add(token);
+//					long size = bBlocks.get(token).size();
+//					long comps = (size*(size-1))/2;
+//					totalComps += comps;
+//					blocksSize.add(size);
+//					uniqueComparisons.add(comps);
+//	//				Set<Integer> entityIds = bBlocks.get(token);
+//	//				allEntities.addAll(entityIds);	
+//	
+//				}
+//			}
+//			compsRatio =  totalComps / this.blockIndexStatistic.getTotalComparisons();
+//			bBlocks.keySet().retainAll(uniqueTokens);
+//			double lastComputation = System.currentTimeMillis();
+//			System.out.println("Time of first calculation: " + (lastComputation - firstComputation)/1000);
+//	//		System.out.println("Total comparisons: " + totalComps);
+//	//		System.out.println("Total entities: " + allEntities.size());
+//	//		System.out.println("Block size: " + uniqueTokens.size());
+//	//		System.out.println();
+//			purgeBlocks(getMaxComparisonsPerBlock(blocksSize, uniqueComparisons));
+//			clearEntitiesToBlocks();
+//			filterBlocks(0.35);	
+//			calculateStats();
+		}
 	}
 	
 	private void clearEntitiesToBlocks() {
-		//double cleanStart = System.currentTimeMillis();
+		double cleanStart = System.currentTimeMillis();
 		Set<String> tokens = bBlocks.keySet();
 		for(Set<String> blocks : entitiesToBlocks.values()) {
 			blocks.retainAll(tokens);
 		}
-		//double cleanEnd = System.currentTimeMillis();
-		//System.out.println("Time of cleaning: " + (cleanEnd - cleanStart)/1000);
+		double cleanEnd = System.currentTimeMillis();
+		System.out.println("Time of cleaning: " + (cleanEnd - cleanStart)/1000);
 	}
 	
 	private void calculateStats() {
 		double start = System.currentTimeMillis();
-		//System.out.println("Number of Blocks: " + bBlocks.size());
+		System.out.println("Number of Blocks: " + bBlocks.size());
 		this.comparisons = 0.0;
 		Set<Integer> uniqueEntities = new HashSet<>();
 		for(String token : bBlocks.keySet()) {
@@ -393,10 +417,10 @@ public class TokenStatistics {
 			long size = blockEntities.size();
 			this.comparisons += (size*(size-1))/2;
 		}
-//		System.out.println("Total Comparisons: " + this.comparisons);
-//		System.out.println("Total Entities: " + uniqueEntities.size());
-//		double end = System.currentTimeMillis();
-//		System.out.println("Calculation time: " + (end - start)/1000);
+		System.out.println("Total Comparisons: " + this.comparisons);
+		System.out.println("Total Entities: " + uniqueEntities.size());
+		double end = System.currentTimeMillis();
+		System.out.println("Calculation time: " + (end - start)/1000);
 	}
 	
 	public void getTokens(List<RexNode> conjuctions){
@@ -421,7 +445,7 @@ public class TokenStatistics {
 					disjToken = disjToken.replace("%", "").replace(":VARCHAR", "").replace("'", "").toLowerCase();
 					disjTokens.add(disjToken);
 				}
-				computeStats(getDisjunctionEntities(disjTokens));
+				getCoarseStats(getDisjunctionEntities(disjTokens));
 			}
 			else {
 				switch(kind) {
@@ -492,7 +516,7 @@ public class TokenStatistics {
 			}
 		}
 		if(!tokens.isEmpty()) allTokens.add(tokens);
-		computeStats(getConjuctionEntities(allTokens));
+		getCoarseStats(getConjuctionEntities(allTokens));
 	}
 	
 	private static long getMaxComparisonsPerBlock(List<Long> blocksSize, Set<Long> distinctComparisonsLevel) {

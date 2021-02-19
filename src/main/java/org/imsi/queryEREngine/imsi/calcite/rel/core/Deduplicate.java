@@ -80,12 +80,7 @@ public abstract class Deduplicate extends SingleRel {
 	@Override public RelOptCost computeSelfCost(RelOptPlanner planner,
 			RelMetadataQuery mq) {
 		RelOptCost cost = null;
-		System.out.println(comparisons);
-		if(comparisons == null) comparisons = blockIndex.getComparisons(conjuctions);
-		else {
-			double comps = blockIndex.getComparisons(conjuctions);
-			if(comps < comparisons) comparisons = comps;
-		}
+		
 		cost =  super.computeSelfCost(planner, mq)
 				.multiplyBy((fieldTypes.size() + 2D)
 						/ (table.getRowType().getFieldCount() + 2D));
@@ -126,7 +121,16 @@ public abstract class Deduplicate extends SingleRel {
 		return this.conjuctions;
 	}
 	
-	public Double getComparisons() {
+	public Double calculateComparisons() {
+		if(conjuctions != null)
+			if(comparisons == null)
+				comparisons = blockIndex.getComparisons(conjuctions, table.getQualifiedName().get(1));
+		System.out.println(comparisons);
+		return comparisons;
+	}
+	public Double getComparisons() {		
+	
+			
 		return comparisons;
 	}
 

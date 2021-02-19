@@ -86,7 +86,7 @@ public class Experiments {
 	{
 		setProperties();
 		// Create output folders
-		QueryEngine.generateDumpDirectories();
+		generateDumpDirectories();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -112,6 +112,7 @@ public class Experiments {
 					double queryEndTime = System.currentTimeMillis();
 					runTime = (queryEndTime - queryStartTime)/1000;
 					exportQueryContent(queryResults, "./data/queryResults.csv");
+					
 					System.out.println("Finished query, time: " + runTime);					
 				}
 				catch(Exception e) {
@@ -263,7 +264,8 @@ public class Experiments {
 
 	private static ResultSet runQuery(CalciteConnection calciteConnection, String query) throws SQLException {
 		System.out.println("Running query...");
-		return calciteConnection.createStatement().executeQuery(query);
+		return calciteConnection.createStatement().executeQuery(query);		
+		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -384,6 +386,38 @@ public class Experiments {
             ex.printStackTrace();
         }
 		return prop;
+	}
+	
+	public static void generateDumpDirectories() throws IOException {
+		File dataDir = new File("./data/");
+		File logsDir = new File("/usr/share/data/logs");
+		File blockIndexDir = new File("/usr/share/data/blockIndex");
+		File groundTruthDir = new File("/usr/share/data/groundTruth");
+		File tableStatsDir = new File("/usr/share/data/tableStats/tableStats");
+		File blockIndexStats = new File("/usr/share/data/tableStats/blockIndexStats");
+		File linksDir = new File("/usr/share/data/links");
+		if(!dataDir.exists()) {
+            FileUtils.forceMkdir(dataDir); //create directory
+		}
+		if(!logsDir.exists()) {
+            FileUtils.forceMkdir(logsDir); //create directory
+		}
+		if(!blockIndexDir.exists()) {
+            FileUtils.forceMkdir(blockIndexDir); //create directory
+		}
+		if(!groundTruthDir.exists()) {
+            FileUtils.forceMkdir(groundTruthDir); //create directory
+		}
+		if(!tableStatsDir.exists()) {
+            FileUtils.forceMkdir(tableStatsDir); //create directory
+		}
+		if(!blockIndexStats.exists()) {
+            FileUtils.forceMkdir(blockIndexStats); //create directory
+		}
+		if(!linksDir.exists()) {
+            FileUtils.forceMkdir(linksDir); //create directory
+		}
+	
 	}
 	
 	

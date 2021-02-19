@@ -75,6 +75,7 @@ public class ExecuteBlockComparisons<T> {
 		eRT.setComparisons(comparisons);
 		eRT.setMatches(matches.size());
 		eRT.setCompTime(compTime/1000);
+		eRT.getAll();
 		return eRT;
 
 	}

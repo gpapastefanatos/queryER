@@ -111,14 +111,14 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
 
 	public static RelOptTableImpl create(RelOptSchema schema, RelDataType rowType, List<String> names, Table table, Expression expression) {
 		return new RelOptTableImpl(schema, rowType, names, table, c -> expression, table
-				.getStatistic().getRowCount(), table.getStatistic().getComparisons(null));
+				.getStatistic().getRowCount(), table.getStatistic().getComparisons(null, null));
 	}
 
 	public static RelOptTableImpl create(RelOptSchema schema, RelDataType rowType, Table table, Path path) {
 		SchemaPlus schemaPlus = MySchemaPlus.create(path);
 		return new RelOptTableImpl(schema, rowType, Pair.left((List)path), table, 
 				getClassExpressionFunction(schemaPlus, (String)((Pair)Util.last((List)path)).left, table), table
-				.getStatistic().getRowCount(), table.getStatistic().getComparisons(null));
+				.getStatistic().getRowCount(), table.getStatistic().getComparisons(null, null));
 	}
 
 	public static RelOptTableImpl create(RelOptSchema schema, RelDataType rowType, CalciteSchema.TableEntry tableEntry, Double rowCount, Double comparisons) {
@@ -207,7 +207,7 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
 	 protected RelOptTable extend(Table extendedTable) {
 		    RelDataType extendedRowType = extendedTable.getRowType(getRelOptSchema().getTypeFactory());
 		    return new RelOptTableImpl(getRelOptSchema(), extendedRowType, getQualifiedName(), extendedTable, this.expressionFunction, 
-		        Double.valueOf(getRowCount()), Double.valueOf(getComparisons(null)));
+		        Double.valueOf(getRowCount()), Double.valueOf(getComparisons(null, null)));
 		  }
 		  
 
@@ -281,12 +281,12 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
 	}
 
 	@Override
-	public double getComparisons(List<RexNode> conjuctions) {
+	public double getComparisons(List<RexNode> conjuctions, String tableName) {
 	    if (this.comparisons != null)
 	      return this.comparisons.doubleValue(); 
 	    if (this.table != null) {
 	      BlockIndex blockIndex = (BlockIndex)this.table;
-	      Double comparisons = this.table.getStatistic().getComparisons(conjuctions);
+	      Double comparisons = this.table.getStatistic().getComparisons(conjuctions, tableName);
 	      if (comparisons != null)
 	        return comparisons.doubleValue(); 
 	    } 

@@ -64,7 +64,7 @@ public interface RelOptTable extends Wrapper {
 
 	List<ColumnStrategy> getColumnStrategies();
 
-	double getComparisons(List<RexNode> paramList);
+	double getComparisons(List<RexNode> paramList, String string);
 
 	public static interface ToRelContext extends ViewExpander {
 		RelOptCluster getCluster();

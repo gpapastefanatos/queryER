@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 public class DeduplicationExecution<T> {
 
     protected static final Logger DEDUPLICATION_EXEC_LOGGER = LoggerFactory.getLogger(DeduplicationExecution.class);
-
+    
     /**
      * Performs deduplication on a single table's entities.
      * The steps for performing the resolution are as follows:
@@ -82,8 +82,8 @@ public class DeduplicationExecution<T> {
     	double setPropertiesStartTime = System.currentTimeMillis();
     	double setPropertiesTime = (System.currentTimeMillis() - setPropertiesStartTime);
     	System.out.println("Deduplicating: " + tableName);
-    	
-        double deduplicateStartTime = System.currentTimeMillis() - setPropertiesTime;
+
+    	double deduplicateStartTime = System.currentTimeMillis() - setPropertiesTime;
         
         CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
         // Check for links and remove qIds that have links
@@ -220,11 +220,7 @@ public class DeduplicationExecution<T> {
         double comparisonStartTime = System.currentTimeMillis() - storeTime;
         ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
         EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(blocks, qIdsNoLinks, key, fieldTypes.size());
-        entityResolvedTuple.getAll();
-        entityResolvedTuple.setLinks(links);
-        if(!firstDedup) entityResolvedTuple.combineLinks(links);
-		entityResolvedTuple.storeLinks(tableName);
-		entityResolvedTuple.filterData(totalIds);
+        entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds);
         
         Integer executedComparisons = entityResolvedTuple.getComparisons();
         int matches = entityResolvedTuple.getMatches();

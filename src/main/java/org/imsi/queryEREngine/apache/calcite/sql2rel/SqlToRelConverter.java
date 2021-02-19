@@ -18,6 +18,7 @@ package org.imsi.queryEREngine.apache.calcite.sql2rel;
 
 import static org.imsi.queryEREngine.apache.calcite.sql.SqlUtil.stripAs;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -45,6 +46,7 @@ import javax.annotation.Nonnull;
 import org.apache.calcite.avatica.util.Spaces;
 import org.imsi.queryEREngine.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.Ord;
+import org.apache.commons.io.FileUtils;
 import org.imsi.queryEREngine.apache.calcite.plan.Convention;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCluster;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptPlanner;
@@ -2719,6 +2721,7 @@ public class SqlToRelConverter {
 		RelNode node = RelOptUtil.pushDownJoinConditions(deduplicateJoin, relBuilder);
 		// If join conditions are pushed down, update the leaves.
 		if (node instanceof Project) {
+			
 			final LogicalDeduplicateJoin newJoin = (LogicalDeduplicateJoin) node.getInputs().get(0);
 			if (leaves.containsKey(leftRel)) {
 				leaves.put(newJoin.getLeft(), leaves.get(leftRel));

@@ -103,17 +103,14 @@ public class QueryEngine {
 		System.out.println("Running query...");
 		ResultSet resultSet;
 		Connection connection = calciteConnectionPool.getConnection();
-		System.err.println(query);
-		System.err.println(connection);
 		
-		try {
-			resultSet = connection.createStatement().executeQuery(query);
-			return resultSet;
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
+		double queryStartTime = System.currentTimeMillis();
+		resultSet = connection.createStatement().executeQuery(query);
+		double queryEndTime = System.currentTimeMillis();
+		double runTime = (queryEndTime - queryStartTime)/1000;
+		System.out.println("Finished query, time: " + runTime);	
+		return resultSet;
+		
 	}
 	
 	
@@ -161,16 +158,12 @@ public class QueryEngine {
 	}
 	
 	public static void generateDumpDirectories() throws IOException {
-		File dataDir = new File("./data/");
 		File logsDir = new File("/usr/share/data/logs");
 		File blockIndexDir = new File("/usr/share/data/blockIndex");
 		File groundTruthDir = new File("/usr/share/data/groundTruth");
 		File tableStatsDir = new File("/usr/share/data/tableStats/tableStats");
 		File blockIndexStats = new File("/usr/share/data/tableStats/blockIndexStats");
 		File linksDir = new File("/usr/share/data/links");
-		if(!dataDir.exists()) {
-            FileUtils.forceMkdir(dataDir); //create directory
-		}
 		if(!logsDir.exists()) {
             FileUtils.forceMkdir(logsDir); //create directory
 		}
@@ -189,6 +182,9 @@ public class QueryEngine {
 		if(!linksDir.exists()) {
             FileUtils.forceMkdir(linksDir); //create directory
 		}
+		
+		
+		
 	}
 	
 	
