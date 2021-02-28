@@ -34,3 +34,7 @@ build/
 queryER-API-0.0.1-SNAPSHOT.war
 data/
 target/
+*.csv
+*.zip
+*.txt
+*.war

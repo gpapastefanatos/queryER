@@ -180,7 +180,6 @@ public abstract class CsvTable extends AbstractTable {
 	public void setCsvTableStatistic(CsvTableStatistic csvTableStatistic) {
 		this.csvTableStatistic = csvTableStatistic;
 	}
-	
 }
 
 // End CsvTable.java

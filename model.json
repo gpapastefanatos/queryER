@@ -7,7 +7,7 @@
       "type": "custom",
       "factory": "org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {
-       "directory": "C:\\Works\\ATHENA\\Projects\\ER\\Code\\queryER-API\\real",
+       "directory": "C:\\Works\\ATHENA\\Projects\\ER\\Code\\queryER\\queryER\\real",
          // "directory": "/Users/giorgos/Documents/Git/queryER-API/example",
         "flavor": "translatable"
       }
@@ -17,7 +17,7 @@
       "type": "custom",
       "factory": "org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {
-       "directory": "C:\\Works\\ATHENA\\Projects\\ER\\Code\\queryER-API\\synthetic",
+       "directory": "C:\\Works\\ATHENA\\Projects\\ER\\Code\\queryER\\queryER\\oag\\data",
          // "directory": "/Users/giorgos/Documents/Git/queryER-API/example",
         "flavor": "translatable"
       }

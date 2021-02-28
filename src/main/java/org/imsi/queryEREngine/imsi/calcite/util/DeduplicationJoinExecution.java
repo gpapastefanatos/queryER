@@ -21,8 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -42,7 +44,20 @@ import java.util.stream.Collectors;
 public class DeduplicationJoinExecution {
 
 	protected static final Logger DEDUPLICATION_EXEC_LOGGER = LoggerFactory.getLogger(DeduplicationExecution.class);
+	private static final String pathToPropertiesFile = "deduplication.properties";
+	private static Properties properties;
 
+	private static final String BP = "mb.bp";
+	private static final String BF = "mb.bf";
+	private static final String EP = "mb.ep";
+	private static final String LINKS = "links";
+	private static final String FILTER_PARAM = "filter.param";
+
+	private static boolean runBP = true;
+	private static boolean runBF = true;
+	private static boolean runEP = true;
+	private static boolean runLinks = true;
+	private static double filterParam = 0.0;
 	/**
 	 * Executes the algorithm of the dirty right join.
 	 * Can deduplicate the table immediately after the scan or by getting the dirty matches first to
@@ -410,6 +425,7 @@ public class DeduplicationJoinExecution {
 	private static EntityResolvedTuple deduplicate(List<Object[]> queryData, Integer key, Integer noOfAttributes,
 			String tableName, Enumerator<Object[]> originalEnumerator) {
 
+		setProperties();
 		double deduplicateStartTime = System.currentTimeMillis();
 		boolean firstDedup  = false;
 		String queryDataSize = Integer.toString(queryData.size());
@@ -468,7 +484,7 @@ public class DeduplicationJoinExecution {
 		// PURGING
 		double blockPurgingStartTime = System.currentTimeMillis();
 		ComparisonsBasedBlockPurging blockPurging = new ComparisonsBasedBlockPurging();
-		blockPurging.applyProcessing(blocks);
+		if(runBP) blockPurging.applyProcessing(blocks);
 		double blockPurgingEndTime = System.currentTimeMillis();
 
 		String purgingBlocksSize = Integer.toString(blocks.size());
@@ -491,15 +507,13 @@ public class DeduplicationJoinExecution {
 		String epTotalComps = "";
 		String filterBlockEntities = "";
 		String ePEntities = "";
-		boolean flag = false;
 		if (blocks.size() > 10) {
 			// FILTERING
-			flag = true;
 			double blockFilteringStartTime = System.currentTimeMillis();
 			//double filterParam = DeduplicationExecution.calculateFilterParam(entities, comps);
 			BlockFiltering bFiltering = new BlockFiltering(0.35);
 
-			bFiltering.applyProcessing(blocks);
+			if(runBF) bFiltering.applyProcessing(blocks);
 			double blockFilteringEndTime = System.currentTimeMillis();
 			filterBlocksSize = Integer.toString(blocks.size());
 
@@ -509,7 +523,7 @@ public class DeduplicationJoinExecution {
 			// EDGE PRUNING
 			double edgePruningStartTime = System.currentTimeMillis();
 			EfficientEdgePruning eEP = new EfficientEdgePruning();
-			eEP.applyProcessing(blocks);
+			if(runEP) eEP.applyProcessing(blocks);
 			double edgePruningEndTime = System.currentTimeMillis();
 
 			epTime = Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000);
@@ -524,7 +538,7 @@ public class DeduplicationJoinExecution {
 
 		//Get ids of final entities, and add back qIds that were cut from m-blocking
         Set<Integer> blockQids = new HashSet<>();
-        if(flag)
+        if(runEP)
         	blockQids = queryBlockIndex.blocksToEntitiesD(blocks);
         else
         	blockQids = queryBlockIndex.blocksToEntities(blocks);
@@ -540,7 +554,7 @@ public class DeduplicationJoinExecution {
 		double comparisonStartTime = System.currentTimeMillis();
 		ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
 		EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(blocks, qIdsNoLinks, key, noOfAttributes);
-		entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds);
+		entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds, runLinks);
 		
 		Integer executedComparisons = entityResolvedTuple.getComparisons();
 		int matches = entityResolvedTuple.getMatches();
@@ -627,5 +641,29 @@ public class DeduplicationJoinExecution {
 			}
 
 		};
+	}
+	
+	private static void setProperties() {
+		properties = loadProperties();
+		if(!properties.isEmpty()) {
+			runBP = Boolean.parseBoolean(properties.getProperty(BP));
+            runBF = Boolean.parseBoolean(properties.getProperty(BF));
+            runEP = Boolean.parseBoolean(properties.getProperty(EP));
+            runLinks = Boolean.parseBoolean(properties.getProperty(LINKS));
+		}
+	}
+	
+	private static Properties loadProperties() {
+		
+        Properties prop = new Properties();
+
+		try (InputStream input = new FileInputStream(pathToPropertiesFile)) {
+            // load a properties file
+            prop.load(input);
+                       
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+		return prop;
 	}
 }

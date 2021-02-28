@@ -2492,7 +2492,7 @@ public class SqlToRelConverter {
 		if(deduplicate) {
 			 List<String> tableName = new ArrayList<>(2);
 		      tableName.add(table.getQualifiedName().get(0));
-		      tableName.add("/usr/share/data/blockIndex/" + (String)table.getQualifiedName().get(1) + "InvertedIndex");
+		      tableName.add("/data/bstam/data/blockIndex/" + (String)table.getQualifiedName().get(1) + "InvertedIndex");
 		      Prepare.PreparingTable preparingTable = this.catalogReader.getTable(tableName);
 		      RelNode newRoot = LogicalDeduplicate.create(tableRel.getCluster(), tableRel
 		          .getTraitSet().replace(Convention.NONE), tableRel, table, preparingTable, null, 

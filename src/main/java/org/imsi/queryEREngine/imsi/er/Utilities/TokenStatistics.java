@@ -342,7 +342,6 @@ public class TokenStatistics {
 
 	public void getCoarseStats(Set<Integer> entities) {
 		double uniqueEntitiesSize = entities.size();
-		//System.out.println("Unique entities size: " + uniqueEntitiesSize);
 
 		if(uniqueEntitiesSize == 0)
 			this.comparisons = 0.0;

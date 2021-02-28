@@ -340,7 +340,8 @@ implements  TranslatableTable {
 			public Double getComparisons(List<RexNode> conjuctions, String tableName) {
 				double begin = System.currentTimeMillis();
 				Set<Integer> entitiesWithLinks = new HashSet<>();
-				String links = "/usr/share/data/links/" + tableName;
+				String links = "/data/bstam/data/links/" + tableName;
+				
 				if(new File(links).exists())
 					entitiesWithLinks = ((HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject(links)).keySet();
 				TokenStatistics tokenStatistics = new TokenStatistics(invertedIndex, entitiesToBlocks, blockIndexStatistic, entitiesWithLinks, conjuctions);

@@ -69,20 +69,29 @@ public class DeduplicationExecution<T> {
      */
 
 
+	private static final String pathToPropertiesFile = "deduplication.properties";
+	private static Properties properties;
 
+	private static final String BP = "mb.bp";
+	private static final String BF = "mb.bf";
+	private static final String EP = "mb.ep";
+	private static final String LINKS = "links";
 	private static final String FILTER_PARAM = "filter.param";
 
+	private static boolean runBP = true;
+	private static boolean runBF = true;
+	private static boolean runEP = true;
+	private static boolean runLinks = true;
 	private static double filterParam = 0.0;
-	
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
     		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
+    	setProperties();
     	boolean firstDedup = false;
     	double setPropertiesStartTime = System.currentTimeMillis();
     	double setPropertiesTime = (System.currentTimeMillis() - setPropertiesStartTime);
     	System.out.println("Deduplicating: " + tableName);
-
     	double deduplicateStartTime = System.currentTimeMillis() - setPropertiesTime;
         
         CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
@@ -116,7 +125,7 @@ public class DeduplicationExecution<T> {
         }).collect(Collectors.toSet());
 
         double linksEndTime = System.currentTimeMillis();
-        String linksTime = Double.toString((linksEndTime - linksStartTime) / 1000);
+        double links1Time = (linksEndTime - linksStartTime) / 1000;
 
         String queryDataSize = Integer.toString(queryData.size());
         
@@ -143,8 +152,9 @@ public class DeduplicationExecution<T> {
 
         // PURGING
         double blockPurgingStartTime = System.currentTimeMillis();
+        
         ComparisonsBasedBlockPurging blockPurging = new ComparisonsBasedBlockPurging();
-        blockPurging.applyProcessing(blocks);
+        if(runBP) blockPurging.applyProcessing(blocks);
         
         double blockPurgingEndTime = System.currentTimeMillis();
 
@@ -166,7 +176,6 @@ public class DeduplicationExecution<T> {
         String epTotalComps = "";
         String filterBlockEntities = "";
         String ePEntities = "";
-        boolean flag = false;
         if (blocks.size() > 10) {
         	
         	// FILTERING
@@ -174,7 +183,7 @@ public class DeduplicationExecution<T> {
             filterParam = 0.35;
             if(tableName.contains("publications")) filterParam = 0.55;
 	        BlockFiltering bFiltering = new BlockFiltering(filterParam);
-	        bFiltering.applyProcessing(blocks);
+	        if(runBF) bFiltering.applyProcessing(blocks);
             
             double blockFilteringEndTime = System.currentTimeMillis();
             filterBlocksSize = Integer.toString(blocks.size());
@@ -183,10 +192,9 @@ public class DeduplicationExecution<T> {
             filterBlockSizes = getBlockSizes(blocks);
             filterBlockEntities = Integer.toString(queryBlockIndex.blocksToEntities(blocks).size());
             // EDGE PRUNING
-            flag = true;
             double edgePruningStartTime = System.currentTimeMillis();
             EfficientEdgePruning eEP = new EfficientEdgePruning();
-            eEP.applyProcessing(blocks);
+            if(runEP) eEP.applyProcessing(blocks);
             double edgePruningEndTime = System.currentTimeMillis();
 
             epTime = Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000);
@@ -201,7 +209,7 @@ public class DeduplicationExecution<T> {
 
         //Get ids of final entities, and add back qIds that were cut from m-blocking
         Set<Integer> blockQids = new HashSet<>();
-        if(flag)
+        if(runEP)
         	blockQids = queryBlockIndex.blocksToEntitiesD(blocks);
         else
         	blockQids = queryBlockIndex.blocksToEntities(blocks);
@@ -220,17 +228,20 @@ public class DeduplicationExecution<T> {
         double comparisonStartTime = System.currentTimeMillis() - storeTime;
         ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
         EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(blocks, qIdsNoLinks, key, fieldTypes.size());
-        entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds);
-        
+        double comparisonEndTime = System.currentTimeMillis();
+        double links2StartTime = System.currentTimeMillis();
+        entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds, runLinks);
+        double links2EndTime = System.currentTimeMillis();
+
         Integer executedComparisons = entityResolvedTuple.getComparisons();
         int matches = entityResolvedTuple.getMatches();
         int totalEntities = entityResolvedTuple.data.size();
         double jaroTime = entityResolvedTuple.getCompTime();
-        double comparisonEndTime = System.currentTimeMillis();
         double deduplicateEndTime = System.currentTimeMillis();
         double revUfCreationTime = entityResolvedTuple.getRevUFCreationTime();
         String comparisonTime = Double.toString((comparisonEndTime - comparisonStartTime) / 1000);
         String totalDeduplicationTime = Double.toString((deduplicateEndTime - deduplicateStartTime) / 1000);
+        String linksTime = Double.toString(links1Time + ((links2EndTime - links2StartTime) / 1000));
         // Log everything
         if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
         	DEDUPLICATION_EXEC_LOGGER.debug(tableName + "," + queryDataSize + "," + blockJoinTime + "," + blockingTime + "," + blocksSize + "," + 
@@ -238,7 +249,8 @@ public class DeduplicationExecution<T> {
         			purgeBlockEntities + "," + filterBlocksSize + "," + filterTime + "," + filterBlockSizes + ","  + filterBlockEntities + "," +
         			epTime + "," + epTotalComps + "," + ePEntities + "," + matches + "," + executedComparisons + "," + tableScanTime + "," + jaroTime + "," +
         			comparisonTime + "," + revUfCreationTime + "," + totalEntities + "," + totalDeduplicationTime);
-        System.out.println(tableName + "\nqueryDataSize " + queryDataSize + "\nlinksTime " + linksTime + "\nblockJoinTime " + blockJoinTime + "\nblockingTime " + blockingTime + "\nblocksSize " + blocksSize + "\nblockSizes " + 
+        
+       System.out.println(tableName + "\nqueryDataSize " + queryDataSize + "\nlinksTime " + linksTime + "\nblockJoinTime " + blockJoinTime + "\nblockingTime " + blockingTime + "\nblocksSize " + blocksSize + "\nblockSizes " + 
     			blockSizes + "\nblockEntities " + blockEntities + "\npurgingBlocksSize " + purgingBlocksSize + "\npurgingTime " + purgingTime + "\npurgingBlockSizes " + purgingBlockSizes + "\n, " + 
     			purgeBlockEntities + "\nfilterBlocksSize " + filterBlocksSize + "\nfilterTime " + filterTime + "\nfilterBlockSizes " + filterBlockSizes + "\nfilterBlockSizes"  + filterBlockEntities + "\nepTime " +
     			epTime + "\nepTotalComps " + epTotalComps + "\nePEntities " + ePEntities + "\nmatches " + matches + "\nexecutedComparisons " + executedComparisons + "\ntableScanTime " + tableScanTime + "\njaroTime " + jaroTime + "\ncomparisonTime " +
@@ -282,14 +294,14 @@ public class DeduplicationExecution<T> {
 
     private static double storeIds(Set<Integer> qIds) {
     	double startTime = System.currentTimeMillis();
-        SerializationUtilities.storeSerializedObject(qIds, "/usr/share/data/qIds");
+        SerializationUtilities.storeSerializedObject(qIds, "/data/bstam/data/qIds");
         return System.currentTimeMillis() - startTime;
     }
 
     private static double storeBlocks(List<AbstractBlock> blocks, String tableName) {
     	double startTime = System.currentTimeMillis();
         List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
-        SerializationUtilities.storeSerializedObject(dBlocks, "/usr/share/data/blocks/" + tableName);
+        SerializationUtilities.storeSerializedObject(dBlocks, "/data/bstam/data/blocks/" + tableName);
         return System.currentTimeMillis() - startTime;
     }
 
@@ -324,8 +336,8 @@ public class DeduplicationExecution<T> {
     }
 
     public static HashMap<Integer, Set<Integer>> loadLinks(String table) {
-    	if(new File("/usr/share/data/links/" + table).exists())
-    		return (HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject("/usr/share/data/links/" + table);
+    	if(new File("/data/bstam/data/links/" + table).exists() && runLinks)
+    		return (HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject("/data/bstam/data/links/" + table);
     	else  return null;
     }
     
@@ -370,5 +382,29 @@ public class DeduplicationExecution<T> {
 
         };
     }
+    
+    private static void setProperties() {
+		properties = loadProperties();
+		if(!properties.isEmpty()) {
+			runBP = Boolean.parseBoolean(properties.getProperty(BP));
+            runBF = Boolean.parseBoolean(properties.getProperty(BF));
+            runEP = Boolean.parseBoolean(properties.getProperty(EP));
+            runLinks = Boolean.parseBoolean(properties.getProperty(LINKS));
+		}
+	}
+	
+	private static Properties loadProperties() {
+		
+        Properties prop = new Properties();
+
+		try (InputStream input = new FileInputStream(pathToPropertiesFile)) {
+            // load a properties file
+            prop.load(input);
+                       
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+		return prop;
+	}
 
 }

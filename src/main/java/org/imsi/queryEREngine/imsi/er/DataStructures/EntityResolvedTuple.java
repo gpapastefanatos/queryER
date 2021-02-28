@@ -31,6 +31,7 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	public HashMap<Integer, Set<Integer>> revUF; // these is the query links
 	public HashMap<Integer, Set<Integer>> links; // these are the total links
 	public List<T> finalData;
+	private boolean isGrouped = false;
 	private int matches;
 	private Integer comparisons;
 	private double compTime;
@@ -57,6 +58,7 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 
 	@Override
 	public Enumerator<T> enumerator() {
+		if(!isGrouped) this.groupEntities();
 		Enumerator<T> originalEnumerator = Linq4j.enumerator(this.finalData);
 		// TODO Auto-generated method stub
 		return new Enumerator<T>() {
@@ -97,6 +99,7 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	@SuppressWarnings("unchecked")
 	public void groupEntities() {
 		this.finalData = (List<T>) EntityGrouping.groupSimilar(this.revUF, 	this.data, keyIndex, noOfAttributes);	
+		isGrouped = true;
 
 	}
 	
@@ -126,18 +129,18 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	}
 	
 	public void mergeLinks(HashMap<Integer, Set<Integer>> links, String tableName, boolean firstDedup,
-			Set<Integer> totalIds) {
+			Set<Integer> totalIds, boolean runLinks) {
 		this.links = links;
 		if(!firstDedup) this.combineLinks(links);
-		storeLinks(tableName);
+		if(runLinks) storeLinks(tableName);
 		filterData(totalIds);	
 	}
 	
 	public void storeLinks(String table) {
 		if(this.links == null)
-			SerializationUtilities.storeSerializedObject(this.revUF, "/usr/share/data/links/" + table);
+			SerializationUtilities.storeSerializedObject(this.revUF, "/data/bstam/data/links/" + table);
 		else {
-			SerializationUtilities.storeSerializedObject(this.links, "/usr/share/data/links/" + table);
+			SerializationUtilities.storeSerializedObject(this.links, "/data/bstam/data/links/" + table);
 			this.links.clear();
 		}
 	}

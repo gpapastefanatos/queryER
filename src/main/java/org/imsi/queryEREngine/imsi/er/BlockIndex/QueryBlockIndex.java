@@ -56,6 +56,27 @@ public class QueryBlockIndex extends BlockIndex {
 
 		}
 	}
+	
+	public <T> void createBlockIndex(List<T> dataset, Integer key, Integer secondaryKey) {
+		// Get project results from previous enumerator
+		for(T row : dataset) {
+			Object[] currentLine = (Object[]) row;
+			Integer fields = currentLine.length;
+			String entityKey = currentLine[key].toString();
+			if(entityKey.contentEquals("")) continue;
+			EntityProfile eP = new EntityProfile(currentLine[key].toString()); // 0 is id, must put this in schema catalog
+			qIds.add(Integer.valueOf(entityKey));
+			int index = 0;
+			while(index < fields) {
+				if(index != key && index != secondaryKey) {
+					eP.addAttribute(index, currentLine[index].toString());;
+				}
+				index ++;
+			}
+			this.entityProfiles.add(eP);
+
+		}
+	}
 
 	public void buildQueryBlocks() {
 		this.invertedIndex = indexEntities(0, entityProfiles);
@@ -65,7 +86,7 @@ public class QueryBlockIndex extends BlockIndex {
 	public List<AbstractBlock> joinBlockIndices(String name, boolean doER) {
 		if(doER) {
 			final Map<String, Set<Integer>> bBlocks = (Map<String, Set<Integer>>) SerializationUtilities
-					.loadSerializedObject("/usr/share/data/blockIndex/" + name + "InvertedIndex");
+					.loadSerializedObject("/data/bstam/data/blockIndex/" + name + "InvertedIndex");
 			bBlocks.keySet().retainAll(this.invertedIndex.keySet());
 			return parseIndex(bBlocks);
 		}

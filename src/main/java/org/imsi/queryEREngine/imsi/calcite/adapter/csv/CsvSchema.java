@@ -128,9 +128,9 @@ public class CsvSchema extends AbstractSchema {
 						break;
 					}
 				}
-				
+							
 				// Compute CsvTableStatistic
-				if(!new File("/usr/share/data/tableStats/table" + tableName + ".json").exists()) {
+				if(!new File("/data/bstam/data/tableStats/table" + tableName + ".json").exists()) {
 					AtomicBoolean ab = new AtomicBoolean();
 					ab.set(false);
 					@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -147,18 +147,18 @@ public class CsvSchema extends AbstractSchema {
 				// Create Block index and store into data folder (only if not already created)
 				if(tableName.contains("ground_truth")) continue;
 				BaseBlockIndex blockIndex = new BaseBlockIndex();
-				if((!new File("/usr/share/data/blockIndex/" + tableName + "InvertedIndex").exists())) {
+				if((!new File("/data/bstam/data/blockIndex/" + tableName + "InvertedIndex").exists())) {
 					System.out.println("Creating Block Index..");
 					AtomicBoolean ab = new AtomicBoolean();
 					ab.set(false);
 					@SuppressWarnings({ "unchecked", "rawtypes" })
 					CsvEnumerator<Object[]> enumerator = new CsvEnumerator(table.getSource(), ab,
 							table.getFieldTypes());
-					
+
 					blockIndex.createBlockIndex(enumerator, table.getKey());
 					blockIndex.buildBlocks();
 					blockIndex.sortIndex();
-					blockIndex.storeBlockIndex("/usr/share/data/blockIndex/", tableName );
+					blockIndex.storeBlockIndex("/data/bstam/data/blockIndex/", tableName );
 					BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
 							blockIndex.getEntitiesToBlocks(), tableName);
 					blockIndex.setBlockIndexStatistic(blockIndexStatistic);
@@ -171,10 +171,10 @@ public class CsvSchema extends AbstractSchema {
 				}
 				else {
 					System.out.println("Block Index already created!");
-					blockIndex.loadBlockIndex("/usr/share/data/blockIndex/", tableName);
+					blockIndex.loadBlockIndex("/data/bstam/data/blockIndex/", tableName);
 					ObjectMapper objectMapper = new ObjectMapper();  
 					try {
-						blockIndex.setBlockIndexStatistic(objectMapper.readValue(new File("/usr/share/data/tableStats/blockIndexStats/" + tableName + ".json"),
+						blockIndex.setBlockIndexStatistic(objectMapper.readValue(new File("/data/bstam/data/tableStats/blockIndexStats/" + tableName + ".json"),
 								BlockIndexStatistic.class));
 					} catch (IOException e) {
 						BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
@@ -189,7 +189,7 @@ public class CsvSchema extends AbstractSchema {
 					}
 					
 				}
-				builder.put("/usr/share/data/blockIndex/" + tableName + "InvertedIndex", blockIndex);
+				builder.put("/data/bstam/data/blockIndex/" + tableName + "InvertedIndex", blockIndex);
 			}
 			
 		}

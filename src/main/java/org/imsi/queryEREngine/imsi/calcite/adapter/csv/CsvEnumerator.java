@@ -192,12 +192,13 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	}
 
 	public static CSVReader openCsv(Source source) throws IOException {
+		
 		final Reader fileReader = source.reader();
-		char seperator = ',';
+		char seperator = '\t';
 		if(source.toString().contains("publications") || source.toString().contains("venues"))
 			seperator = '>';
 		
-		return new CSVReader(fileReader, seperator);
+		return new CSVReader(fileReader, seperator, '"');
 //		return new CSVReader(fileReader, ',');
 	}
 
@@ -244,6 +245,7 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 					}
 
 					current = rowConverter.convertRow(strings);
+					if (current == null) continue;
 					position += 1;
 					return true;
 				}
@@ -387,11 +389,16 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 		public Object[] convertNormalRow(String[] strings) {
 
 			final Object[] objects = new Object[fields.length];
-			for (int i = 0; i < fields.length; i++) {
-				int field = fields[i];
-				objects[i] = convert(fieldTypes[field], strings[field]);
+			try {
+				for (int i = 0; i < fields.length; i++) {
+					int field = fields[i];
+					objects[i] = convert(fieldTypes[field], strings[field]);
+				}
+				return objects;
 			}
-			return objects;
+			catch(Exception e) {
+				return null;
+			}
 		}
 
 

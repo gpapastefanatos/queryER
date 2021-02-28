@@ -158,12 +158,12 @@ public class QueryEngine {
 	}
 	
 	public static void generateDumpDirectories() throws IOException {
-		File logsDir = new File("/usr/share/data/logs");
-		File blockIndexDir = new File("/usr/share/data/blockIndex");
-		File groundTruthDir = new File("/usr/share/data/groundTruth");
-		File tableStatsDir = new File("/usr/share/data/tableStats/tableStats");
-		File blockIndexStats = new File("/usr/share/data/tableStats/blockIndexStats");
-		File linksDir = new File("/usr/share/data/links");
+		File logsDir = new File("/data/bstam/data/logs");
+		File blockIndexDir = new File("/data/bstam/data/blockIndex");
+		File groundTruthDir = new File("/data/bstam/data/groundTruth");
+		File tableStatsDir = new File("/data/bstam/data/tableStats/tableStats");
+		File blockIndexStats = new File("/data/bstam/data/tableStats/blockIndexStats");
+		File linksDir = new File("/data/bstam/data/links");
 		if(!logsDir.exists()) {
             FileUtils.forceMkdir(logsDir); //create directory
 		}

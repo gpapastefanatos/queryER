@@ -206,7 +206,7 @@ public class BlockIndexStatistic implements Serializable {
 	
 	
 	public void storeStatistics() throws IOException {
-		File file = new File("/usr/share/data/tableStats/blockIndexStats/" + tableName + ".json");
+		File file = new File("/data/bstam/data/tableStats/blockIndexStats/" + tableName + ".json");
 		FileOutputStream fOut = null;
 
 		fOut = new FileOutputStream(file);

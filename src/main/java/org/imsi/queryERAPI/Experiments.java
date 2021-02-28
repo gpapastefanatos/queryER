@@ -196,7 +196,6 @@ public class Experiments {
 		return query;
 	}
 
-
 	private static void runQueries(CalciteConnection calciteConnection, List<String> queries, 
 			Integer totalRuns, String schemaName) throws IOException, SQLException {
 		int index = 1;
@@ -221,7 +220,6 @@ public class Experiments {
         //csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ\n");
         csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,entities_in_blocks,detected_duplicates,PC,PQ\n");
     	final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
-
         if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
 			DEDUPLICATION_EXEC_LOGGER.debug("table_name,query_entities,block_join_time,blocking_time,query_blocks,max_query_block_size,avg_query_block_size,total_query_comps,block_entities,"
 					+ "purge_blocks,purge_time,max_purge_block_size,avg_purge_block_size,total_purge_comps,purge_entities,filter_blocks,filter_time,max_filter_block_size,avg_filter_block_size,"
@@ -285,7 +283,7 @@ public class Experiments {
 		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
 		File blocksDir = new File("./data/groundTruth/" + name);
 		if(blocksDir.exists()) {
-			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./usr/share/data/groundTruth/" + name);
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/bstam/data/groundTruth/" + name);
 		}
 		else {
 			System.out.println("Calculating ground truth..");
@@ -327,7 +325,7 @@ public class Experiments {
 					groundDups.add(idd);
 				}		
 			}
-			SerializationUtilities.storeSerializedObject(groundDups, "./usr/share/data/groundTruth/" + name);
+			SerializationUtilities.storeSerializedObject(groundDups, "./data/bstam/data/groundTruth/" + name);
 		}
 		
 
@@ -337,7 +335,7 @@ public class Experiments {
 		duplicatePropagation.resetDuplicates();
 		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject("./data/blocks/" + tableName);
 		//remove file now
-        FileUtils.forceDelete(new File("./usr/share/data/blocks/" + tableName)); //delete directory
+        FileUtils.forceDelete(new File("./data/bstam/data/blocks/" + tableName)); //delete directory
 		BlockStatistics bStats = new BlockStatistics(blocks, duplicatePropagation, csvWriter);
 		bStats.applyProcessing();		
 	}
@@ -390,12 +388,12 @@ public class Experiments {
 	
 	public static void generateDumpDirectories() throws IOException {
 		File dataDir = new File("./data/");
-		File logsDir = new File("/usr/share/data/logs");
-		File blockIndexDir = new File("/usr/share/data/blockIndex");
-		File groundTruthDir = new File("/usr/share/data/groundTruth");
-		File tableStatsDir = new File("/usr/share/data/tableStats/tableStats");
-		File blockIndexStats = new File("/usr/share/data/tableStats/blockIndexStats");
-		File linksDir = new File("/usr/share/data/links");
+		File logsDir = new File("/data/bstam/data/logs");
+		File blockIndexDir = new File("/data/bstam/data/blockIndex");
+		File groundTruthDir = new File("/data/bstam/data/groundTruth");
+		File tableStatsDir = new File("/data/bstam/data/tableStats/tableStats");
+		File blockIndexStats = new File("/data/bstam/data/tableStats/blockIndexStats");
+		File linksDir = new File("/data/bstam/data/links");
 		if(!dataDir.exists()) {
             FileUtils.forceMkdir(dataDir); //create directory
 		}

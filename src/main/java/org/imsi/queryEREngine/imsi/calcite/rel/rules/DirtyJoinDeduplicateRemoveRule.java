@@ -77,7 +77,7 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 //				deduplicateLeft.getFieldTypes(), deduplicateRight.getFieldTypes(), deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
 //				Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
 //	
-		
+
 		if (leftConjuctions == null && rightConjuctions != null) {
 			newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join
 					.getVariablesSet(), JoinRelType.DIRTY_LEFT, deduplicateLeft.getSource(), deduplicateRight.getSource(), 
