@@ -40,6 +40,7 @@ import org.imsi.queryEREngine.imsi.er.DataStructures.IdDuplicates;
 import org.imsi.queryEREngine.imsi.er.EfficiencyLayer.ComparisonRefinement.AbstractDuplicatePropagation;
 import org.imsi.queryEREngine.imsi.er.EfficiencyLayer.ComparisonRefinement.UnilateralDuplicatePropagation;
 import org.imsi.queryEREngine.imsi.er.Utilities.BlockStatistics;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,9 +72,10 @@ public class Experiments {
 	private static final String CALCITE_CONNECTION = "calcite.connection";
 	private static final String CALCULATE_GROUND_TRUTH = "ground_truth.calculate";
 	private static final String DIVIDE_GROUND_TRUTH = "ground_truth.divide";
-
+	private static final String DUMP_PATH = "dump.path";
 	
 	private static String queryFilePath = "";
+	private static String dumpPath = "";
 	private static Integer groundTruthDivide = 500;
 	private static Integer totalRuns = 1;
 	private static String schemaName = "";
@@ -86,7 +88,8 @@ public class Experiments {
 	{
 		setProperties();
 		// Create output folders
-		generateDumpDirectories();
+		DumpDirectories dumpDirectories = new DumpDirectories(dumpPath);
+		dumpDirectories.generateDumpDirectories();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -377,6 +380,7 @@ public class Experiments {
             calciteConnectionString = properties.getProperty(CALCITE_CONNECTION);
             calculateGroundTruth = Boolean.parseBoolean(properties.getProperty(CALCULATE_GROUND_TRUTH));
             groundTruthDivide = Integer.parseInt(properties.getProperty(DIVIDE_GROUND_TRUTH));
+			dumpPath = properties.getProperty(DUMP_PATH);
 		}
 	}
 	
@@ -394,41 +398,7 @@ public class Experiments {
 		return prop;
 	}
 	
-	public static void generateDumpDirectories() throws IOException {
-		File dataDir = new File("./data/");
-		File logsDir = new File("/data/bstam/data/logs");
-		File blockDir = new File("/data/bstam/data/blocks");
-		File blockIndexDir = new File("/data/bstam/data/blockIndex");
-		File groundTruthDir = new File("/data/bstam/data/groundTruth");
-		File tableStatsDir = new File("/data/bstam/data/tableStats/tableStats");
-		File blockIndexStats = new File("/data/bstam/data/tableStats/blockIndexStats");
-		File linksDir = new File("/data/bstam/data/links");
-		if(!dataDir.exists()) {
-            FileUtils.forceMkdir(dataDir); //create directory
-		}
-		if(!logsDir.exists()) {
-            FileUtils.forceMkdir(logsDir); //create directory
-		}
-		if(!blockIndexDir.exists()) {
-            FileUtils.forceMkdir(blockIndexDir); //create directory
-		}
-		if(!groundTruthDir.exists()) {
-            FileUtils.forceMkdir(groundTruthDir); //create directory
-		}
-		if(!tableStatsDir.exists()) {
-            FileUtils.forceMkdir(tableStatsDir); //create directory
-		}
-		if(!blockIndexStats.exists()) {
-            FileUtils.forceMkdir(blockIndexStats); //create directory
-		}
-		if(!linksDir.exists()) {
-            FileUtils.forceMkdir(linksDir); //create directory
-		}
-		if(!blockDir.exists()) {
-            FileUtils.forceMkdir(blockDir); //create directory
-		}
-	
-	}
+
 	
 	
 	

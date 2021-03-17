@@ -40,6 +40,13 @@
             <artifactId>jsr305</artifactId>
             <version>3.0.2</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.7.1</version>
+            <scope>test</scope>
+        </dependency>
 
 
         <dependency>
@@ -235,10 +242,6 @@
  	<build>
  
 		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>				
-			</plugin>
 			 <plugin>
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-maven-plugin</artifactId>

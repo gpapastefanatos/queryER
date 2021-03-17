@@ -16,11 +16,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.dbcp2.BasicDataSource;
 import org.imsi.queryEREngine.apache.calcite.adapter.jdbc.JdbcSchema;
 import org.imsi.queryEREngine.apache.calcite.jdbc.CalciteConnection;
 import org.imsi.queryEREngine.apache.calcite.schema.SchemaPlus;
-import org.apache.commons.dbcp2.BasicDataSource;
-
 
 import com.google.common.util.concurrent.MoreExecutors;
 

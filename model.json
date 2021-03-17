@@ -7,8 +7,7 @@
       "type": "custom",
       "factory": "org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {
-       "directory": "C:\\Works\\ATHENA\\Projects\\ER\\Code\\queryER\\queryER\\oag\\data",
-         // "directory": "/Users/giorgos/Documents/Git/queryER-API/example",
+        "directory": "/Users/vasilisstamatopoulos/Documents/GitHub/queryER/oag/data",
         "flavor": "translatable"
       }
     }

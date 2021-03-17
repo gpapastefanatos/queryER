@@ -16,14 +16,8 @@
  */
 package org.imsi.queryEREngine.imsi.calcite.adapter.csv;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import org.imsi.queryEREngine.apache.calcite.adapter.java.JavaTypeFactory;
 import org.apache.calcite.linq4j.Enumerator;
+import org.imsi.queryEREngine.apache.calcite.adapter.java.JavaTypeFactory;
 import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataType;
 import org.imsi.queryEREngine.apache.calcite.sql.type.SqlTypeName;
 import org.imsi.queryEREngine.apache.calcite.util.Pair;
@@ -32,6 +26,11 @@ import org.imsi.queryEREngine.imsi.er.KDebug;
 import org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor.RowListProcessor;
 import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvParser;
 import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvParserSettings;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /** Enumerator that reads from a CSV file.
