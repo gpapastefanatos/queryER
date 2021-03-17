@@ -194,16 +194,18 @@ public class DeduplicationExecution<T> {
             // EDGE PRUNING
             double edgePruningStartTime = System.currentTimeMillis();
             EfficientEdgePruning eEP = new EfficientEdgePruning();
-            if(runEP) eEP.applyProcessing(blocks);
-            double edgePruningEndTime = System.currentTimeMillis();
-
-            epTime = Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000);
-            double totalComps = 0;
-            for (AbstractBlock block : blocks) {
-            	totalComps += block.getNoOfComparisons();
+            if(runEP) {
+            	eEP.applyProcessing(blocks);
+	            double edgePruningEndTime = System.currentTimeMillis();
+	
+	            epTime = Double.toString((edgePruningEndTime - edgePruningStartTime) / 1000);
+	            double totalComps = 0;
+	            for (AbstractBlock block : blocks) {
+	            	totalComps += block.getNoOfComparisons();
+	            }
+	            epTotalComps = Double.toString(totalComps);
+	            ePEntities = Integer.toString(queryBlockIndex.blocksToEntitiesD(blocks).size());
             }
-            epTotalComps = Double.toString(totalComps);
-            ePEntities = Integer.toString(queryBlockIndex.blocksToEntitiesD(blocks).size());
             
         }
 
@@ -216,14 +218,15 @@ public class DeduplicationExecution<T> {
         totalIds.addAll(blockQids);
         totalIds.addAll(qIds);
         double storeTime = storeIds(qIds);
+        // To find ground truth statistics
+        storeTime = storeBlocks(blocks, tableName);
         double tableScanStartTime = System.currentTimeMillis() - storeTime;
         AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((Enumerator<Object[]>) originalEnumerator, totalIds, key);
         double tableScanEndTime = System.currentTimeMillis();
         String tableScanTime = Double.toString((tableScanEndTime - tableScanStartTime) / 1000);
 
         HashMap<Integer, Object[]> entityMap = createMap(comparisonEnumerable, key);
-        // To find ground truth statistics
-//        storeTime = storeBlocks(blocks, tableName);
+       
 
         double comparisonStartTime = System.currentTimeMillis() - storeTime;
         ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
@@ -244,17 +247,11 @@ public class DeduplicationExecution<T> {
         String linksTime = Double.toString(links1Time + ((links2EndTime - links2StartTime) / 1000));
         // Log everything
         if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
-        	DEDUPLICATION_EXEC_LOGGER.debug(tableName + "," + queryDataSize + "," + blockJoinTime + "," + blockingTime + "," + blocksSize + "," + 
+        	DEDUPLICATION_EXEC_LOGGER.debug(tableName + "," + queryDataSize + "," + linksTime + "," + blockJoinTime + "," + blockingTime +  "," + blocksSize + "," + 
         			blockSizes + "," + blockEntities + "," + purgingBlocksSize + "," + purgingTime + "," + purgingBlockSizes + "," + 
         			purgeBlockEntities + "," + filterBlocksSize + "," + filterTime + "," + filterBlockSizes + ","  + filterBlockEntities + "," +
         			epTime + "," + epTotalComps + "," + ePEntities + "," + matches + "," + executedComparisons + "," + tableScanTime + "," + jaroTime + "," +
         			comparisonTime + "," + revUfCreationTime + "," + totalEntities + "," + totalDeduplicationTime);
-        
-       System.out.println(tableName + "\nqueryDataSize " + queryDataSize + "\nlinksTime " + linksTime + "\nblockJoinTime " + blockJoinTime + "\nblockingTime " + blockingTime + "\nblocksSize " + blocksSize + "\nblockSizes " + 
-    			blockSizes + "\nblockEntities " + blockEntities + "\npurgingBlocksSize " + purgingBlocksSize + "\npurgingTime " + purgingTime + "\npurgingBlockSizes " + purgingBlockSizes + "\n, " + 
-    			purgeBlockEntities + "\nfilterBlocksSize " + filterBlocksSize + "\nfilterTime " + filterTime + "\nfilterBlockSizes " + filterBlockSizes + "\nfilterBlockSizes"  + filterBlockEntities + "\nepTime " +
-    			epTime + "\nepTotalComps " + epTotalComps + "\nePEntities " + ePEntities + "\nmatches " + matches + "\nexecutedComparisons " + executedComparisons + "\ntableScanTime " + tableScanTime + "\njaroTime " + jaroTime + "\ncomparisonTime " +
-    			comparisonTime + "\nrevUfCreationTime " + revUfCreationTime + "\ntotalEntities " + totalEntities + "\ntotalDeduplicationTime " + totalDeduplicationTime);
         return entityResolvedTuple;
     }
 

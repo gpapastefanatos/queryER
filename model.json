@@ -1,19 +1,9 @@
 {
   "version": "1.0",
-  "defaultSchema": "real",
+  "defaultSchema": "ground_truth",
   "schemas": [
     {
-      "name": "real",
-      "type": "custom",
-      "factory": "org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvSchemaFactory",
-      "operand": {
-       "directory": "C:\\Works\\ATHENA\\Projects\\ER\\Code\\queryER\\queryER\\real",
-         // "directory": "/Users/giorgos/Documents/Git/queryER-API/example",
-        "flavor": "translatable"
-      }
-    },
-    {
-      "name": "synthetic",
+      "name": "oag",
       "type": "custom",
       "factory": "org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvSchemaFactory",
       "operand": {

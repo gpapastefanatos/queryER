@@ -568,17 +568,12 @@ public class DeduplicationJoinExecution {
 
 		// Log everything
 		if (DEDUPLICATION_EXEC_LOGGER.isDebugEnabled())
-			DEDUPLICATION_EXEC_LOGGER.debug(tableName + "," + queryDataSize + "," + blockJoinTime + "," + blockingTime + "," + blocksSize + "," + 
-					blockSizes + "," + blockEntities + "," + purgingBlocksSize + "," + purgingTime + "," + purgingBlockSizes + "," + 
-					purgeBlockEntities + "," + filterBlocksSize + "," + filterTime + "," + filterBlockSizes + ","  + filterBlockEntities + "," +
-					epTime + "," + epTotalComps + "," + ePEntities + "," + matches + "," + executedComparisons + "," + tableScanTime + "," + jaroTime + "," +
-					comparisonTime + "," + revUfCreationTime + "," + totalEntities + "," + totalDeduplicationTime);
-		 System.out.println(tableName + "\nqueryDataSize " + queryDataSize + "\nlinksTime " + linksTime + "\nblockJoinTime " + blockJoinTime + "\nblockingTime " + blockingTime + "\nblocksSize " + blocksSize + "\nblockSizes " + 
-	    			blockSizes + "\nblockEntities " + blockEntities + "\npurgingBlocksSize " + purgingBlocksSize + "\npurgingTime " + purgingTime + "\npurgingBlockSizes " + purgingBlockSizes + "\n, " + 
-	    			purgeBlockEntities + "\nfilterBlocksSize " + filterBlocksSize + "\nfilterTime " + filterTime + "\nfilterBlockSizes " + filterBlockSizes + "\nfilterBlockSizes"  + filterBlockEntities + "\nepTime " +
-	    			epTime + "\nepTotalComps " + epTotalComps + "\nePEntities " + ePEntities + "\nmatches " + matches + "\nexecutedComparisons " + executedComparisons + "\ntableScanTime " + tableScanTime + "\njaroTime " + jaroTime + "\ncomparisonTime " +
-	    			comparisonTime + "\nrevUfCreationTime " + revUfCreationTime + "\ntotalEntities " + totalEntities + "\ntotalDeduplicationTime " + totalDeduplicationTime);
-		return entityResolvedTuple;
+        	DEDUPLICATION_EXEC_LOGGER.debug(tableName + "," + queryDataSize + "," + linksTime + "," + blockJoinTime + "," + blockingTime + "," + blocksSize + "," + 
+        			blockSizes + "," + blockEntities + "," + purgingBlocksSize + "," + purgingTime + "," + purgingBlockSizes + "," + 
+        			purgeBlockEntities + "," + filterBlocksSize + "," + filterTime + "," + filterBlockSizes + ","  + filterBlockEntities + "," +
+        			epTime + "," + epTotalComps + "," + ePEntities + "," + matches + "," + executedComparisons + "," + tableScanTime + "," + jaroTime + "," +
+        			comparisonTime + "," + revUfCreationTime + "," + totalEntities + "," + totalDeduplicationTime);
+       return entityResolvedTuple;
 	}
 
 

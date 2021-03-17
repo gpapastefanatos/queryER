@@ -111,6 +111,7 @@ public class Experiments {
 					ResultSet queryResults = runQuery(calciteConnection, query);
 					double queryEndTime = System.currentTimeMillis();
 					runTime = (queryEndTime - queryStartTime)/1000;
+					//printQueryContents(queryResults);
 					exportQueryContent(queryResults, "./data/queryResults.csv");
 					
 					System.out.println("Finished query, time: " + runTime);					
@@ -155,10 +156,19 @@ public class Experiments {
 		}
 		String query = "SELECT 1 FROM " + fSchema + "." + fTable;
 		runQuery(calciteConnection, query);	
+		writeHeader();
 		System.out.println("Initializing Finished!");
 
 	}
 
+	public static void writeHeader(){
+		final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
+        if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
+			DEDUPLICATION_EXEC_LOGGER.debug("table_name,query_entities,links_time,block_join_time,blocking_time,query_blocks,max_query_block_size,avg_query_block_size,total_query_comps,block_entities,"
+					+ "purge_blocks,purge_time,max_purge_block_size,avg_purge_block_size,total_purge_comps,purge_entities,filter_blocks,filter_time,max_filter_block_size,avg_filter_block_size,"
+					+ "total_filter_comps,filter_entities,ep_time,ep_comps,ep_entities,matches_found,executed_comparisons,table_scan_time,jaro_time,comparison_time,rev_uf_creation_time,total_entities,total_dedup_time\n");
+		
+	}
 
 	private static void readQueries(List<String> queries, String queryFilePath) {
 		// read query line by line
@@ -219,12 +229,7 @@ public class Experiments {
         FileWriter csvWriter = new FileWriter(queryFile);
         //csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,total_entities,entities_in_blocks,singleton_entities,average_block,BC,detected_duplicates,PC,PQ\n");
         csvWriter.append("query,runs,time,no_of_blocks,agg_cardinality,CC,entities_in_blocks,detected_duplicates,PC,PQ\n");
-    	final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
-        if(DEDUPLICATION_EXEC_LOGGER.isDebugEnabled()) 
-			DEDUPLICATION_EXEC_LOGGER.debug("table_name,query_entities,block_join_time,blocking_time,query_blocks,max_query_block_size,avg_query_block_size,total_query_comps,block_entities,"
-					+ "purge_blocks,purge_time,max_purge_block_size,avg_purge_block_size,total_purge_comps,purge_entities,filter_blocks,filter_time,max_filter_block_size,avg_filter_block_size,"
-					+ "total_filter_comps,filter_entities,ep_time,ep_comps,ep_entities,matches_found,executed_comparisons,table_scan_time,jaro_time,comparison_time,rev_uf_creation_time,total_entities,total_dedup_time\n");
-		for(String query : queries) {
+    	for(String query : queries) {
 			double totalRunTime = 0.0;
             ResultSet queryResults = null;
 			for(int i = 0; i < totalRuns; i++) {
@@ -281,9 +286,9 @@ public class Experiments {
 	
 		// Construct ground truth query
 		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
-		File blocksDir = new File("./data/groundTruth/" + name);
+		File blocksDir = new File("/data/bstam/data/groundTruth/" + name);
 		if(blocksDir.exists()) {
-			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("./data/bstam/data/groundTruth/" + name);
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("/data/bstam/data/groundTruth/" + name);
 		}
 		else {
 			System.out.println("Calculating ground truth..");
@@ -295,7 +300,7 @@ public class Experiments {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject("./data/qIds");
+			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject("/data/bstam/data/qIds");
 			List<Set<Integer>> inIdsSets = new ArrayList<>();
 			Set<Integer> currSet = null;
 			for (Integer value : qIds) {
@@ -315,6 +320,9 @@ public class Experiments {
 			System.out.println("Will execute " + inIds.size() + " queries");
 
 			for(String inIdd : inIds) {
+//				String groundTruthQuery = "SELECT orig_id1, orig_id2 FROM ground_truth.ground_truth_" + tableName +
+//						" INNER JOIN schemaName." + tableName + " ON (id_s = orig_id OR id_d = orig_id)"
+//						" WHERE id_s IN " + inIdd + " OR id_d IN " + inIdd ;
 				String groundTruthQuery = "SELECT id_d, id_s FROM ground_truth.ground_truth_" + tableName +
 						" WHERE id_s IN " + inIdd + " OR id_d IN " + inIdd ;
 				ResultSet gtQueryResults = runQuery(calciteConnection, groundTruthQuery);
@@ -325,7 +333,7 @@ public class Experiments {
 					groundDups.add(idd);
 				}		
 			}
-			SerializationUtilities.storeSerializedObject(groundDups, "./data/bstam/data/groundTruth/" + name);
+			SerializationUtilities.storeSerializedObject(groundDups, "/data/bstam/data/groundTruth/" + name);
 		}
 		
 
@@ -333,9 +341,9 @@ public class Experiments {
 		System.out.println("Existing Duplicates\t:\t" + duplicatePropagation.getDuplicates().size());
 
 		duplicatePropagation.resetDuplicates();
-		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject("./data/blocks/" + tableName);
+		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject("/data/bstam/data/blocks/" + tableName);
 		//remove file now
-        FileUtils.forceDelete(new File("./data/bstam/data/blocks/" + tableName)); //delete directory
+        FileUtils.forceDelete(new File("/data/bstam/data/blocks/" + tableName)); //delete directory
 		BlockStatistics bStats = new BlockStatistics(blocks, duplicatePropagation, csvWriter);
 		bStats.applyProcessing();		
 	}
@@ -389,6 +397,7 @@ public class Experiments {
 	public static void generateDumpDirectories() throws IOException {
 		File dataDir = new File("./data/");
 		File logsDir = new File("/data/bstam/data/logs");
+		File blockDir = new File("/data/bstam/data/blocks");
 		File blockIndexDir = new File("/data/bstam/data/blockIndex");
 		File groundTruthDir = new File("/data/bstam/data/groundTruth");
 		File tableStatsDir = new File("/data/bstam/data/tableStats/tableStats");
@@ -414,6 +423,9 @@ public class Experiments {
 		}
 		if(!linksDir.exists()) {
             FileUtils.forceMkdir(linksDir); //create directory
+		}
+		if(!blockDir.exists()) {
+            FileUtils.forceMkdir(blockDir); //create directory
 		}
 	
 	}

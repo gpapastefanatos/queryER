@@ -130,18 +130,18 @@ public class CsvSchema extends AbstractSchema {
 				}
 							
 				// Compute CsvTableStatistic
-				if(!new File("/data/bstam/data/tableStats/table" + tableName + ".json").exists()) {
-					AtomicBoolean ab = new AtomicBoolean();
-					ab.set(false);
-					@SuppressWarnings({ "unchecked", "rawtypes" })
-					CsvEnumerator csvEnumerator = new CsvEnumerator(table.getSource(), ab,
-							table.getFieldTypes());
-					CsvTableStatistic csvTableStatistic = new CsvTableStatistic(csvEnumerator,
-							tableName, table.getFieldTypes().size(), table.getKey(), files, source);
-					csvTableStatistic.getStatistics();
-					csvTableStatistic.storeStatistics();
-					table.setCsvTableStatistic(csvTableStatistic);
-				}
+//				if(!new File("/data/bstam/data/tableStats/table" + tableName + ".json").exists()) {
+//					AtomicBoolean ab = new AtomicBoolean();
+//					ab.set(false);
+//					@SuppressWarnings({ "unchecked", "rawtypes" })
+//					CsvEnumerator csvEnumerator = new CsvEnumerator(table.getSource(), ab,
+//							table.getFieldTypes());
+//					CsvTableStatistic csvTableStatistic = new CsvTableStatistic(csvEnumerator,
+//							tableName, table.getFieldTypes().size(), table.getKey(), files, source);
+//					csvTableStatistic.getStatistics();
+//					csvTableStatistic.storeStatistics();
+//					table.setCsvTableStatistic(csvTableStatistic);
+//				}
 				builder.put(sourceSansCsv.relative(baseSource).path(), table);
 
 				// Create Block index and store into data folder (only if not already created)
@@ -156,6 +156,7 @@ public class CsvSchema extends AbstractSchema {
 							table.getFieldTypes());
 
 					blockIndex.createBlockIndex(enumerator, table.getKey());
+					System.out.println("created");
 					blockIndex.buildBlocks();
 					blockIndex.sortIndex();
 					blockIndex.storeBlockIndex("/data/bstam/data/blockIndex/", tableName );

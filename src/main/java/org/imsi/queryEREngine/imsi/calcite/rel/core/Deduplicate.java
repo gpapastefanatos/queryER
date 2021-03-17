@@ -122,10 +122,9 @@ public abstract class Deduplicate extends SingleRel {
 	}
 	
 	public Double calculateComparisons() {
-		if(conjuctions != null)
-			if(comparisons == null)
-				comparisons = blockIndex.getComparisons(conjuctions, table.getQualifiedName().get(1));
-		System.out.println(comparisons);
+		if(comparisons == null)
+			comparisons = blockIndex.getComparisons(conjuctions, table.getQualifiedName().get(1));
+		System.out.println(table.getQualifiedName().get(1) + comparisons);
 		return comparisons;
 	}
 	public Double getComparisons() {		

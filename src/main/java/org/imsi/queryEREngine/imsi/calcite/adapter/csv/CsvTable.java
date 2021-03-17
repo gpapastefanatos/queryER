@@ -96,7 +96,8 @@ public abstract class CsvTable extends AbstractTable {
 			@Override
 			public Double getRowCount() {
 				if(rows == null)
-					rows = Double.parseDouble(csvTableStatistic.columnCardinalities.get(tableKey).toString());
+					//rows = Double.parseDouble(csvTableStatistic.columnCardinalities.get(tableKey).toString());
+					rows = 1000.0;
 				//System.out.println("Stats" + " " +rows);
 				return rows;
 			}

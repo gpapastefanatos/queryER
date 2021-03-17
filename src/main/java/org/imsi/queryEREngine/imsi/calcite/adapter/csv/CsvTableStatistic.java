@@ -147,7 +147,9 @@ public class CsvTableStatistic {
 			cardinalityList.add(new HLL(14, 5));
 			col += 1;
 		}
-		while(csvEnumerator.moveNext()) {
+		int rows = 0;
+		while(csvEnumerator.moveNext() && rows < 100000) {
+			rows ++;
 			Object[] curr = (Object[]) csvEnumerator.current();
 			for(int i = 0 ; i < columnCount; i++) {
 				String attribute = curr[i].toString();
