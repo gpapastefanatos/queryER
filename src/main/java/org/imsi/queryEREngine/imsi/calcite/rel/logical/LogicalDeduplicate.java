@@ -3,12 +3,9 @@ package org.imsi.queryEREngine.imsi.calcite.rel.logical;
 import java.util.List;
 
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCluster;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptCost;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptPlanner;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
 import org.imsi.queryEREngine.apache.calcite.plan.RelTraitSet;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
-import org.imsi.queryEREngine.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;
 import org.imsi.queryEREngine.apache.calcite.util.Source;
 import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
@@ -32,7 +29,8 @@ public class LogicalDeduplicate extends Deduplicate {
 		 return new LogicalDeduplicate(cluster, traitSet, input, table, blockIndex, conjuctions, key, source, fieldTypes, comparisons);
 	 }
 
-	 public RelNode copy(RelTraitSet traitSet, RelNode input) {
+	 @Override
+	public RelNode copy(RelTraitSet traitSet, RelNode input) {
 		 return new LogicalDeduplicate(getCluster(), traitSet, input, this.table, this.blockIndex, this.conjuctions, this.key, this.source, this.fieldTypes, this.comparisons);
 	 }
  }

@@ -13,7 +13,6 @@ import org.apache.calcite.linq4j.function.Predicate2;
 import org.apache.calcite.linq4j.tree.Types;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityResolvedTuple;
 import com.google.common.collect.ImmutableMap;
-import org.imsi.queryEREngine.imsi.er.BlockIndex.BlockIndex;
 public enum NewBuiltInMethod {
 	DEDUPLICATE_ENUM(DeduplicationExecution.class, "deduplicateEnumerator", Enumerable.class,
 			String.class, Integer.class, String.class, List.class, AtomicBoolean.class),

@@ -128,7 +128,7 @@ public class RelOptTableImpl extends Prepare.AbstractPreparingTable {
 	}
 
 	public RelOptTableImpl copy(RelDataType newRowType) {
-		return new RelOptTableImpl(this.schema, newRowType, (List<String>)this.names, this.table, this.expressionFunction, this.rowCount, this.comparisons);
+		return new RelOptTableImpl(this.schema, newRowType, this.names, this.table, this.expressionFunction, this.rowCount, this.comparisons);
 	}
 
 	@Override public String toString() {

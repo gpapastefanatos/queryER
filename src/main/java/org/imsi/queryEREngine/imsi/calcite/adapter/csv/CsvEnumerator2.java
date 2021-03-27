@@ -16,9 +16,7 @@
  */
 package org.imsi.queryEREngine.imsi.calcite.adapter.csv;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.text.ParseException;
 import java.util.ArrayList;

@@ -21,8 +21,6 @@ import java.util.List;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRule;
 import org.imsi.queryEREngine.apache.calcite.rel.core.RelFactories;
 import org.imsi.queryEREngine.apache.calcite.util.trace.CalciteTrace;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableDeduplicateJoinRule;
-import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
 import org.imsi.queryEREngine.imsi.calcite.adapter.enumerable.EnumerableDeduplicateRule;
 import org.imsi.queryEREngine.imsi.calcite.adapter.enumerable.EnumerableMergeEntitiesRule;
 import org.slf4j.Logger;

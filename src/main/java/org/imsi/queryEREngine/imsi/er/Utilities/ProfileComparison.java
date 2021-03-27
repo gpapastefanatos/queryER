@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.IntStream;
-
 import org.apache.commons.text.similarity.JaroWinklerSimilarity;
 import org.imsi.queryEREngine.imsi.er.DataStructures.Attribute;
 
@@ -234,6 +232,7 @@ public class ProfileComparison {
 		HashMap<Integer, String> at2 = new HashMap<>();
 		Integer length = entity1.length;
 		int index = 0;
+		
 		while (index < length) {
 			if(index != keyIndex) {
 				if (entity1[index].equals("")) {

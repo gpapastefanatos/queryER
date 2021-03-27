@@ -2,12 +2,10 @@ package org.imsi.queryEREngine.apache.calcite.adapter.enumerable;
 
 import java.util.function.Predicate;
 
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.imsi.queryEREngine.apache.calcite.plan.Convention;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.convert.ConverterRule;
 import org.imsi.queryEREngine.apache.calcite.rel.core.RelFactories;
-import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalDeduplicateJoin;
 
 public class EnumerableDeduplicateJoinRule extends ConverterRule {

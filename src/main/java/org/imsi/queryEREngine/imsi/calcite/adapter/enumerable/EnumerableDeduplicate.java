@@ -16,26 +16,18 @@
  */
 package org.imsi.queryEREngine.imsi.calcite.adapter.enumerable;
 
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumUtils;
 import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableRel;
 import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableRelImplementor;
 import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.PhysType;
-import org.imsi.queryEREngine.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.tree.BlockBuilder;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.linq4j.tree.Expressions;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCluster;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptCost;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptPlanner;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptUtil;
 import org.imsi.queryEREngine.apache.calcite.plan.RelTraitSet;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.metadata.RelMetadataQuery;
@@ -44,8 +36,6 @@ import org.imsi.queryEREngine.apache.calcite.util.Source;
 import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
 import org.imsi.queryEREngine.imsi.calcite.rel.core.Deduplicate;
 import org.imsi.queryEREngine.imsi.calcite.util.NewBuiltInMethod;
-import org.imsi.queryEREngine.imsi.er.BlockIndex.BlockIndex;
-import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 
 
 /**
@@ -91,7 +81,8 @@ public class EnumerableDeduplicate extends Deduplicate implements EnumerableRel 
 	    return new EnumerableDeduplicate(cluster, traitSet, input, table, blockIndex, conjuctions, key, source, fieldTypes, comparisons);
 	  }
 	  
-	  public EnumerableDeduplicate copy(RelTraitSet traitSet, RelNode input) {
+	  @Override
+	public EnumerableDeduplicate copy(RelTraitSet traitSet, RelNode input) {
 	    return new EnumerableDeduplicate(getCluster(), traitSet, input, this.table, this.blockIndex, this.conjuctions, this.key, this.source, this.fieldTypes, this.comparisons);
 	  }
 	/**

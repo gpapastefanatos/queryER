@@ -9,7 +9,7 @@
         <Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
             <PatternLayout pattern="${LOG_PATTERN}"/>
         </Console>
-        <File name="FileAppender" fileName="/data/bstam/data/logs/deduplication_log.csv" bufferedIO="true" advertiseURI="file://data/bstam/data/logs/deduplication_log.csv" advertise="true">
+        <File name="FileAppender" fileName="data/logs/deduplication_log.csv" bufferedIO="true" advertiseURI="file:data/logs/deduplication_log.csv" advertise="true">
 		</File>
     </Appenders>
     <Loggers>

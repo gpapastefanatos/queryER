@@ -1,26 +1,15 @@
 package org.imsi.queryEREngine.imsi.calcite.adapter.csv;
 
 import java.io.File;
-import java.lang.invoke.MethodHandles.Lookup;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.imsi.queryEREngine.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.AbstractEnumerable;
-import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
-import org.apache.calcite.linq4j.Linq4j;
-import org.apache.calcite.linq4j.function.EqualityComparer;
-import org.apache.calcite.linq4j.function.Function1;
-import org.apache.calcite.linq4j.function.Function2;
-import org.apache.calcite.linq4j.function.Predicate2;
-import org.imsi.queryEREngine.apache.calcite.schema.Table;
 import org.imsi.queryEREngine.apache.calcite.util.Source;
 import org.imsi.queryEREngine.apache.calcite.util.Sources;
 import org.imsi.queryEREngine.imsi.er.BlockIndex.QueryBlockIndex;
@@ -31,7 +20,6 @@ import org.imsi.queryEREngine.imsi.er.MetaBlocking.BlockFiltering;
 import org.imsi.queryEREngine.imsi.er.MetaBlocking.EfficientEdgePruning;
 import org.imsi.queryEREngine.imsi.er.Utilities.ExecuteBlockComparisons;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 
@@ -81,9 +69,9 @@ public class CsvTableStatistic {
 					if(tableName.equals(table.getName())) continue;
 					table.getRowType(new JavaTypeFactoryImpl());
 					CsvEnumerator<T> thisEnumerator = new CsvEnumerator(csvEnumerator.getSource(),
-			        		csvEnumerator.getCancelFlag(), csvEnumerator.getFieldTypes());
+			        		csvEnumerator.getCancelFlag(), csvEnumerator.getFieldTypes(), table.getKey());
 					CsvEnumerator<T> otherEnumerator = new CsvEnumerator(source,
-							csvEnumerator.getCancelFlag(), table.getFieldTypes());
+							csvEnumerator.getCancelFlag(), table.getFieldTypes(), tableKey);
 					getAllDirtyMatches(thisEnumerator, otherEnumerator, tableName, table.getName());
 						
 				}
@@ -112,7 +100,7 @@ public class CsvTableStatistic {
 	public <T> void deduplicate() {
 
         CsvEnumerator<T> originalEnumerator = new CsvEnumerator(csvEnumerator.getSource(),
-        		csvEnumerator.getCancelFlag(), csvEnumerator.getFieldTypes());
+        		csvEnumerator.getCancelFlag(), csvEnumerator.getFieldTypes(), tableKey);
 
 		QueryBlockIndex queryBlockIndex = new QueryBlockIndex();
 		queryBlockIndex.createBlockIndex(sample, tableKey);
@@ -139,7 +127,7 @@ public class CsvTableStatistic {
 	}
 	public <T> void getCardinalities() {
 		CsvEnumerator<T> csvEnumerator = new CsvEnumerator(this.csvEnumerator.getSource(),
-        		this.csvEnumerator.getCancelFlag(), this.csvEnumerator.getFieldTypes());
+        		this.csvEnumerator.getCancelFlag(), this.csvEnumerator.getFieldTypes(), tableKey);
 		HashFunction hashFunction = Hashing.murmur3_128();
 		List<HLL> cardinalityList = new ArrayList<>();
 		int col = 0;

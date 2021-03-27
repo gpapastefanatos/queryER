@@ -19,9 +19,6 @@ import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.BilateralBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.Comparison;
 import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
-import org.imsi.queryEREngine.imsi.er.MetaBlocking.AbstractMetablocking;
-
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;

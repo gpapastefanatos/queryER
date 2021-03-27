@@ -63,7 +63,7 @@ implements QueryableTable, TranslatableTable {
 		return new AbstractEnumerable<Object[]>() {
 			@Override
 			public Enumerator<Object[]> enumerator() {
-				CsvEnumerator<Object[]> enumerator = new CsvEnumerator<Object[]>(source, cancelFlag, fieldTypes, fields);
+				CsvEnumerator<Object[]> enumerator = new CsvEnumerator<Object[]>(source, cancelFlag, fieldTypes, fields, tableKey);
 				return enumerator;
 			}
 

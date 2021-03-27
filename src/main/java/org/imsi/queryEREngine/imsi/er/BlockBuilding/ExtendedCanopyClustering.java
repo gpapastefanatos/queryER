@@ -2,7 +2,6 @@
 
 package org.imsi.queryEREngine.imsi.er.BlockBuilding;
 
-import org.imsi.queryEREngine.imsi.er.BlockBuilding.AbstractExtendedCanopyClustering;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityProfile;
 import java.util.List;
 

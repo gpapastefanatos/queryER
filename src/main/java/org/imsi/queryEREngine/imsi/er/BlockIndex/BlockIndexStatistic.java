@@ -13,22 +13,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.imsi.queryEREngine.imsi.calcite.util.DeduplicationExecution;
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.Comparison;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityIndex;
 import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
-import org.imsi.queryEREngine.imsi.er.EfficiencyLayer.BlockRefinement.ComparisonsBasedBlockPurging;
-import org.imsi.queryEREngine.imsi.er.MetaBlocking.BlockFiltering;
-import org.imsi.queryEREngine.imsi.er.Utilities.ComparisonIterator;
-import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
-import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
-
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -200,13 +193,14 @@ public class BlockIndexStatistic implements Serializable {
 //			}
 			
 		}
-		meanComparisonsPerBlock = (double) totalComparisons / blocks.size();
-		meanEntitiesPerBlock = (double) totalEntities / blocks.size();
+		meanComparisonsPerBlock = totalComparisons / blocks.size();
+		meanEntitiesPerBlock = totalEntities / blocks.size();
 	}
 	
 	
 	public void storeStatistics() throws IOException {
-		File file = new File("/data/bstam/data/tableStats/blockIndexStats/" + tableName + ".json");
+		String blockIndexStatsDir = DumpDirectories.loadDirectories().getBlockIndexStatsDirPath();
+		File file = new File(blockIndexStatsDir + tableName + ".json");
 		FileOutputStream fOut = null;
 
 		fOut = new FileOutputStream(file);
@@ -218,6 +212,7 @@ public class BlockIndexStatistic implements Serializable {
 		mapper.writeValue(jGenerator, this);
 		jGenerator.close();
 	}
+	
 	private static long getMaxComparisonsPerBlock(List<Long> blocksSize, Set<Long> distinctComparisonsLevel) {
 		Collections.sort(blocksSize);
 		

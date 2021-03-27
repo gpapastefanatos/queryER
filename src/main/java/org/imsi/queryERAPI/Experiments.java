@@ -1,17 +1,12 @@
 package org.imsi.queryERAPI;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -22,18 +17,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.sql.DataSource;
-
-
 import org.apache.commons.io.FileUtils;
 import org.imsi.queryEREngine.apache.calcite.jdbc.CalciteConnection;
 import org.imsi.queryEREngine.apache.calcite.sql.parser.SqlParseException;
 import org.imsi.queryEREngine.apache.calcite.tools.RelConversionException;
 import org.imsi.queryEREngine.apache.calcite.tools.ValidationException;
 import org.imsi.queryEREngine.imsi.calcite.util.DeduplicationExecution;
-import org.imsi.queryEREngine.imsi.er.QueryEngine;
 import org.imsi.queryEREngine.imsi.er.ConnectionPool.CalciteConnectionPool;
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.IdDuplicates;
@@ -44,9 +33,6 @@ import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
@@ -82,14 +68,16 @@ public class Experiments {
 	private static String calciteConnectionString = "";
 	private static Boolean calculateGroundTruth = false;
 	private static CalciteConnectionPool calciteConnectionPool = null;
+	private static DumpDirectories dumpDirectories  = null;
 
 	public static void main(String[] args)
 			throws  ClassNotFoundException, SQLException, ValidationException, RelConversionException, SqlParseException, IOException
 	{
 		setProperties();
 		// Create output folders
-		DumpDirectories dumpDirectories = new DumpDirectories(dumpPath);
+		dumpDirectories = new DumpDirectories(dumpPath);
 		dumpDirectories.generateDumpDirectories();
+		dumpDirectories.storeDumpMap();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -289,9 +277,9 @@ public class Experiments {
 	
 		// Construct ground truth query
 		Set<IdDuplicates> groundDups = new HashSet<IdDuplicates>();
-		File blocksDir = new File("/data/bstam/data/groundTruth/" + name);
+		File blocksDir = new File(dumpDirectories.getGroundTruthDirPath() + name);
 		if(blocksDir.exists()) {
-			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject("/data/bstam/data/groundTruth/" + name);
+			groundDups = (Set<IdDuplicates>) SerializationUtilities.loadSerializedObject(dumpDirectories.getGroundTruthDirPath() + name);
 		}
 		else {
 			System.out.println("Calculating ground truth..");
@@ -303,7 +291,7 @@ public class Experiments {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject("/data/bstam/data/qIds");
+			Set<Integer> qIds = (Set<Integer>) SerializationUtilities.loadSerializedObject(dumpDirectories.getqIdsPath());
 			List<Set<Integer>> inIdsSets = new ArrayList<>();
 			Set<Integer> currSet = null;
 			for (Integer value : qIds) {
@@ -323,9 +311,6 @@ public class Experiments {
 			System.out.println("Will execute " + inIds.size() + " queries");
 
 			for(String inIdd : inIds) {
-//				String groundTruthQuery = "SELECT orig_id1, orig_id2 FROM ground_truth.ground_truth_" + tableName +
-//						" INNER JOIN schemaName." + tableName + " ON (id_s = orig_id OR id_d = orig_id)"
-//						" WHERE id_s IN " + inIdd + " OR id_d IN " + inIdd ;
 				String groundTruthQuery = "SELECT id_d, id_s FROM ground_truth.ground_truth_" + tableName +
 						" WHERE id_s IN " + inIdd + " OR id_d IN " + inIdd ;
 				ResultSet gtQueryResults = runQuery(calciteConnection, groundTruthQuery);
@@ -336,7 +321,7 @@ public class Experiments {
 					groundDups.add(idd);
 				}		
 			}
-			SerializationUtilities.storeSerializedObject(groundDups, "/data/bstam/data/groundTruth/" + name);
+			SerializationUtilities.storeSerializedObject(groundDups, dumpDirectories.getGroundTruthDirPath() + name);
 		}
 		
 
@@ -344,9 +329,9 @@ public class Experiments {
 		System.out.println("Existing Duplicates\t:\t" + duplicatePropagation.getDuplicates().size());
 
 		duplicatePropagation.resetDuplicates();
-		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject("/data/bstam/data/blocks/" + tableName);
+		List<AbstractBlock> blocks = (List<AbstractBlock>) SerializationUtilities.loadSerializedObject(dumpDirectories.getBlockDirPath() + tableName);
 		//remove file now
-        FileUtils.forceDelete(new File("/data/bstam/data/blocks/" + tableName)); //delete directory
+        FileUtils.forceDelete(new File(dumpDirectories.getBlockDirPath() + tableName)); //delete directory
 		BlockStatistics bStats = new BlockStatistics(blocks, duplicatePropagation, csvWriter);
 		bStats.applyProcessing();		
 	}

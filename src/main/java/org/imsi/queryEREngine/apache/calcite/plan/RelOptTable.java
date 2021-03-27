@@ -25,7 +25,6 @@ import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.RelReferentialConstraint;
 import org.imsi.queryEREngine.apache.calcite.rel.RelRoot;
 import org.imsi.queryEREngine.apache.calcite.rel.hint.RelHint;
-import org.imsi.queryEREngine.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataType;
 import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataTypeField;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;

@@ -16,7 +16,6 @@ package org.imsi.queryEREngine.imsi.er.EfficiencyLayer;
 
 
 import org.imsi.queryEREngine.imsi.er.DataStructures.*;
-import org.imsi.queryEREngine.imsi.er.EfficiencyLayer.AbstractEfficiencyMethod;
 import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
 
 import java.util.Collection;

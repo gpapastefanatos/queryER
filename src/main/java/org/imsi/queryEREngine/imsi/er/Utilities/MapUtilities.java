@@ -1,5 +1,6 @@
 package org.imsi.queryEREngine.imsi.er.Utilities;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -11,5 +12,9 @@ public class MapUtilities {
 		for (Map.Entry<T, Set<U>> e : map.entrySet())
 			clone.put(e.getKey(), e.getValue().stream().collect(Collectors.toSet())); 
 		return clone;
+	}
+	
+	public static Set<Integer> deepCopySet(Set<Integer> set){
+		return set.stream().map(Integer::new).collect(Collectors.toSet());
 	}
 }

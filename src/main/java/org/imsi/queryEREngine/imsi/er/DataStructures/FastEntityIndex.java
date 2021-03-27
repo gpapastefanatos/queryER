@@ -13,11 +13,6 @@
  */
 package org.imsi.queryEREngine.imsi.er.DataStructures;
 
-import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
-import org.imsi.queryEREngine.imsi.er.DataStructures.BilateralBlock;
-import org.imsi.queryEREngine.imsi.er.DataStructures.DecomposedBlock;
-import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
-
 import java.io.Serializable;
 import java.util.List;
 

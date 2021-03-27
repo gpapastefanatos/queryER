@@ -8,7 +8,6 @@ import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
 import org.imsi.queryEREngine.imsi.er.Utilities.Constants;
 import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

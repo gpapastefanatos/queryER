@@ -23,14 +23,14 @@ public abstract class AbstractExtendedCanopyClustering extends AbstractCanopies 
         super(n, "In-memory Canopy Clustering with Nearest Neighbors", profiles);
         this.n1 = n1;
         this.n2 = n2;
-        n2NearestEntities = new PriorityQueue<>((int) (2 * n2), new ComparisonWeightComparator());
+        n2NearestEntities = new PriorityQueue<>(2 * n2, new ComparisonWeightComparator());
     }
 
     public AbstractExtendedCanopyClustering(int n1, int n2, int n, String[] entityPaths, String[] index) {
         super(n, "In-memory Canopy Clustering with Nearest Neighbors", entityPaths, index);
         this.n1 = n1;
         this.n2 = n2;
-        n2NearestEntities = new PriorityQueue<>((int) (2 * n2), new ComparisonWeightComparator());
+        n2NearestEntities = new PriorityQueue<>(2 * n2, new ComparisonWeightComparator());
     }
 
     private void addComparison(Comparison comparison) {

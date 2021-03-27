@@ -18,13 +18,6 @@ package org.imsi.queryEREngine.apache.calcite.adapter.enumerable;
 
 import java.util.List;
 import java.util.Set;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumUtils;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableConvention;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableRel;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableRelImplementor;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.JavaRowFormat;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.PhysType;
-import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.PhysTypeImpl;
 import org.apache.calcite.linq4j.tree.BlockBuilder;
 import org.apache.calcite.linq4j.tree.Expression;
 import org.apache.calcite.linq4j.tree.Expressions;

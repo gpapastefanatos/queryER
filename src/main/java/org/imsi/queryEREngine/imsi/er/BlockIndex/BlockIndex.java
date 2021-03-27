@@ -4,13 +4,8 @@ package org.imsi.queryEREngine.imsi.er.BlockIndex;
 import static java.util.stream.Collectors.toMap;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -21,13 +16,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.Set;
 
-import org.apache.calcite.linq4j.AbstractEnumerable;
-import org.apache.calcite.linq4j.Enumerable;
-import org.apache.calcite.linq4j.Enumerator;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable.ToRelContext;
 import org.imsi.queryEREngine.apache.calcite.rel.RelCollation;
@@ -37,34 +28,27 @@ import org.imsi.queryEREngine.apache.calcite.rel.RelReferentialConstraint;
 import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataType;
 import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataTypeFactory;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;
-import org.imsi.queryEREngine.apache.calcite.schema.QueryableTable;
 import org.imsi.queryEREngine.apache.calcite.schema.Statistic;
 import org.imsi.queryEREngine.apache.calcite.schema.TranslatableTable;
 import org.imsi.queryEREngine.apache.calcite.schema.impl.AbstractTable;
 import org.imsi.queryEREngine.apache.calcite.sql.type.SqlTypeName;
 import org.imsi.queryEREngine.apache.calcite.util.ImmutableBitSet;
 import org.imsi.queryEREngine.apache.calcite.util.Pair;
-import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvEnumerator;
-import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvTableScan;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalBlockIndexScan;
 import org.imsi.queryEREngine.imsi.calcite.util.DeduplicationExecution;
-import org.imsi.queryEREngine.imsi.er.BlockBuilding.AbstractIndexBasedMethod;
 import org.imsi.queryEREngine.imsi.er.BlockBuilding.ExtendedCanopyClustering;
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.Attribute;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityProfile;
 import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
 import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.imsi.queryEREngine.imsi.er.Utilities.EquiFreqBinning;
-import org.imsi.queryEREngine.imsi.er.Utilities.EquiWidthBinning;
 import org.imsi.queryEREngine.imsi.er.Utilities.MapUtilities;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 import org.imsi.queryEREngine.imsi.er.Utilities.TokenStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 
 public class BlockIndex extends AbstractTable 
 implements  TranslatableTable {
@@ -77,6 +61,7 @@ implements  TranslatableTable {
 	protected Set<Integer> joinedIds;
 	protected Map<Integer, Set<String>> entitiesToBlocks;
 	protected static ExtendedCanopyClustering eCC;
+	private DumpDirectories dumpDirectories = DumpDirectories.loadDirectories();
 	
 	public BlockIndex() {
 		this.entityProfiles = new ArrayList<EntityProfile>();
@@ -313,34 +298,41 @@ implements  TranslatableTable {
 		final Map<Integer, Set<String>> entitiesToBlocks = MapUtilities.deepCopy(this.entitiesToBlocks);
 
 		return new Statistic() {
+			@Override
 			public Double getRowCount() {
 				return Double.valueOf(0.0D);
 			}
 
+			@Override
 			public boolean isKey(ImmutableBitSet columns) {
 				return false;
 			}
 
+			@Override
 			public List<ImmutableBitSet> getKeys() {
 				return null;
 			}
 
+			@Override
 			public List<RelReferentialConstraint> getReferentialConstraints() {
 				return null;
 			}
 
+			@Override
 			public List<RelCollation> getCollations() {
 				return null;
 			}
 
+			@Override
 			public RelDistribution getDistribution() {
 				return null;
 			}
 
+			@Override
 			public Double getComparisons(List<RexNode> conjuctions, String tableName) {
 				double begin = System.currentTimeMillis();
 				Set<Integer> entitiesWithLinks = new HashSet<>();
-				String links = "/data/bstam/data/links/" + tableName;
+				String links = dumpDirectories.getLinksDirPath() + tableName;
 				
 				if(new File(links).exists())
 					entitiesWithLinks = ((HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject(links)).keySet();

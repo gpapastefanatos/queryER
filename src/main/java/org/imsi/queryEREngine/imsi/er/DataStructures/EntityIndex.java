@@ -1,10 +1,7 @@
 package org.imsi.queryEREngine.imsi.er.DataStructures;
 
-import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
-
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 

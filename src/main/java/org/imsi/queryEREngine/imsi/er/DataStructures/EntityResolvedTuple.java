@@ -1,6 +1,5 @@
 package org.imsi.queryEREngine.imsi.er.DataStructures;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,20 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-
 import org.apache.calcite.linq4j.AbstractEnumerable;
 import org.apache.calcite.linq4j.Enumerator;
 import org.apache.calcite.linq4j.Linq4j;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.imsi.queryEREngine.imsi.er.Utilities.EntityGrouping;
 import org.imsi.queryEREngine.imsi.er.Utilities.MapUtilities;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 import org.imsi.queryEREngine.imsi.er.Utilities.UnionFind;
-
-import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 
@@ -122,8 +115,6 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 			}
 		}
 
-		
-
 		double revUFCreationEndTime = System.currentTimeMillis();
 		this.setRevUFCreationTime((revUFCreationEndTime - revUFCreationStartTime)/1000);
 	}
@@ -137,10 +128,11 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	}
 	
 	public void storeLinks(String table) {
+		String linksDir = DumpDirectories.loadDirectories().getLinksDirPath();
 		if(this.links == null)
-			SerializationUtilities.storeSerializedObject(this.revUF, "/data/bstam/data/links/" + table);
+			SerializationUtilities.storeSerializedObject(this.revUF, linksDir + table);
 		else {
-			SerializationUtilities.storeSerializedObject(this.links, "/data/bstam/data/links/" + table);
+			SerializationUtilities.storeSerializedObject(this.links, linksDir + table);
 			this.links.clear();
 		}
 	}
@@ -154,7 +146,6 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 		for (int id : this.revUF.keySet()) {
 			Object[] datum = this.data.get(id);
 			filteredData.put(id, datum);
-			if(datum == null) System.out.println(datum);
 			this.finalData.add((T) datum);
 		}
 		this.data = filteredData;

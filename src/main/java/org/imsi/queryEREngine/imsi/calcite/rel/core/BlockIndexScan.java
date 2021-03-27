@@ -1,7 +1,6 @@
 package org.imsi.queryEREngine.imsi.calcite.rel.core;
 
 
-import org.imsi.queryEREngine.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCluster;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCost;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptPlanner;
@@ -10,7 +9,6 @@ import org.imsi.queryEREngine.apache.calcite.plan.RelTraitSet;
 import org.imsi.queryEREngine.apache.calcite.rel.AbstractRelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataType;
-import org.imsi.queryEREngine.imsi.er.BlockIndex.BlockIndex;
 
 public class BlockIndexScan extends AbstractRelNode {
 	

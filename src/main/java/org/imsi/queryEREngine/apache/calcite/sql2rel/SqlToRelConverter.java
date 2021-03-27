@@ -18,11 +18,8 @@ package org.imsi.queryEREngine.apache.calcite.sql2rel;
 
 import static org.imsi.queryEREngine.apache.calcite.sql.SqlUtil.stripAs;
 
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.nio.file.Paths;
 import java.util.AbstractList;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -44,21 +41,16 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
 import org.apache.calcite.avatica.util.Spaces;
-import org.imsi.queryEREngine.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.linq4j.Ord;
-import org.apache.commons.io.FileUtils;
 import org.imsi.queryEREngine.apache.calcite.plan.Convention;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCluster;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptPlanner;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptSamplingParameters;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptSchema;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptUtil;
 import org.imsi.queryEREngine.apache.calcite.plan.RelTraitSet;
 import org.imsi.queryEREngine.apache.calcite.plan.ViewExpanders;
-import org.imsi.queryEREngine.apache.calcite.prepare.CalciteCatalogReader;
 import org.imsi.queryEREngine.apache.calcite.prepare.Prepare;
-import org.imsi.queryEREngine.apache.calcite.prepare.Prepare.PreparingTable;
 import org.imsi.queryEREngine.apache.calcite.prepare.RelOptTableImpl;
 import org.imsi.queryEREngine.apache.calcite.rel.RelCollation;
 import org.imsi.queryEREngine.apache.calcite.rel.RelCollationTraitDef;
@@ -125,7 +117,6 @@ import org.imsi.queryEREngine.apache.calcite.rex.RexWindowBound;
 import org.imsi.queryEREngine.apache.calcite.schema.ColumnStrategy;
 import org.imsi.queryEREngine.apache.calcite.schema.ModifiableTable;
 import org.imsi.queryEREngine.apache.calcite.schema.ModifiableView;
-import org.imsi.queryEREngine.apache.calcite.schema.Path;
 import org.imsi.queryEREngine.apache.calcite.schema.Table;
 import org.imsi.queryEREngine.apache.calcite.schema.TranslatableTable;
 import org.imsi.queryEREngine.apache.calcite.schema.Wrapper;
@@ -211,11 +202,10 @@ import org.imsi.queryEREngine.apache.calcite.util.Util;
 import org.imsi.queryEREngine.apache.calcite.util.trace.CalciteTrace;
 import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
 import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvTableScan;
-import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalBlockIndexScan;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalDeduplicate;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalDeduplicateJoin;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalMergeEntities;
-import org.imsi.queryEREngine.imsi.er.BlockIndex.BlockIndex;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.slf4j.Logger;
 
 import com.google.common.base.Preconditions;
@@ -2488,11 +2478,11 @@ public class SqlToRelConverter {
 			fieldTypes = ((CsvTableScan) tableRel).csvTable.getFieldTypes();
 		}
 		bb.setRoot(tableRel, true);
-
+		DumpDirectories dumpDirectories = DumpDirectories.loadDirectories();
 		if(deduplicate) {
 			 List<String> tableName = new ArrayList<>(2);
 		      tableName.add(table.getQualifiedName().get(0));
-		      tableName.add("/data/bstam/data/blockIndex/" + (String)table.getQualifiedName().get(1) + "InvertedIndex");
+		      tableName.add(dumpDirectories.getBlockIndexDirPath() + table.getQualifiedName().get(1) + "InvertedIndex");
 		      Prepare.PreparingTable preparingTable = this.catalogReader.getTable(tableName);
 		      RelNode newRoot = LogicalDeduplicate.create(tableRel.getCluster(), tableRel
 		          .getTraitSet().replace(Convention.NONE), tableRel, table, preparingTable, null, 

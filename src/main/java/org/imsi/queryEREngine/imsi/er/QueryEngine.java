@@ -1,7 +1,5 @@
 package org.imsi.queryEREngine.imsi.er;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,15 +15,10 @@ import java.util.Set;
 
 
 import org.imsi.queryEREngine.apache.calcite.jdbc.CalciteConnection;
-import org.apache.commons.io.FileUtils;
-import org.imsi.queryEREngine.apache.calcite.sql.parser.SqlParseException;
-import org.imsi.queryEREngine.apache.calcite.tools.RelConversionException;
-import org.imsi.queryEREngine.apache.calcite.tools.ValidationException;
 import org.imsi.queryEREngine.imsi.er.ConnectionPool.CalciteConnectionPool;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
+
 import au.com.bytecode.opencsv.CSVWriter;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
 
 public class QueryEngine {
 
@@ -54,7 +47,8 @@ public class QueryEngine {
 	public void initialize() throws IOException, SQLException {
 		setProperties();
 		// Create output folders
-		generateDumpDirectories();
+		DumpDirectories dumpDirectories = new DumpDirectories("");
+		dumpDirectories.generateDumpDirectories();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -156,36 +150,5 @@ public class QueryEngine {
         }
 		return prop;
 	}
-	
-	public static void generateDumpDirectories() throws IOException {
-		File logsDir = new File("/data/bstam/data/logs");
-		File blockIndexDir = new File("/data/bstam/data/blockIndex");
-		File groundTruthDir = new File("/data/bstam/data/groundTruth");
-		File tableStatsDir = new File("/data/bstam/data/tableStats/tableStats");
-		File blockIndexStats = new File("/data/bstam/data/tableStats/blockIndexStats");
-		File linksDir = new File("/data/bstam/data/links");
-		if(!logsDir.exists()) {
-            FileUtils.forceMkdir(logsDir); //create directory
-		}
-		if(!blockIndexDir.exists()) {
-            FileUtils.forceMkdir(blockIndexDir); //create directory
-		}
-		if(!groundTruthDir.exists()) {
-            FileUtils.forceMkdir(groundTruthDir); //create directory
-		}
-		if(!tableStatsDir.exists()) {
-            FileUtils.forceMkdir(tableStatsDir); //create directory
-		}
-		if(!blockIndexStats.exists()) {
-            FileUtils.forceMkdir(blockIndexStats); //create directory
-		}
-		if(!linksDir.exists()) {
-            FileUtils.forceMkdir(linksDir); //create directory
-		}
-		
-		
-		
-	}
-	
 	
 }

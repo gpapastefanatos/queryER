@@ -2,11 +2,7 @@ package org.imsi.queryEREngine.imsi.calcite.rel.rules;
 
 import static org.imsi.queryEREngine.apache.calcite.plan.RelOptUtil.conjunctions;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRule;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRuleCall;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRuleOperand;
@@ -17,17 +13,11 @@ import org.imsi.queryEREngine.apache.calcite.rel.core.RelFactories;
 import org.imsi.queryEREngine.apache.calcite.rel.logical.LogicalFilter;
 import org.imsi.queryEREngine.apache.calcite.rex.RexBuilder;
 import org.imsi.queryEREngine.apache.calcite.rex.RexCall;
-import org.imsi.queryEREngine.apache.calcite.rex.RexInputRef;
 import org.imsi.queryEREngine.apache.calcite.rex.RexLiteral;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;
-import org.imsi.queryEREngine.apache.calcite.rex.RexShuttle;
-import org.imsi.queryEREngine.apache.calcite.rex.RexSubQuery;
 import org.imsi.queryEREngine.apache.calcite.rex.RexVisitorImpl;
-import org.imsi.queryEREngine.apache.calcite.sql.SqlKind;
-import org.imsi.queryEREngine.apache.calcite.tools.RelBuilder;
 import org.imsi.queryEREngine.apache.calcite.tools.RelBuilderFactory;
 import org.imsi.queryEREngine.imsi.calcite.rel.core.Deduplicate;
-import org.imsi.queryEREngine.imsi.calcite.rel.core.MergeEntities;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalDeduplicate;
 
 

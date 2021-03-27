@@ -1,9 +1,6 @@
 package org.imsi.queryEREngine.imsi.er.EfficiencyLayer.MemoryBased;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 
 

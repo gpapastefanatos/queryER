@@ -7,7 +7,6 @@ import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.core.Join;
 import org.imsi.queryEREngine.apache.calcite.rel.core.JoinRelType;
 import org.imsi.queryEREngine.apache.calcite.rel.core.RelFactories;
-import org.imsi.queryEREngine.apache.calcite.rel.logical.LogicalJoin;
 import org.imsi.queryEREngine.apache.calcite.tools.RelBuilderFactory;
 import org.imsi.queryEREngine.imsi.calcite.rel.core.Deduplicate;
 import org.imsi.queryEREngine.imsi.calcite.rel.logical.LogicalDeduplicateJoin;

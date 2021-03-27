@@ -3,8 +3,6 @@ package org.imsi.queryEREngine.imsi.er.Utilities;
 import org.apache.commons.lang.ArrayUtils;
 import org.imsi.queryEREngine.imsi.er.DataStructures.*;
 import org.imsi.queryEREngine.imsi.er.EfficiencyLayer.AbstractEfficiencyMethod;
-import org.imsi.queryEREngine.imsi.er.Utilities.ComparisonIterator;
-import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
 import org.imsi.queryEREngine.imsi.er.Utilities.MetaBlockingConfiguration.WeightingScheme;
 import java.util.ArrayList;
 import java.util.Iterator;

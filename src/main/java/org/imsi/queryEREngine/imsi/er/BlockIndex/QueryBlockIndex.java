@@ -1,23 +1,13 @@
 package org.imsi.queryEREngine.imsi.er.BlockIndex;
 
-import static java.util.stream.Collectors.toMap;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
@@ -25,7 +15,7 @@ import org.imsi.queryEREngine.imsi.er.DataStructures.Attribute;
 import org.imsi.queryEREngine.imsi.er.DataStructures.DecomposedBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityProfile;
 import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
-import org.imsi.queryEREngine.imsi.er.Utilities.Converter;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 
 public class QueryBlockIndex extends BlockIndex {
@@ -36,6 +26,27 @@ public class QueryBlockIndex extends BlockIndex {
 		this.qIds = new HashSet<>();
 	}
 
+	public void createBlockIndex(HashMap<Integer, Object[]> queryData, Integer key) {
+		// Get project results from previous enumerator
+		for(Object[] row : queryData.values()) {
+			Object[] currentLine = (Object[]) row;
+			Integer fields = currentLine.length;
+			String entityKey = currentLine[key].toString();
+			if(entityKey.contentEquals("")) continue;
+			EntityProfile eP = new EntityProfile(currentLine[key].toString()); // 0 is id, must put this in schema catalog
+			qIds.add(Integer.valueOf(entityKey));
+			int index = 0;
+			while(index < fields) {
+				if(index != key) {
+					eP.addAttribute(index, currentLine[index].toString());;
+				}
+				index ++;
+			}
+			this.entityProfiles.add(eP);
+
+		}
+	}
+	
 	public <T> void createBlockIndex(List<T> dataset, Integer key) {
 		// Get project results from previous enumerator
 		for(T row : dataset) {
@@ -56,27 +67,6 @@ public class QueryBlockIndex extends BlockIndex {
 
 		}
 	}
-	
-	public <T> void createBlockIndex(List<T> dataset, Integer key, Integer secondaryKey) {
-		// Get project results from previous enumerator
-		for(T row : dataset) {
-			Object[] currentLine = (Object[]) row;
-			Integer fields = currentLine.length;
-			String entityKey = currentLine[key].toString();
-			if(entityKey.contentEquals("")) continue;
-			EntityProfile eP = new EntityProfile(currentLine[key].toString()); // 0 is id, must put this in schema catalog
-			qIds.add(Integer.valueOf(entityKey));
-			int index = 0;
-			while(index < fields) {
-				if(index != key && index != secondaryKey) {
-					eP.addAttribute(index, currentLine[index].toString());;
-				}
-				index ++;
-			}
-			this.entityProfiles.add(eP);
-
-		}
-	}
 
 	public void buildQueryBlocks() {
 		this.invertedIndex = indexEntities(0, entityProfiles);
@@ -85,8 +75,9 @@ public class QueryBlockIndex extends BlockIndex {
 	@SuppressWarnings("unchecked")
 	public List<AbstractBlock> joinBlockIndices(String name, boolean doER) {
 		if(doER) {
+			DumpDirectories dumpDirectories = DumpDirectories.loadDirectories();
 			final Map<String, Set<Integer>> bBlocks = (Map<String, Set<Integer>>) SerializationUtilities
-					.loadSerializedObject("/data/bstam/data/blockIndex/" + name + "InvertedIndex");
+					.loadSerializedObject(dumpDirectories.getBlockIndexDirPath() + name + "InvertedIndex");
 			bBlocks.keySet().retainAll(this.invertedIndex.keySet());
 			return parseIndex(bBlocks);
 		}
@@ -119,6 +110,7 @@ public class QueryBlockIndex extends BlockIndex {
 		return joinedEntityIds;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	protected Map<String, Set<Integer>> indexEntities(int sourceId, List<EntityProfile> profiles) {
 		invertedIndex = new HashMap<String, Set<Integer>>();

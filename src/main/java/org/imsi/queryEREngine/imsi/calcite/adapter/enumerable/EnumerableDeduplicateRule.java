@@ -4,7 +4,6 @@ import java.util.function.Predicate;
 
 import org.imsi.queryEREngine.apache.calcite.adapter.enumerable.EnumerableConvention;
 import org.imsi.queryEREngine.apache.calcite.plan.Convention;
-import org.imsi.queryEREngine.apache.calcite.plan.RelTrait;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.convert.ConverterRule;
 import org.imsi.queryEREngine.apache.calcite.rel.core.RelFactories;

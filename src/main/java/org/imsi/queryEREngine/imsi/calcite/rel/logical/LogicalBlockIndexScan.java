@@ -13,7 +13,6 @@ import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
 import org.imsi.queryEREngine.apache.calcite.plan.RelTraitSet;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.imsi.calcite.rel.core.BlockIndexScan;
-import org.imsi.queryEREngine.imsi.er.BlockIndex.BlockIndex;
 
 public class LogicalBlockIndexScan extends BlockIndexScan implements EnumerableRel{
 

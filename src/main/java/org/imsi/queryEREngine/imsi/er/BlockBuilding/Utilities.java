@@ -2,7 +2,6 @@ package org.imsi.queryEREngine.imsi.er.BlockBuilding;
 
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.Utilities.Constants;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -107,7 +106,7 @@ public class Utilities implements Constants {
     public static void purgeBlocksByAssignments(int maxAssignments, List<AbstractBlock> blocks) {
         Iterator<AbstractBlock> blocksIterator = blocks.iterator();
         while (blocksIterator.hasNext()) {
-            AbstractBlock block = (AbstractBlock) blocksIterator.next();
+            AbstractBlock block = blocksIterator.next();
             if (maxAssignments < block.getTotalBlockAssignments()) {
                 blocksIterator.remove();
             }

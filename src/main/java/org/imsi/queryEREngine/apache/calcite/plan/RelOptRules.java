@@ -74,9 +74,6 @@ import org.imsi.queryEREngine.apache.calcite.rel.rules.ValuesReduceRule;
 import org.imsi.queryEREngine.imsi.calcite.rel.rules.FilterDeduplicateTransposeRule;
 import org.imsi.queryEREngine.imsi.calcite.rel.rules.FilterMergeTransposeRule;
 import org.imsi.queryEREngine.imsi.calcite.rel.rules.DirtyJoinDeduplicateRemoveRule;
-import org.imsi.queryEREngine.imsi.calcite.rel.rules.MultiDirtyRightJoinDeduplicateRemoveRule;
-import org.imsi.queryEREngine.imsi.calcite.rel.rules.JoinConvertToDuplicateRule;
-
 import com.google.common.collect.ImmutableList;
 
 /**

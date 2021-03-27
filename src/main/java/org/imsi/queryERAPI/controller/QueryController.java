@@ -1,13 +1,8 @@
 package org.imsi.queryERAPI.controller;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.sun.rowset.CachedRowSetImpl;
-
-import org.apache.catalina.mapper.Mapper;
 import org.imsi.queryERAPI.util.PagedResult;
 import org.imsi.queryERAPI.util.ResultSetToJsonMapper;
 import org.imsi.queryEREngine.imsi.er.QueryEngine;

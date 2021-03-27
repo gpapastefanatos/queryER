@@ -23,11 +23,15 @@ import org.imsi.queryEREngine.apache.calcite.sql.type.SqlTypeName;
 import org.imsi.queryEREngine.apache.calcite.util.Pair;
 import org.imsi.queryEREngine.apache.calcite.util.Source;
 import org.imsi.queryEREngine.imsi.er.KDebug;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.common.processor.RowListProcessor;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvParser;
-import org.junit.jupiter.params.shadow.com.univocity.parsers.csv.CsvParserSettings;
+import org.imsi.queryEREngine.imsi.er.Utilities.RandomAccessReader;
 
+import com.univocity.parsers.common.processor.RowListProcessor;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
+
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,7 +55,8 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 
 	private  CsvParser parser;
 	private  AtomicBoolean cancelFlag;
-
+	private int key = 0;
+	
 	private E current;
 	private List<CsvFieldType> fieldTypes;
 	public List<String> fieldNames;
@@ -59,16 +64,17 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	private Source source;
 
 	public CsvEnumerator(Source source, AtomicBoolean cancelFlag,
-			List<CsvFieldType> fieldTypes) {
-		this(source, cancelFlag, fieldTypes, identityList(fieldTypes.size()));
+			List<CsvFieldType> fieldTypes, int key) {
+		this(source, cancelFlag, fieldTypes, identityList(fieldTypes.size()), key);
 	}
 
 	public CsvEnumerator(Source source, AtomicBoolean cancelFlag,
-			List<CsvFieldType> fieldTypes, Integer[] fields) {
+			List<CsvFieldType> fieldTypes, Integer[] fields, int key) {
 		this.cancelFlag = cancelFlag;
 		this.source = source;
 		this.cancelFlag = cancelFlag;
 		this.fieldTypes = fieldTypes;
+		this.key = key;
 		try {
 			this.parser = openCsv(source);
 			this.parser.parseNext(); // skip header row
@@ -137,16 +143,12 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 		//You can configure the parser to automatically detect what line separator sequence is in the input
 		parserSettings.setNullValue("");
 		parserSettings.setEmptyValue("");
-		parserSettings.getFormat().setQuote('"');
 		parserSettings.setDelimiterDetectionEnabled(true);
-		parserSettings.getFormat().setLineSeparator("\n");
-		// A RowListProcessor stores each parsed row in a List.
-		RowListProcessor rowProcessor = new RowListProcessor();
-		parserSettings.setProcessor(rowProcessor);
 		CsvParser parser = new CsvParser(parserSettings);
-		parser.beginParsing(source.reader());
+		parser.beginParsing(new File(source.path()), Charset.forName("US-ASCII"));
 		return parser;
 	}
+
 
 	@Override
 	public E current() {
@@ -156,14 +158,14 @@ public class CsvEnumerator<E> implements Enumerator<E> {
 	@Override
 	public boolean moveNext() {
 		for (;;) {
-
+			long rowOffset = parser.getContext().currentChar() - 1;
 			final String[] strings = parser.parseNext();
 			if (strings == null) {
 				current = null;
 				return false;
 			}
+			strings[0] = Long.toString(rowOffset);
 			current = (E) strings;
-			//if (strings.length != fieldTypes.size()) continue;
 			return true;
 
 		}

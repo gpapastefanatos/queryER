@@ -1,5 +1,8 @@
 package org.imsi.queryEREngine.imsi.er.Utilities;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -8,21 +11,38 @@ import java.util.Set;
 import org.imsi.queryEREngine.imsi.calcite.util.DeduplicationExecution;
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.Comparison;
-import org.imsi.queryEREngine.imsi.er.DataStructures.EntityProfile;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityResolvedTuple;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
 
 public class ExecuteBlockComparisons<T> {
 
 	private HashMap<Integer, Object[]> newData = new HashMap<>();
+	HashMap<Integer, Long> veti = new HashMap<>();
+	private RandomAccessReader randomAccessReader;
 	protected static final Logger DEDUPLICATION_EXEC_LOGGER =  LoggerFactory.getLogger(DeduplicationExecution.class);
-
+	CsvParser parser =  null;
+	private Integer noOfFields;
 	public ExecuteBlockComparisons(HashMap<Integer, Object[]> newData) {
 		this.newData = newData;
+	}
+
+	public ExecuteBlockComparisons(RandomAccessReader randomAccessReader) {
+		this.randomAccessReader = randomAccessReader;
+	}
+
+	public ExecuteBlockComparisons(HashMap<Integer, Object[]> queryData, RandomAccessReader randomAccessReader) {
+		this.randomAccessReader = randomAccessReader;
+		this.newData = queryData;
+		CsvParserSettings parserSettings = new CsvParserSettings();
+		parserSettings.setNullValue("");
+		parserSettings.setEmptyValue("");
+		parserSettings.getFormat().setDelimiter('\t');
+		//parserSettings.selectIndexes(key);
+		this.parser = new CsvParser(parserSettings);
 	}
 
 	public EntityResolvedTuple comparisonExecutionAll(List<AbstractBlock> blocks, Set<Integer> qIds,
@@ -40,25 +60,28 @@ public class ExecuteBlockComparisons<T> {
 		Set<String> matches = new HashSet<>();
 		Set<AbstractBlock> nBlocks = new HashSet<>(blocks);
 		Set<String> uComparisons = new HashSet<>();
+		this.noOfFields = noOfFields;
 		double compTime = 0.0;
 		for (AbstractBlock block : nBlocks) {
 			ComparisonIterator iterator = block.getComparisonIterator();
 			while (iterator.hasNext()) {
 				Comparison comparison = iterator.next();
-				if (!qIds.contains(comparison.getEntityId1()) && !qIds.contains(comparison.getEntityId2()))
+				int id1 = comparison.getEntityId1();
+				int id2 = comparison.getEntityId2();
+				if (!qIds.contains(id1) && !qIds.contains(id2))
 					continue;
 				
 				String uniqueComp = "";
 				if (comparison.getEntityId1() > comparison.getEntityId2())
-					uniqueComp = comparison.getEntityId1() + "u" + comparison.getEntityId2();
+					uniqueComp = id1 + "u" + id2;
 				else
-					uniqueComp = comparison.getEntityId2() + "u" + comparison.getEntityId1();
+					uniqueComp = id2 + "u" + id1;
 				if (uComparisons.contains(uniqueComp))
 					continue;
 				uComparisons.add(uniqueComp);
 
-				Object[] entity1 = newData.get(comparison.getEntityId1());
-				Object[] entity2 = newData.get(comparison.getEntityId2());
+				Object[] entity1 = getEntity(id1);
+				Object[] entity2 = getEntity(id2);				
 
 				double compStartTime = System.currentTimeMillis();
 				double similarity = ProfileComparison.getJaroSimilarity(entity1, entity2, keyIndex);
@@ -67,7 +90,7 @@ public class ExecuteBlockComparisons<T> {
 				comparisons++;
 				if (similarity >= 0.92) {
 					matches.add(uniqueComp);
-					uFind.union(comparison.getEntityId1(), comparison.getEntityId2());
+					uFind.union(id1, id2); 	
 				}
 			}
 		}	
@@ -77,7 +100,26 @@ public class ExecuteBlockComparisons<T> {
 		eRT.setCompTime(compTime/1000);
 		eRT.getAll();
 		return eRT;
-
+	}
+	
+	
+	private Object[] getEntity(int id) {
+		try {
+			if(newData.containsKey(id)) return newData.get(id);
+			randomAccessReader.seek(id);
+			String line = randomAccessReader.readLine();
+			if (line != null) {
+			    Object[] entity = parser.parseLine(line);
+			    newData.put(id, entity);
+			    return entity;
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		Object[] emptyVal = new Object[noOfFields];
+		for(int i = 0; i < noOfFields; i++) emptyVal[i] = "";
+		return emptyVal;
 	}
 	
 }

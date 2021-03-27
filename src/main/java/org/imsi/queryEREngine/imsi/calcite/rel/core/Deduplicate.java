@@ -1,39 +1,18 @@
 package org.imsi.queryEREngine.imsi.calcite.rel.core;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCluster;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptCost;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptPlanner;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
 import org.imsi.queryEREngine.apache.calcite.plan.RelTraitSet;
-import org.imsi.queryEREngine.apache.calcite.rel.BiRel;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
 import org.imsi.queryEREngine.apache.calcite.rel.RelWriter;
 import org.imsi.queryEREngine.apache.calcite.rel.SingleRel;
 import org.imsi.queryEREngine.apache.calcite.rel.metadata.RelMetadataQuery;
-import org.imsi.queryEREngine.apache.calcite.rel.type.RelDataType;
-import org.imsi.queryEREngine.apache.calcite.rex.RexCall;
-import org.imsi.queryEREngine.apache.calcite.rex.RexLiteral;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;
-import org.imsi.queryEREngine.apache.calcite.rex.RexVisitorImpl;
-import org.imsi.queryEREngine.apache.calcite.util.ImmutableBitSet;
 import org.imsi.queryEREngine.apache.calcite.util.Source;
 import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
-import org.imsi.queryEREngine.imsi.er.Comparators.BlockCardinalityComparator;
-import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
-import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
-import org.imsi.queryEREngine.imsi.er.Utilities.TokenStatistics;
 
 /**
  * 

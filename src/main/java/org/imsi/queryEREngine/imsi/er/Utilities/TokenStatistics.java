@@ -1,13 +1,8 @@
 package org.imsi.queryEREngine.imsi.er.Utilities;
 
-import static java.util.stream.Collectors.toMap;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,10 +12,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptTable;
 import org.imsi.queryEREngine.apache.calcite.rex.RexCall;
 import org.imsi.queryEREngine.apache.calcite.rex.RexLiteral;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;

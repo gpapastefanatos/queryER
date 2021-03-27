@@ -5,16 +5,10 @@ import java.util.List;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRule;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRuleCall;
 import org.imsi.queryEREngine.apache.calcite.plan.RelOptRuleOperand;
-import org.imsi.queryEREngine.apache.calcite.plan.RelOptUtil;
 import org.imsi.queryEREngine.apache.calcite.rel.RelNode;
-import org.imsi.queryEREngine.apache.calcite.rel.RelShuttle;
-import org.imsi.queryEREngine.apache.calcite.rel.RelShuttleImpl;
-import org.imsi.queryEREngine.apache.calcite.rel.RelVisitor;
-import org.imsi.queryEREngine.apache.calcite.rel.core.Filter;
 import org.imsi.queryEREngine.apache.calcite.rel.core.Join;
 import org.imsi.queryEREngine.apache.calcite.rel.core.JoinRelType;
 import org.imsi.queryEREngine.apache.calcite.rel.core.RelFactories;
-import org.imsi.queryEREngine.apache.calcite.rel.hint.Hintable;
 import org.imsi.queryEREngine.apache.calcite.rex.RexNode;
 import org.imsi.queryEREngine.apache.calcite.tools.RelBuilderFactory;
 import org.imsi.queryEREngine.imsi.calcite.rel.core.Deduplicate;
@@ -52,6 +46,7 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 		this(operand, description, RelFactories.LOGICAL_BUILDER);
 	}
 
+	@Override
 	public void onMatch(RelOptRuleCall call) {
 		Join join = (Join)call.rel(0);
 		if (join.isDirtyJoin())
@@ -81,13 +76,13 @@ public class DirtyJoinDeduplicateRemoveRule extends RelOptRule{
 		Double rightComps = deduplicateRight.calculateComparisons();
 		if (leftComps != 0 && rightComps != 0)
 			if (leftComps.doubleValue() > rightComps.doubleValue()) {
-				newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), (RelNode)deduplicateRight, join.getCondition(), join
+				newJoin = LogicalDeduplicateJoin.create(deduplicateLeft.getInput(0), deduplicateRight, join.getCondition(), join
 						.getVariablesSet(), JoinRelType.DIRTY_LEFT, deduplicateLeft.getSource(), deduplicateRight.getSource(), 
 						deduplicateLeft.getFieldTypes(), deduplicateRight.getFieldTypes(), deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
 						Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));
 			}
 			else {
-				newJoin = LogicalDeduplicateJoin.create((RelNode)deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
+				newJoin = LogicalDeduplicateJoin.create(deduplicateLeft, deduplicateRight.getInput(0), join.getCondition(), join
 						.getVariablesSet(), JoinRelType.DIRTY_RIGHT, deduplicateLeft.getSource(), deduplicateRight.getSource(), 
 						deduplicateLeft.getFieldTypes(), deduplicateRight.getFieldTypes(), deduplicateLeft.getKey(), deduplicateRight.getKey(), leftTableName, rightTableName, 
 						Integer.valueOf(deduplicateLeft.getFieldTypes().size()), Integer.valueOf(deduplicateRight.getFieldTypes().size()), Boolean.valueOf(true));

@@ -1,7 +1,5 @@
 package org.imsi.queryEREngine.imsi.calcite.util;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.apache.calcite.linq4j.AbstractEnumerable;
 import org.apache.calcite.linq4j.Enumerable;
 import org.apache.calcite.linq4j.Enumerator;
@@ -10,35 +8,30 @@ import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvEnumerator;
 import org.imsi.queryEREngine.imsi.calcite.adapter.csv.CsvFieldType;
 import org.imsi.queryEREngine.imsi.er.BlockIndex.QueryBlockIndex;
 import org.imsi.queryEREngine.imsi.er.DataStructures.AbstractBlock;
-import org.imsi.queryEREngine.imsi.er.DataStructures.Comparison;
 import org.imsi.queryEREngine.imsi.er.DataStructures.DecomposedBlock;
 import org.imsi.queryEREngine.imsi.er.DataStructures.EntityResolvedTuple;
-import org.imsi.queryEREngine.imsi.er.DataStructures.UnilateralBlock;
 import org.imsi.queryEREngine.imsi.er.EfficiencyLayer.BlockRefinement.ComparisonsBasedBlockPurging;
 import org.imsi.queryEREngine.imsi.er.MetaBlocking.BlockFiltering;
 import org.imsi.queryEREngine.imsi.er.MetaBlocking.EfficientEdgePruning;
-import org.imsi.queryEREngine.imsi.er.Utilities.ComparisonIterator;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
 import org.imsi.queryEREngine.imsi.er.Utilities.ExecuteBlockComparisons;
+import org.imsi.queryEREngine.imsi.er.Utilities.MapUtilities;
+import org.imsi.queryEREngine.imsi.er.Utilities.RandomAccessReader;
 import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.collect.ImmutableSet;
-
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /*
@@ -83,46 +76,43 @@ public class DeduplicationExecution<T> {
 	private static boolean runEP = true;
 	private static boolean runLinks = true;
 	private static double filterParam = 0.0;
-
+	private static DumpDirectories dumpDirectories = DumpDirectories.loadDirectories();
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public static <T, TKey> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
+    public static <T> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
     		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
     	setProperties();
+    	CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes, key);
+        HashMap<Integer, Object[]> queryData = createMap((AbstractEnumerable<Object[]>) enumerable, key);
+        return deduplicate(queryData, key, fieldTypes.size(), tableName, originalEnumerator, source);
+    	
+    }
+
+    public static EntityResolvedTuple deduplicate(HashMap<Integer, Object[]> queryData, Integer key, Integer noOfAttributes,
+			String tableName, Enumerator<Object[]> originalEnumerator, String source) {
     	boolean firstDedup = false;
     	double setPropertiesStartTime = System.currentTimeMillis();
     	double setPropertiesTime = (System.currentTimeMillis() - setPropertiesStartTime);
     	System.out.println("Deduplicating: " + tableName);
     	double deduplicateStartTime = System.currentTimeMillis() - setPropertiesTime;
         
-        CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes);
         // Check for links and remove qIds that have links
         double linksStartTime = System.currentTimeMillis();
         HashMap<Integer, Set<Integer>> links = loadLinks(tableName);
         if(links == null) firstDedup = true;
-        List<Object[]> queryData = (List<Object[]>) enumerable.toList();
         Set<Integer> qIds = new HashSet<>();
         Set<Integer> totalIds = new HashSet<>();
 
-        final Set<Integer> qIdsNoLinks;
-
-        qIds = queryData.stream().map(row -> {
-    		return Integer.parseInt(row[key].toString());
-    	}).collect(Collectors.toSet());
+        qIds = queryData.keySet();
         
         // Remove from data qIds with links
         if(!firstDedup) {
-    		queryData = queryData.stream().filter(row -> {
-    			Integer id = Integer.parseInt(row[key].toString());
-    			return !(links.containsKey(id));
-    		}).collect(Collectors.toList());	
+        	queryData.keySet().removeAll(links.keySet());
             // Clear links and keep only qIds
-    		Set<Integer> linkedIds = getLinkedIds(queryData, key, links,  qIds);
+    		Set<Integer> linkedIds = getLinkedIds(key, links,  qIds);
     		totalIds.addAll(linkedIds);  // Add links back
         }
         
-        qIdsNoLinks = queryData.stream().map(row -> {
-        	return Integer.parseInt(row[key].toString());
-        }).collect(Collectors.toSet());
+        final Set<Integer> qIdsNoLinks = MapUtilities.deepCopySet(queryData.keySet());
 
         double linksEndTime = System.currentTimeMillis();
         double links1Time = (linksEndTime - linksStartTime) / 1000;
@@ -135,9 +125,7 @@ public class DeduplicationExecution<T> {
         queryBlockIndex.buildQueryBlocks();
         double blockingEndTime = System.currentTimeMillis();
         String blockingTime = Double.toString((blockingEndTime - blockingStartTime) / 1000);
-        boolean doER = queryData.size() > 0 ? true : false;
-        queryData.clear(); // no more need for query data
-        
+        boolean doER = queryData.size() > 0 ? true : false;        
         
         double blockJoinStart = System.currentTimeMillis();
         List<AbstractBlock> blocks = queryBlockIndex
@@ -221,16 +209,25 @@ public class DeduplicationExecution<T> {
         // To find ground truth statistics
         storeTime = storeBlocks(blocks, tableName);
         double tableScanStartTime = System.currentTimeMillis() - storeTime;
-        AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((Enumerator<Object[]>) originalEnumerator, totalIds, key);
+        
+        RandomAccessReader randomAccessReader = null;
+        try {
+        	randomAccessReader = RandomAccessReader.open(new File(source));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         double tableScanEndTime = System.currentTimeMillis();
         String tableScanTime = Double.toString((tableScanEndTime - tableScanStartTime) / 1000);
 
-        HashMap<Integer, Object[]> entityMap = createMap(comparisonEnumerable, key);
        
 
         double comparisonStartTime = System.currentTimeMillis() - storeTime;
-        ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(entityMap);
-        EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(blocks, qIdsNoLinks, key, fieldTypes.size());
+//        AbstractEnumerable<Object[]> comparisonEnumerable = createEnumerable((Enumerator<Object[]>) originalEnumerator, totalIds, key);
+//        queryData = createMap(comparisonEnumerable, key);
+        
+        ExecuteBlockComparisons ebc = new ExecuteBlockComparisons(queryData, randomAccessReader);
+        EntityResolvedTuple entityResolvedTuple = ebc.comparisonExecutionAll(blocks, qIdsNoLinks, key, noOfAttributes);
         double comparisonEndTime = System.currentTimeMillis();
         double links2StartTime = System.currentTimeMillis();
         entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds, runLinks);
@@ -253,10 +250,10 @@ public class DeduplicationExecution<T> {
         			epTime + "," + epTotalComps + "," + ePEntities + "," + matches + "," + executedComparisons + "," + tableScanTime + "," + jaroTime + "," +
         			comparisonTime + "," + revUfCreationTime + "," + totalEntities + "," + totalDeduplicationTime);
         return entityResolvedTuple;
-    }
+		
+	}
 
-    public static Set<Integer> getLinkedIds(List<Object[]> queryData, 
-    		Integer key, Map<Integer, Set<Integer>> links, Set<Integer> qIds) {
+	public static Set<Integer> getLinkedIds(Integer key, Map<Integer, Set<Integer>> links, Set<Integer> qIds) {
 
     	Set<Integer> totalIds = new HashSet<>();
     	Set<Set<Integer>> sublinks = links.entrySet().stream().filter(entry -> {
@@ -290,15 +287,17 @@ public class DeduplicationExecution<T> {
 
 
     private static double storeIds(Set<Integer> qIds) {
+    	Set<Integer> newSet = new HashSet<>();
+    	newSet.addAll(qIds);
     	double startTime = System.currentTimeMillis();
-        SerializationUtilities.storeSerializedObject(qIds, "/data/bstam/data/qIds");
+        SerializationUtilities.storeSerializedObject(newSet, dumpDirectories.getqIdsPath());
         return System.currentTimeMillis() - startTime;
     }
 
     private static double storeBlocks(List<AbstractBlock> blocks, String tableName) {
     	double startTime = System.currentTimeMillis();
         List<DecomposedBlock> dBlocks = (List<DecomposedBlock>) (List<? extends AbstractBlock>) blocks;
-        SerializationUtilities.storeSerializedObject(dBlocks, "/data/bstam/data/blocks/" + tableName);
+        SerializationUtilities.storeSerializedObject(dBlocks, dumpDirectories.getBlockDirPath());
         return System.currentTimeMillis() - startTime;
     }
 
@@ -317,6 +316,7 @@ public class DeduplicationExecution<T> {
         return entityResolvedTuple;
 
     }
+    
 
     /**
      * @param enumerable Data of the table
@@ -325,7 +325,7 @@ public class DeduplicationExecution<T> {
      */
     private static HashMap<Integer, Object[]> createMap(AbstractEnumerable<Object[]> enumerable, Integer key) {
         List<Object[]> entityList = enumerable.toList();
-        HashMap<Integer, Object[]> entityMap = new HashMap<Integer, Object[]>(entityList.size());
+        HashMap<Integer, Object[]> entityMap = new HashMap<Integer, Object[]>();
         for (Object[] entity : entityList) {
             entityMap.put(Integer.parseInt(entity[key].toString()), entity);
         }
@@ -333,8 +333,8 @@ public class DeduplicationExecution<T> {
     }
 
     public static HashMap<Integer, Set<Integer>> loadLinks(String table) {
-    	if(new File("/data/bstam/data/links/" + table).exists() && runLinks)
-    		return (HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject("/data/bstam/data/links/" + table);
+    	if(new File(dumpDirectories.getLinksDirPath() + table).exists() && runLinks)
+    		return (HashMap<Integer, Set<Integer>>) SerializationUtilities.loadSerializedObject(dumpDirectories.getLinksDirPath() + table);
     	else  return null;
     }
     

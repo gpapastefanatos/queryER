@@ -18,14 +18,11 @@ package org.imsi.queryEREngine.imsi.calcite.adapter.csv;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.imsi.queryEREngine.apache.calcite.jdbc.JavaTypeFactoryImpl;
@@ -36,11 +33,15 @@ import org.imsi.queryEREngine.apache.calcite.util.Source;
 import org.imsi.queryEREngine.apache.calcite.util.Sources;
 import org.imsi.queryEREngine.imsi.er.BlockIndex.BaseBlockIndex;
 import org.imsi.queryEREngine.imsi.er.BlockIndex.BlockIndexStatistic;
+import org.imsi.queryEREngine.imsi.er.Utilities.DumpDirectories;
+import org.imsi.queryEREngine.imsi.er.Utilities.SerializationUtilities;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import static java.util.stream.Collectors.*;
-import static java.util.Map.Entry.*;
+import com.univocity.parsers.csv.CsvParser;
+import com.univocity.parsers.csv.CsvParserSettings;
+import com.univocity.parsers.csv.CsvWriter;
+import com.univocity.parsers.csv.CsvWriterSettings;
 /**
  * Schema mapped onto a directory of CSV files. Each table in the schema
  * is a CSV file in that directory.
@@ -49,6 +50,7 @@ public class CsvSchema extends AbstractSchema {
 	private final File directoryFile;
 	private final CsvTable.Flavor flavor;
 	private Map<String, Table> tableMap;
+	DumpDirectories dumpDirectories = DumpDirectories.loadDirectories();
 
 	/**
 	 * Creates a CSV schema.
@@ -105,9 +107,10 @@ public class CsvSchema extends AbstractSchema {
 		for (File file : files) {
 			Source source = Sources.of(file);
 			Source sourceSansGz = source.trim(".gz");
-			
+
 			final Source sourceSansCsv = sourceSansGz.trimOrNull(".csv");
 			if (sourceSansCsv != null) {
+				
 				final CsvTranslatableTable table = createTable(source, sourceSansCsv.relative(baseSource).path());
 				
 				String tableName = table.getName();
@@ -127,77 +130,123 @@ public class CsvSchema extends AbstractSchema {
 						table.setKey(fieldNames.indexOf(key));
 						break;
 					}
-				}
-							
-				// Compute CsvTableStatistic
-//				if(!new File("/data/bstam/data/tableStats/table" + tableName + ".json").exists()) {
-//					AtomicBoolean ab = new AtomicBoolean();
-//					ab.set(false);
-//					@SuppressWarnings({ "unchecked", "rawtypes" })
-//					CsvEnumerator csvEnumerator = new CsvEnumerator(table.getSource(), ab,
-//							table.getFieldTypes());
-//					CsvTableStatistic csvTableStatistic = new CsvTableStatistic(csvEnumerator,
-//							tableName, table.getFieldTypes().size(), table.getKey(), files, source);
-//					csvTableStatistic.getStatistics();
-//					csvTableStatistic.storeStatistics();
-//					table.setCsvTableStatistic(csvTableStatistic);
-//				}
+				}				
+				// createVETI(source, table.getKey(), tableName);
+				// computeTableStatistics(table, tableName, files, source);
 				builder.put(sourceSansCsv.relative(baseSource).path(), table);
-
-				// Create Block index and store into data folder (only if not already created)
 				if(tableName.contains("ground_truth")) continue;
-				BaseBlockIndex blockIndex = new BaseBlockIndex();
-				if((!new File("/data/bstam/data/blockIndex/" + tableName + "InvertedIndex").exists())) {
-					System.out.println("Creating Block Index..");
-					AtomicBoolean ab = new AtomicBoolean();
-					ab.set(false);
-					@SuppressWarnings({ "unchecked", "rawtypes" })
-					CsvEnumerator<Object[]> enumerator = new CsvEnumerator(table.getSource(), ab,
-							table.getFieldTypes());
-
-					blockIndex.createBlockIndex(enumerator, table.getKey());
-					System.out.println("created");
-					blockIndex.buildBlocks();
-					blockIndex.sortIndex();
-					blockIndex.storeBlockIndex("/data/bstam/data/blockIndex/", tableName );
-					BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
-							blockIndex.getEntitiesToBlocks(), tableName);
-					blockIndex.setBlockIndexStatistic(blockIndexStatistic);
-					try {
-						blockIndexStatistic.storeStatistics();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					System.out.println("Block Index created!");
-				}
-				else {
-					System.out.println("Block Index already created!");
-					blockIndex.loadBlockIndex("/data/bstam/data/blockIndex/", tableName);
-					ObjectMapper objectMapper = new ObjectMapper();  
-					try {
-						blockIndex.setBlockIndexStatistic(objectMapper.readValue(new File("/data/bstam/data/tableStats/blockIndexStats/" + tableName + ".json"),
-								BlockIndexStatistic.class));
-					} catch (IOException e) {
-						BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
-								blockIndex.getEntitiesToBlocks(), tableName);
-						blockIndex.setBlockIndexStatistic(blockIndexStatistic);
-						try {
-							blockIndexStatistic.storeStatistics();
-						} catch (IOException e1) {
-							e1.printStackTrace();
-						}
-						
-					}
-					
-				}
-				builder.put("/data/bstam/data/blockIndex/" + tableName + "InvertedIndex", blockIndex);
+				BaseBlockIndex blockIndex = createBlockIndex(table, tableName);
+				builder.put(dumpDirectories.getBlockIndexDirPath() + tableName + "InvertedIndex", blockIndex);
+				
 			}
-			
+
 		}
 		return builder.build();
 	}
-	
 
+
+	private void computeTableStatistics(CsvTranslatableTable table, String tableName, File[] files, Source source) {
+		if(!new File("/data/bstam/data/tableStats/table" + tableName + ".json").exists()) {
+			AtomicBoolean ab = new AtomicBoolean();
+			ab.set(false);
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			CsvEnumerator csvEnumerator = new CsvEnumerator(table.getSource(), ab,
+					table.getFieldTypes(), table.getKey());
+			CsvTableStatistic csvTableStatistic = new CsvTableStatistic(csvEnumerator,
+					tableName, table.getFieldTypes().size(), table.getKey(), files, source);
+			csvTableStatistic.getStatistics();
+			csvTableStatistic.storeStatistics();
+			table.setCsvTableStatistic(csvTableStatistic);	
+		}
+	}
+
+	private BaseBlockIndex createBlockIndex(CsvTranslatableTable table, String tableName) {
+		// Create Block index and store into data folder (only if not already created)
+		BaseBlockIndex blockIndex = new BaseBlockIndex();
+		if((!new File(dumpDirectories.getBlockIndexDirPath() + tableName + "InvertedIndex").exists())) {
+			System.out.println("Creating Block Index..");
+			AtomicBoolean ab = new AtomicBoolean();
+			ab.set(false);
+			@SuppressWarnings({ "unchecked", "rawtypes" })
+			CsvEnumerator<Object[]> enumerator = new CsvEnumerator(table.getSource(), ab,
+					table.getFieldTypes(), table.getKey());
+
+			blockIndex.createBlockIndex(enumerator, table.getKey());
+			System.out.println("created");
+			blockIndex.buildBlocks();
+			blockIndex.sortIndex();
+			blockIndex.storeBlockIndex(dumpDirectories.getBlockIndexDirPath(), tableName );
+			BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
+					blockIndex.getEntitiesToBlocks(), tableName);
+			blockIndex.setBlockIndexStatistic(blockIndexStatistic);
+			try {
+				blockIndexStatistic.storeStatistics();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			System.out.println("Block Index created!");
+		}
+		else {
+			System.out.println("Block Index already created!");
+			blockIndex.loadBlockIndex(dumpDirectories.getBlockIndexDirPath(), tableName);
+			ObjectMapper objectMapper = new ObjectMapper();  
+			try {
+				blockIndex.setBlockIndexStatistic(objectMapper.readValue(new File(dumpDirectories.getBlockIndexStatsDirPath() + tableName + ".json"),
+						BlockIndexStatistic.class));
+			} catch (IOException e) {
+				BlockIndexStatistic blockIndexStatistic = new BlockIndexStatistic(blockIndex.getInvertedIndex(), 
+						blockIndex.getEntitiesToBlocks(), tableName);
+				blockIndex.setBlockIndexStatistic(blockIndexStatistic);
+				try {
+					blockIndexStatistic.storeStatistics();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
+
+			}
+
+		}
+		return blockIndex;
+
+	}
+
+	private void createVETI(Source source, Integer key, String tableName){
+		Map<Integer, Long> veti = new HashMap<>();
+		System.out.println("Creating VETI");
+		CsvParserSettings parserSettings = new CsvParserSettings();
+		CsvWriterSettings writerSettings = new CsvWriterSettings();
+		File sourceFile = new File(source.path());
+		String sourceSansCsv = source.path().substring(0, source.path().indexOf('.'));
+		
+		//You can configure the parser to automatically detect what line separator sequence is in the input
+		parserSettings.setNullValue("");
+		parserSettings.setEmptyValue("");
+		parserSettings.setDelimiterDetectionEnabled(true);
+		parserSettings.selectIndexes(key);
+		parserSettings.setColumnReorderingEnabled(false);
+		
+		CsvParser parser = new CsvParser(parserSettings);
+		parser.beginParsing(sourceFile, Charset.forName("US-ASCII"));
+		// Get header
+		String[] row;
+		long rowOffset = parser.getContext().currentChar() - 1;
+		while ((row = parser.parseNext()) != null) {
+			try {
+				// index row
+				rowOffset = parser.getContext().currentChar() - 1;
+				veti.put(Integer.parseInt(row[key]), rowOffset);
+			} catch (Exception e) {
+				continue;
+			} finally {
+
+			}
+		}
+		parser.stopParsing();
+		SerializationUtilities.storeSerializedObject(veti, dumpDirectories.getVetiPath() + tableName);
+		System.out.println("VETI Created");
+
+		
+	}
 
 	/** Creates table */
 	private CsvTranslatableTable createTable(Source source, String name) {
