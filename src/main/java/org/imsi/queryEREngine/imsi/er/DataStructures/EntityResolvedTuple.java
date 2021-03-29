@@ -31,6 +31,7 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	private double revUFCreationTime;
 	private Integer keyIndex;
 	private Integer noOfAttributes;
+	private DumpDirectories dumpDirectories = DumpDirectories.loadDirectories();
 	
 	public EntityResolvedTuple(HashMap<Integer, Object[]> data, UnionFind uFind, Integer keyIndex, Integer noOfAttributes) {
 		super();
@@ -128,7 +129,7 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	}
 	
 	public void storeLinks(String table) {
-		String linksDir = DumpDirectories.loadDirectories().getLinksDirPath();
+		String linksDir = dumpDirectories.getLinksDirPath();
 		if(this.links == null)
 			SerializationUtilities.storeSerializedObject(this.revUF, linksDir + table);
 		else {
@@ -137,6 +138,9 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 		}
 	}
 	
+	public void storeLI() {
+		SerializationUtilities.storeSerializedObject(this.revUF, dumpDirectories.getLiFilePath());
+	}
 	
 	public void filterData(Set<Integer> totalIds) {
 		HashMap<Integer, Object[]> filteredData = new HashMap<>();
@@ -222,6 +226,8 @@ public class EntityResolvedTuple<T> extends AbstractEnumerable<T> {
 	public HashMap<Integer, Set<Integer>> getLinks() {
 		return links;
 	}
+
+
 
 	
 

@@ -1,5 +1,6 @@
 package org.imsi.queryEREngine.imsi.er;
 
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,18 +38,23 @@ public class QueryEngine {
 
 	private static final String SCHEMA_NAME = "schema.name";
 	private static final String CALCITE_CONNECTION = "calcite.connection";
+	private static final String DUMP_PATH = "dump.path";
 
 	
 	private static String schemaName = "";
+	private static String dumpPath = "";
 	private static String calciteConnectionString = "";
 	private static CalciteConnectionPool calciteConnectionPool = null;
 	private CalciteConnection calciteConnection = null;
+	private static DumpDirectories dumpDirectories  = null;
+
 
 	public void initialize() throws IOException, SQLException {
 		setProperties();
 		// Create output folders
-		DumpDirectories dumpDirectories = new DumpDirectories("");
+		dumpDirectories = new DumpDirectories(dumpPath);
 		dumpDirectories.generateDumpDirectories();
+		dumpDirectories.storeDumpMap();
 		// Create Connection
 		calciteConnectionPool = new CalciteConnectionPool();
 		CalciteConnection calciteConnection = null;
@@ -58,8 +64,6 @@ public class QueryEngine {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-		// Enter a query or read query from file
-		List<String> queries = new ArrayList<>();
 		initializeDB(calciteConnection, schemaName);
 	}
 
@@ -108,32 +112,13 @@ public class QueryEngine {
 	}
 	
 	
-	private static void exportQueryContent(ResultSet queryResults, String path) throws SQLException, IOException {
-		 CSVWriter writer = new CSVWriter(new FileWriter(path),',');
-	     writer.writeAll(queryResults, true);
-		 
-	}
-
-
-	private static void printQueryContents(ResultSet resultSet) throws SQLException {
-		ResultSetMetaData rsmd = resultSet.getMetaData();
-		int columnsNumber = rsmd.getColumnCount();
-		while (resultSet.next()) {
-			//Print one row
-			for(int i = 1 ; i <= columnsNumber; i++){
-				System.out.print(resultSet.getString(i) + " || "); //Print one element of a row
-			}
-			System.out.println();//Move to the next line to print the next row.
-		}
-		resultSet.close();
-	}
-	
 
 	private void setProperties() {
 		properties = loadProperties();
 		if(!properties.isEmpty()) {
             schemaName = properties.getProperty(SCHEMA_NAME);
             calciteConnectionString = properties.getProperty(CALCITE_CONNECTION);
+			dumpPath = properties.getProperty(DUMP_PATH);
 		}
 	}
 	
@@ -141,7 +126,7 @@ public class QueryEngine {
 		
         Properties prop = new Properties();
        
-		try (InputStream input = this.getClass().getClassLoader().getResourceAsStream(pathToPropertiesFile)) {
+		try (InputStream input = new FileInputStream(pathToPropertiesFile)){
             // load a properties file
             prop.load(input);
                        

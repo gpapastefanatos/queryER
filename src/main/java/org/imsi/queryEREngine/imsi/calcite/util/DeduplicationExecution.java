@@ -80,7 +80,6 @@ public class DeduplicationExecution<T> {
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T> EntityResolvedTuple deduplicateEnumerator(Enumerable<T> enumerable, String tableName,
     		Integer key, String source, List<CsvFieldType> fieldTypes, AtomicBoolean ab) {
-    	setProperties();
     	CsvEnumerator<Object[]> originalEnumerator = new CsvEnumerator(Sources.of(new File(source)), ab, fieldTypes, key);
         HashMap<Integer, Object[]> queryData = createMap((AbstractEnumerable<Object[]>) enumerable, key);
         return deduplicate(queryData, key, fieldTypes.size(), tableName, originalEnumerator, source);
@@ -91,6 +90,7 @@ public class DeduplicationExecution<T> {
 			String tableName, Enumerator<Object[]> originalEnumerator, String source) {
     	boolean firstDedup = false;
     	double setPropertiesStartTime = System.currentTimeMillis();
+    	//setProperties();
     	double setPropertiesTime = (System.currentTimeMillis() - setPropertiesStartTime);
     	System.out.println("Deduplicating: " + tableName);
     	double deduplicateStartTime = System.currentTimeMillis() - setPropertiesTime;
@@ -231,6 +231,7 @@ public class DeduplicationExecution<T> {
         double comparisonEndTime = System.currentTimeMillis();
         double links2StartTime = System.currentTimeMillis();
         entityResolvedTuple.mergeLinks(links, tableName, firstDedup, totalIds, runLinks);
+        entityResolvedTuple.storeLI();
         double links2EndTime = System.currentTimeMillis();
 
         Integer executedComparisons = entityResolvedTuple.getComparisons();

@@ -40,8 +40,13 @@ public class ExecuteBlockComparisons<T> {
 		CsvParserSettings parserSettings = new CsvParserSettings();
 		parserSettings.setNullValue("");
 		parserSettings.setEmptyValue("");
-		parserSettings.getFormat().setDelimiter('\t');
+		parserSettings.setDelimiterDetectionEnabled(true);
+		File file = new File(randomAccessReader.getPath());
 		//parserSettings.selectIndexes(key);
+		this.parser = new CsvParser(parserSettings);
+		this.parser.beginParsing(file);
+		char delimeter = this.parser.getDetectedFormat().getDelimiter();
+		parserSettings.getFormat().setDelimiter(delimeter);
 		this.parser = new CsvParser(parserSettings);
 	}
 

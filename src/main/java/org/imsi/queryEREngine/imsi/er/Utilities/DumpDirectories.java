@@ -24,6 +24,7 @@ public class DumpDirectories implements Serializable{
 	private  String tableStatsDirPath;
 	private  String blockIndexStatsDirPath;
 	private  String linksDirPath;
+	private String liFilePath;
 	private  String qIdsPath;
 	private String vetiPath;
 
@@ -59,6 +60,7 @@ public class DumpDirectories implements Serializable{
 		linksDirPath = dumpPath + "/links/";
 		qIdsPath = dumpPath + "/qIds/";
 		vetiPath = dumpPath + "/veti/";
+		liFilePath = dumpPath + "/LI";
 	}
 
 	public  void generateDumpDirectories() throws IOException {
@@ -111,7 +113,7 @@ public class DumpDirectories implements Serializable{
 		mapper.writeValue(jGenerator, this);
 		jGenerator.close();
 	}
-
+	
 	public String getDataDirPath() {
 		return dataDirPath;
 	}
@@ -149,6 +151,10 @@ public class DumpDirectories implements Serializable{
 
 	public String getVetiPath() {
 		return vetiPath;
+	}
+	
+	public String getLiFilePath() {
+		return liFilePath;
 	}
 	
 }
